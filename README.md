@@ -4,7 +4,7 @@
 
 ## Getting started
 
-You should check out this repository into `~/projects/dotfiles` folder. 
+You should check out this repository into `~/projects/dotfiles` folder.
 If you want to check out to another location make sure you change all references to that folder in this repository, before starting it.
 
 > Make sure you **know** what you are doing! Check the scripts if it's necessary.
@@ -27,7 +27,7 @@ Feel free to fork it and customize it with your own needs.
 
 Inspiration and code was taken from many sources, including:
 
-@tay1orjones (Taylor Jones) https://github.com/tay1orjones/dotfiles
-@mathiasbynens (Mathias Bynens) https://github.com/mathiasbynens/dotfiles
-@paulirish (Paul Irish) https://github.com/paulirish/dotfiles
-@alrra (Cãtãlin Mariş) https://github.com/alrra/dotfiles
+* @tay1orjones (Taylor Jones)  [dotfiles repository](https://github.com/tay1orjones/dotfiles)
+* @mathiasbynens (Mathias Bynens) [dotfiles repository](https://github.com/mathiasbynens/dotfiles)
+* @paulirish (Paul Irish) [dotfiles repository](https://github.com/paulirish/dotfiles)
+* @alrra (Cãtãlin Mariş) [dotfiles repository](https://github.com/alrra/dotfiles)
