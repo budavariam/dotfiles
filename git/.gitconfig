@@ -1,0 +1,56 @@
+[http]
+    sslVerify = false
+[user]
+    name = Mátyás Budavári
+    email = matyas.budavari@gmail.com
+[core]
+    editor = vim
+[alias]
+    ac = !git add . && git commit -am
+    ack = -c color.grep.filename='bold green' -c color.grep.match='black yellow' grep --break --heading -n
+    amend = commit --amend -v
+    ci = commit -v
+    cloneurl = config --get remote.origin.url
+    co = checkout
+    ctags = !.git/hooks/ctags
+    df = diff --cached
+    fa = fetch --all
+    filelog = log -u
+    la = "!git config -l | grep alias | cut -c 7-"
+    ld = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
+    lg = log -p
+    ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
+    locate = '''!sh -c 'git ls-files | grep --color=auto "$1"' -'''
+    logf = log --pretty=fuller
+    lol = log --graph --decorate --pretty=oneline --abbrev-commit
+    lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+    new = log --abbrev-commit --pretty=oneline --no-merges @{1}..
+    pend = log @{upstream}..
+    rlog = log --pretty=format:\"%h %C(auto, green)%cr%C(auto, reset) %cn %C(auto, green)%s%C(auto, reset)\"
+    root = rev-parse --show-toplevel
+    sa = stash apply
+    sl = stash list
+    sp = stash pop	
+    ss = stash save
+    spull = !git svn fetch && git-svn rebase
+    spush = !git svn dcommit
+    st = status
+    up = pull --rebase
+    wdiff = diff --color-words
+[color]
+    ui = auto
+[diff]
+    renames = copy
+    algorithm = patience
+[merge]
+    tool = meld
+[push]
+    default = simple
+[apply]
+    whitespace = fix
+[help]
+    autocorrect = 1
+[rerere]
+    enabled = 1
+[mergetool "meld"]
+    path = /usr/bin/meld
