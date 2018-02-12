@@ -4,7 +4,7 @@
 
 ## Getting started
 
-You should check out this repository into `~/projects/dotfiles` folder.
+You should check out this repository into `~/project/dotfiles` folder.
 If you want to check out to another location make sure you change all references to that folder in this repository, before starting it.
 
 > Make sure you **know** what you are doing! Check the scripts if it's necessary.
