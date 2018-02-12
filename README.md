@@ -9,7 +9,7 @@ If you want to check out to another location make sure you change all references
 
 > Make sure you **know** what you are doing! Check the scripts if it's necessary.
 
-Run `setup.sh`.
+Run `./setup.sh`.
 
 ## How it works
 
