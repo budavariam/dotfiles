@@ -22,9 +22,8 @@ linkvscode(){
 }
 
 printf "Create Symlinks\n"
-# Create the necessary symbolic links between the `.dotfiles` and `HOME`
-# directory. The `bash_profile` sources other files directly from the
-# `.dotfiles` repository.
+# Create the necessary symbolic links between the `.dotfiles` and the appropriate directory. 
+# The `bash_profile` sources other files directly from the `dotfiles` repository.
 linkhome "shell/.bashrc"             ".bashrc"
 linkhome "shell/.bash_profile"       ".bash_profile"
 linkhome "git/.gitattributes"        ".gitattributes"
