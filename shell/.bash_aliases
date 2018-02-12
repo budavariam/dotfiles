@@ -3,6 +3,7 @@
 # Projects
 alias cs="cd ~/project"
 alias howto="code ~/project/todolog"
+alias dotfiles="code ~/project/dotfiles"
 
 # some more ls aliases
 alias ll='ls -alF'
