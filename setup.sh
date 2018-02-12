@@ -8,25 +8,20 @@ declare -r DOTFILES_UTILS_URL="https://raw.githubusercontent.com/$GITHUB_REPOSIT
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-declare dotfilesDirectory="$HOME/project/dotfiles"
-declare vscode="${HOME}/.config/Code/User/"
-declare skipQuestions=false
+DOTFILES_DIRECTORY="${HOME}/project/dotfiles"
+VSCODE="${HOME}/.config/Code/User"
 
 linkhome() {
-    # Create a copy before overwrite.
-    cp "${HOME}/${2}" "./tmp/${1}"
     # Force create/replace the symlink.
     ln -fs "${DOTFILES_DIRECTORY}/${1}" "${HOME}/${2}"
 }
 
 linkvscode(){
-    # Create a copy before overwrite.
-    cp "${VSCODE}/${2}" "./tmp/${1}"
     # Force create/replace the symlink.
     ln -fs "${DOTFILES_DIRECTORY}/${1}" "${VSCODE}/${2}"
 }
 
-printf "Create Symlinks"
+printf "Create Symlinks\n"
 # Create the necessary symbolic links between the `.dotfiles` and `HOME`
 # directory. The `bash_profile` sources other files directly from the
 # `.dotfiles` repository.
