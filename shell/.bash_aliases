@@ -1,11 +1,8 @@
 #!/bin/bash
 
-#Editors
-alias code="code ./"
-
 # Projects
 alias cs="cd ~/project"
-alias howto="code project/todolog"
+alias howto="code ~/project/todolog"
 
 # some more ls aliases
 alias ll='ls -alF'
@@ -17,7 +14,7 @@ alias l='ls -CF'
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
 # Update/reload bash_profile
-alias reload="source ~/.bash_profile"
+alias bashreload="source ~/.bash_profile"
 
 # Open the last command with authority
 alias please="sudo !!"
