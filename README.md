@@ -19,9 +19,21 @@ This gives you the possibility to revision your config files, and make it easy t
 ## What it contains
 
 These are **my** most common settings that I use day by day in my UNIX based systems.
-It contains aliases for shell, common gitignore patterns, aliases for git and settings for vscode and vim.
 These might change over time.
 Feel free to fork it and customize it with your own needs.
+It contains:
+
+* aliases for shell
+* git info for shell
+* common gitignore patterns
+* aliases and basic settings for git
+* settings for vscode
+* setings for vim
+
+### Shell
+
+Only the `.bash_profile` and `.bashrc` files are linked to the home directory. The others are referenced from `.bash_profile`.
+If you modify those files, make sure you reload `.bash_profile`. You can do it with the `bashreload` alias without logging out.
 
 ## Acknowledgements
 
