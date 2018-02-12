@@ -13,4 +13,8 @@ export GIT_PS1_SHOWUNTRACKEDFILES=1
 export GIT_PS1_SHOWUPSTREAM=1
 # \j  - the  number of jobs currently managed by the shell
 # for more info: http://www.tldp.org/HOWTO/Bash-Prompt-HOWTO/bash-prompt-escape-sequences.html
-PS1='$(__git_ps1 "(%s) ")[\j]'$PS1
+
+if [ -z ${BASHGITPROMPTSET+x} ]; then
+    BASHGITPROMPTSET=1;
+    PS1='$(__git_ps1 "(%s) ")[\j]'$PS1;
+fi
