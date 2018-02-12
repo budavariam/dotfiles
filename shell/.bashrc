@@ -78,5 +78,8 @@ if ! shopt -oq posix; then
   fi
 fi
 
+[ -n "$PS1" ] \
+    && . ~/.bash_profile
+
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.rvm/bin"
