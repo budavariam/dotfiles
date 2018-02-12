@@ -5,6 +5,7 @@
     email = matyas.budavari@gmail.com
 [core]
     editor = vim
+    excludesfile = ~/.gitignore
 [alias]
     ac = !git add . && git commit -am
     ack = -c color.grep.filename='bold green' -c color.grep.match='black yellow' grep --break --heading -n
