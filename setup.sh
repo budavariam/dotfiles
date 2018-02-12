@@ -32,6 +32,6 @@ linkhome "git/.gitignore"            ".gitignore"
 linkhome "git/.gitconfig"            ".gitconfig"
 linkhome "vim/.vimrc"                ".vimrc"
 linkvscode "vscode/keybindings.json" "keybindings.json"
-linkvscode "vscode/settings.json" "settings.json"
+linkvscode "vscode/settings.json"    "settings.json"
 
 
