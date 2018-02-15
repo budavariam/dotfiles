@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Set default editor to vscode
-export EDITOR="code"
+# Set default editor to vim
+export EDITOR="vim"
 
 # Ignore duplicate commands in the history
 export HISTCONTROL=ignoredups
