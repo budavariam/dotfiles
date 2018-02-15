@@ -30,6 +30,7 @@ linkhome "git/.gitattributes"        ".gitattributes"
 linkhome "git/.gitignore"            ".gitignore"
 linkhome "git/.gitconfig"            ".gitconfig"
 linkhome "vim/.vimrc"                ".vimrc"
+linkhome "npm/.npmrc"                ".npmrc"
 linkvscode "vscode/keybindings.json" "keybindings.json"
 linkvscode "vscode/settings.json"    "settings.json"
 

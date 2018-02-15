@@ -29,6 +29,7 @@ It contains:
 * aliases and basic settings for git
 * settings for vscode
 * setings for vim
+* npm init config to set my default data.
 
 ### Shell
 
