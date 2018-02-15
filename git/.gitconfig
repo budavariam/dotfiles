@@ -2,7 +2,7 @@
     sslVerify = false
 [user]
     name = Mátyás Budavári
-    email = matyas.budavari@gmail.com
+    email = budavariam@gmail.com
 [core]
     editor = vim
     excludesfile = ~/.gitignore
