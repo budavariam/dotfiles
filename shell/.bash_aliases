@@ -18,7 +18,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 alias bashreload="source ~/.bash_profile"
 
 # Open the last command with authority
-alias please="sudo !!"
+alias please='sudo $(fc -ln -1)'
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
