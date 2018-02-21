@@ -33,20 +33,20 @@
     ld = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
     # ll - oneline with userinfo and num stats
     ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
-    # locate -
-    locate = '''!sh -c 'git ls-files | grep --color=auto "$1"' -'''
+    # locate - Search in file paths
+    locate = "!git ls-files | grep --color=auto"
     # logf - log with separate commit/author data (different when patches applied)
     logf = log --pretty=fuller
     # lol - oneline abbreviated comments with graph
     lol = log --graph --decorate --pretty=oneline --abbrev-commit
     # lola - all branches oneline abbreviated comments with graph
     lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
-    # new -
+    # new - Show last commit without merges in one line with abbreviated commithash
     new = log --abbrev-commit --pretty=oneline --no-merges @{1}..
     # pend - Show pending commits
     pend = log @{upstream}..
     # rlog -
-    rlog = log --pretty=format:\"%h %C(auto, green)%cr%C(auto, reset) %cn %C(auto, green)%s%C(auto, reset)\"
+    rlog = log --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%cr%C(green) %cn %C(reset)%s%C(reset)\"
     # undelete - undelete a file to the last known state
     undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"' -
     # root - Show the repository root folder
