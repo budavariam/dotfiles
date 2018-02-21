@@ -31,7 +31,7 @@
     root = rev-parse --show-toplevel
     sa = stash apply
     sl = stash list
-    sp = stash pop	
+    sp = stash pop
     ss = stash save
     spull = !git svn fetch && git-svn rebase
     spush = !git svn dcommit
@@ -45,6 +45,7 @@
     algorithm = patience
 [merge]
     tool = meld
+	conflictstyle = diff3
 [push]
     default = simple
 [apply]
