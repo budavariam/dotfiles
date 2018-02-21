@@ -7,36 +7,61 @@
     editor = vim
     excludesfile = ~/.gitignore
 [alias]
-    ac = !git add . && git commit -am
+    # ac - add the current working tree changes to the previous commit
+    ac = !git add . && git commit --am
+    # ack - search for pattern group result by files
     ack = -c color.grep.filename='bold green' -c color.grep.match='black yellow' grep --break --heading -n
+    # amend - amend commit and show the modified chunks
     amend = commit --amend -v
+    # ci - commit with showing the chunks
     ci = commit -v
+    # cloneurl - get the remote url of the repository
     cloneurl = config --get remote.origin.url
+    # co - shortcut to checkout
     co = checkout
+    # ctags -
     ctags = !.git/hooks/ctags
+    # df - Changes between the index and your last commit; what you would be committing if you run "git commit" without "-a" option.
     df = diff --cached
+    # fa - Fetch all remotes
     fa = fetch --all
+    # filelog - Show git log with chunk info
     filelog = log -u
-    la = "!git config -l | grep alias | cut -c 7-"
+    # la - list aliases
+    la = "!git config -l | grep alias | cut -c 7- | less"
+    # ld - oneline history with date and username
     ld = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
-    lg = log -p
+    # ll - oneline with userinfo and num stats
     ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
+    # locate -
     locate = '''!sh -c 'git ls-files | grep --color=auto "$1"' -'''
+    # logf - log with separate commit/author data (different when patches applied)
     logf = log --pretty=fuller
+    # lol - oneline abbreviated comments with graph
     lol = log --graph --decorate --pretty=oneline --abbrev-commit
+    # lola - all branches oneline abbreviated comments with graph
     lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+    # new -
     new = log --abbrev-commit --pretty=oneline --no-merges @{1}..
+    # pend - Show pending commits
     pend = log @{upstream}..
+    # rlog -
     rlog = log --pretty=format:\"%h %C(auto, green)%cr%C(auto, reset) %cn %C(auto, green)%s%C(auto, reset)\"
+    # root - Show the repository root folder
     root = rev-parse --show-toplevel
     sa = stash apply
     sl = stash list
     sp = stash pop
     ss = stash save
+    # spull - git pull in an svn repository
     spull = !git svn fetch && git-svn rebase
+    # spull - git push in an svn repository
     spush = !git svn dcommit
+    # st - abreviation for status
     st = status
+    # up - git fetch && git rebase (instead of fetch&merge)
     up = pull --rebase
+    # wdiff - show the differences colored in line
     wdiff = diff --color-words
 [color]
     ui = auto
