@@ -17,8 +17,6 @@
     ci = commit -v
     # cloneurl - get the remote url of the repository
     cloneurl = config --get remote.origin.url
-    # co - shortcut to checkout
-    co = checkout
     # ctags -
     ctags = !.git/hooks/ctags
     # df - Changes between the index and your last commit; what you would be committing if you run "git commit" without "-a" option.
@@ -49,20 +47,21 @@
     rlog = log --pretty=format:\"%h %C(auto, green)%cr%C(auto, reset) %cn %C(auto, green)%s%C(auto, reset)\"
     # root - Show the repository root folder
     root = rev-parse --show-toplevel
-    sa = stash apply
-    sl = stash list
-    sp = stash pop
-    ss = stash save
     # spull - git pull in an svn repository
     spull = !git svn fetch && git-svn rebase
     # spull - git push in an svn repository
     spush = !git svn dcommit
-    # st - abreviation for status
-    st = status
     # up - git fetch && git rebase (instead of fetch&merge)
     up = pull --rebase
     # wdiff - show the differences colored in line
     wdiff = diff --color-words
+    # Simple abbreviations
+    st = status
+    co = checkout
+    sa = stash apply
+    sl = stash list
+    sp = stash pop
+    ss = stash save
 [color]
     ui = auto
 [diff]
