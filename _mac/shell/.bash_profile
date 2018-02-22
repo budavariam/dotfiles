@@ -17,3 +17,5 @@ export GIT_PS1_SHOWUPSTREAM=1
 PS1='$(__git_ps1 "(%s) ")[\j]'$PS1
 
 . $HOME/.bash_aliases
+
+export PATH="$PATH:$HOME/.global-modules/bin"
