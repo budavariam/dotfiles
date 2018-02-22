@@ -47,6 +47,8 @@
     pend = log @{upstream}..
     # rlog -
     rlog = log --pretty=format:\"%h %C(auto, green)%cr%C(auto, reset) %cn %C(auto, green)%s%C(auto, reset)\"
+    # undelete - undelete a file to the last known state
+    undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"' -
     # root - Show the repository root folder
     root = rev-parse --show-toplevel
     # spull - git pull in an svn repository
