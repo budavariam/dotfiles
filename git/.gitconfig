@@ -23,6 +23,8 @@
     df = diff --cached
     # fa - Fetch all remotes
     fa = fetch --all
+    # find - REgex Search in commit names, report who, when, what modifications
+    find = log --all --pretty=format:\"%C(yellow)%h%C(reset) %C(green)%an%C(reset) %s %C(blue)(%ar)%C(reset)\n%b\" --name-status --grep
     # filelog - Show git log with chunk info
     filelog = log -u
     # la - list aliases
@@ -80,3 +82,9 @@
     enabled = 1
 [mergetool "meld"]
     path = /usr/bin/meld
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path =
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
