@@ -1,0 +1,32 @@
+// Place your key bindings in this file to overwrite the defaults
+[
+    {
+        "key": "cmd+k cmd+k",
+        "command": "workbench.action.terminal.toggleTerminal"
+    },
+    {
+        "key": "alt+[Comma]",
+        "command": "-gitlens.diffWithPrevious",
+        "when": "editorTextFocus && gitlens:activeIsTracked && gitlens:keymap == 'standard'"
+    },
+    {
+        "key": "shift+backspace",
+        "command": "deleteRight",
+        "when": "editorTextFocus && !editorReadonly"
+    },
+    {
+        "key": "delete",
+        "command": "-deleteRight",
+        "when": "editorTextFocus && !editorReadonly"
+    },
+    {
+        "key": "alt+[Period]",
+        "command": "-gitlens.diffWithNext",
+        "when": "editorTextFocus && gitlens:activeIsTracked && gitlens:keymap == 'standard'"
+    },
+    {
+        "key": "alt+[Period]",
+        "command": "-gitlens.key..",
+        "when": "gitlens:key:."
+    }
+]
