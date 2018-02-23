@@ -55,6 +55,10 @@
     spull = !git svn fetch && git-svn rebase
     # spull - git push in an svn repository
     spush = !git svn dcommit
+    # ssu - stash untracked and unstaged files
+    ssu = stash -k -u-
+    # ssp - stash only selected chunks
+    ssp = stash --patch
     # up - git fetch && git rebase (instead of fetch&merge)
     up = pull --rebase
     # wdiff - show the differences colored in line
