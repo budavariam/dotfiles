@@ -27,8 +27,8 @@
     find = log --all --pretty=format:\"%C(yellow)%h%C(reset) %C(green)%an%C(reset) %s %C(blue)(%ar)%C(reset)\n%b\" --name-status --grep
     # filelog - Show git log with chunk info
     filelog = log -u
-    # la - list aliases
-    la = "!git config -l | grep alias | cut -c 7- | less"
+    # la - list aliases alphabetically
+    la = "!git config -l | grep alias | cut -c 7- | sort | less"
     # ld - oneline history with date and username
     ld = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
     # ll - oneline with userinfo and num stats
@@ -47,6 +47,8 @@
     pend = log @{upstream}..
     # rlog -
     rlog = log --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%cr%C(green) %cn %C(reset)%s%C(reset)\"
+    # allfiles - list all files that has ever been added to the repository, sorted by path
+    allfiles = !git log --pretty=format: --name-only --diff-filter=A | sort -u
     # undelete - undelete a file to the last known state
     undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"' -
     # root - Show the repository root folder
@@ -59,11 +61,16 @@
     ssu = stash -k -u-
     # ssp - stash only selected chunks
     ssp = stash --patch
+    # stashpatch - Create a patch from the last patch
+    stashpatch = !sh -c 'git stash show -p stash@{$1} > Stash$1.patch' -
     # up - git fetch && git rebase (instead of fetch&merge)
     up = pull --rebase
     # wdiff - show the differences colored in line
     wdiff = diff --color-words
     # Simple abbreviations
+    br = branch
+    mr = merge
+    mt = mergetool
     st = status
     co = checkout
     sa = stash apply
@@ -76,7 +83,7 @@
     renames = copy
     algorithm = patience
 [merge]
-    tool = meld
+    tool = kdiff3
     conflictstyle = diff3
 [push]
     default = simple
@@ -88,3 +95,5 @@
     enabled = 1
 [mergetool "meld"]
     path = /usr/bin/meld
+[mergetool "kdiff3"]
+    path = /usr/local/bin/kdiff3
