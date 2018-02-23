@@ -73,7 +73,7 @@
     algorithm = patience
 [merge]
     tool = meld
-	conflictstyle = diff3
+    conflictstyle = diff3
 [push]
     default = simple
 [apply]
@@ -84,9 +84,3 @@
     enabled = 1
 [mergetool "meld"]
     path = /usr/bin/meld
-[difftool "sourcetree"]
-	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path =
-[mergetool "sourcetree"]
-	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
-	trustExitCode = true
