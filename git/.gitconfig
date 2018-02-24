@@ -51,6 +51,8 @@
     allfiles = !git log --pretty=format: --name-only --diff-filter=A | sort -u
     # undelete - undelete a file to the last known state
     undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"' -
+    # undo last commit in the local history.
+    undo = reset HEAD~
     # root - Show the repository root folder
     root = rev-parse --show-toplevel
     # spull - git pull in an svn repository
@@ -61,8 +63,8 @@
     ssu = stash -k -u-
     # ssp - stash only selected chunks
     ssp = stash --patch
-    # stashpatch - Create a patch from the last patch
-    stashpatch = !sh -c 'git stash show -p stash@{$1} > Stash$1.patch' -
+    # stpc - Create a patch from the last stash (https://stackoverflow.com/a/22819771/9174012)
+    stpc = !git stash show -p > laststash.patch && git diff 4b825dc642cb6eb9a060e54bf8d69288fbee4904 stash^3 >> laststash.patch
     # up - git fetch && git rebase (instead of fetch&merge)
     up = pull --rebase
     # wdiff - show the differences colored in line
@@ -93,7 +95,5 @@
     autocorrect = 1
 [rerere]
     enabled = 1
-[mergetool "meld"]
-    path = /usr/bin/meld
-[mergetool "kdiff3"]
-    path = /usr/local/bin/kdiff3
+[credential]
+	helper = cache --timeout=3600
