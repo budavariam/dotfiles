@@ -60,11 +60,11 @@
     # spull - git push in an svn repository
     spush = !git svn dcommit
     # ssu - stash untracked and unstaged files
-    ssu = stash -k -u-
+    ssu = stash -k -u
     # ssp - stash only selected chunks
     ssp = stash --patch
     # stpc - Create a patch from the last stash (https://stackoverflow.com/a/22819771/9174012)
-    stpc = !git stash show -p > laststash.patch && git diff 4b825dc642cb6eb9a060e54bf8d69288fbee4904 stash^3 >> laststash.patch
+    stpc = !git stash show -p > laststash.patch && git diff `git hash-object -t tree /dev/null` stash^3 >> laststash.patch
     # up - git fetch && git rebase (instead of fetch&merge)
     up = pull --rebase
     # wdiff - show the differences colored in line
