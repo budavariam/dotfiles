@@ -19,5 +19,6 @@
     "jshint.enable": false,
     "jslint.enable": false,
     "trailing-spaces.trimOnSave": false,
-    "workbench.iconTheme": "vscode-icons"
+    "workbench.iconTheme": "vscode-icons",
+    "diffEditor.ignoreTrimWhitespace": false
 }

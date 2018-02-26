@@ -19,3 +19,5 @@ PS1='$(__git_ps1 "(%s) ")[\j]'$PS1
 . $HOME/.bash_aliases
 
 export PATH="$PATH:$HOME/.global-modules/bin"
+
+export CLICOLOR=1
