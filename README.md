@@ -3,7 +3,7 @@
 > Because life's too short to manually setup my machine
 
 This repository came alive to help me **revision** and **sync** my config files, and make it easy to **setup any new workstation** with similar settings as the others.
-These are **my** most common settings that I use day by day in my UNIX based systems. These might change over time.
+These are **my** most common settings that I use day by day in my systems. These might change over time.
 
 Feel free to fork it and customize it with your own needs.
 
