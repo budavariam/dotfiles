@@ -63,8 +63,10 @@
     ssu = stash -k -u
     # ssp - stash only selected chunks
     ssp = stash --patch
-    # stpc - Create a patch from the last stash (https://stackoverflow.com/a/22819771/9174012)
-    stpc = !git stash show -p > laststash.patch && git diff `git hash-object -t tree /dev/null` stash^3 >> laststash.patch
+    # pcst - Create a patch from the last stash (https://stackoverflow.com/a/22819771/9174012)
+    pcst = !git stash show -p > laststash.patch && git diff `git hash-object -t tree /dev/null` stash^3 >> laststash.patch
+    # pclc - Create a patch from the last commit
+    pclc = !git format-patch -n HEAD^ --stdout > ./lastcommit.patch
     # up - git fetch && git rebase (instead of fetch&merge)
     up = pull --rebase
     # wdiff - show the differences colored in line
