@@ -24,10 +24,6 @@
     undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"' -
 	# delmerged - Remove branches that have already been merged with master a.k.a. ‘delete merged’
 	delmerged = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
-    # new - Show last commit without merges in one line with abbreviated commithash
-    new = log --abbrev-commit --pretty=oneline --no-merges @{1}..
-    # pend - Show pending commits
-    pend = log @{upstream}..
     # retag - Remove the old tag with this name and tag the latest commit with it.
 	retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
     # ctags -
@@ -47,6 +43,10 @@
     amend = commit --amend -v
     # ci - commit with showing the chunks
     ci = commit -v
+    # new - Show last commit without merges in one line with abbreviated commithash
+    new = log --abbrev-commit --pretty=oneline --no-merges @{1}..
+    # pend - Show pending commits
+    pend = log @{upstream}..
 
     # Diffs
 
