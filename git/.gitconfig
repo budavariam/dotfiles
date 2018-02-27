@@ -7,25 +7,25 @@
     editor = vim
     excludesfile = ~/.gitignore
     # Speed up commands involving untracked files such as `git status`.
-	# https://git-scm.com/docs/git-update-index#_untracked_cache
-	untrackedCache = true
+    # https://git-scm.com/docs/git-update-index#_untracked_cache
+    untrackedCache = true
 [alias]
     # la - list aliases alphabetically
     la = "!git config -l | grep alias | cut -c 7- | sort | less"
     # root - Show the repository root folder
     root = rev-parse --show-toplevel
     # contributors - List contributors with number of commits
-	contributors = shortlog --summary --numbered
+    contributors = shortlog --summary --numbered
     # cloneurl - get the remote url of the repository
     cloneurl = config --get remote.origin.url
     # allfiles - list all files that has ever been added to the repository, sorted by path
     allfiles = !git log --pretty=format: --name-only --diff-filter=A | sort -u
     # undelete - undelete a file to the last known state, you must use the full path, useful with grepped allfiles
     undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"' -
-	# delmerged - Remove branches that have already been merged with master a.k.a. ‘delete merged’
-	delmerged = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
+    # delmerged - Remove branches that have already been merged with master a.k.a. ‘delete merged’
+    delmerged = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
     # retag - Remove the old tag with this name and tag the latest commit with it.
-	retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
+    retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
     # ctags -
     ctags = !.git/hooks/ctags
     # up - fetch & rebase instead of fetch & merge
@@ -51,7 +51,7 @@
     # Diffs
 
     # d - Show the diff between the latest commit and the current state
-	d = !"git diff-index --quiet HEAD -- || clear; git --no-pager diff --patch-with-stat"
+    d = !"git diff-index --quiet HEAD -- || clear; git --no-pager diff --patch-with-stat"
     # df - Changes between the index and your last commit; what you would be committing if you run "git commit" without "-a" option.
     df = diff --cached
     # wdiff - show the differences colored in line
@@ -62,13 +62,13 @@
     # ack - Find file content grouped by files
     ack = -c color.grep.filename='bold green' -c color.grep.match='black yellow' grep --break --heading -n
     # fb - Find branches containing commit
-	fb = "!f() { git branch -a --contains $1; }; f"
-	# ft - Find tags containing commit
-	ft = "!f() { git describe --always --contains $1; }; f"
-	# fc - Find commits by source code
-	fc = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(red)%d' --decorate --date=short -S$1; }; f"
-	# fm - Find commits by commit message
-	fm = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(red)%d' --decorate --date=short --grep=$1; }; f"
+    fb = "!f() { git branch -a --contains $1; }; f"
+    # ft - Find tags containing commit
+    ft = "!f() { git describe --always --contains $1; }; f"
+    # fc - Find commits by source code
+    fc = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(red)%d' --decorate --date=short -S$1; }; f"
+    # fm - Find commits by commit message
+    fm = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(red)%d' --decorate --date=short --grep=$1; }; f"
     # find - Find text in commit names. shorthash, name, shortmessage, relativedate
     find = log --all --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%ar%C(reset) %s %C(green)(%an)%C(reset)\n%b\" --name-status --grep
     # locate - Find file name
@@ -135,7 +135,7 @@
 [push]
     default = simple
 [stash]
-	showPatch = true
+    showPatch = true
 [apply]
     whitespace = fix
 [help]
@@ -143,4 +143,4 @@
 [rerere]
     enabled = 1
 [credential]
-	helper = cache --timeout=3600
+    helper = cache --timeout=3600
