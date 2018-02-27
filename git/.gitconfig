@@ -6,81 +6,124 @@
 [core]
     editor = vim
     excludesfile = ~/.gitignore
+    # Speed up commands involving untracked files such as `git status`.
+	# https://git-scm.com/docs/git-update-index#_untracked_cache
+	untrackedCache = true
 [alias]
-    # ac - add the current working tree changes to the previous commit
-    ac = !git add . && git commit --am
-    # ack - search for pattern group result by files
-    ack = -c color.grep.filename='bold green' -c color.grep.match='black yellow' grep --break --heading -n
-    # amend - amend commit and show the modified chunks
-    amend = commit --amend -v
-    # ci - commit with showing the chunks
-    ci = commit -v
-    # cloneurl - get the remote url of the repository
-    cloneurl = config --get remote.origin.url
-    # ctags -
-    ctags = !.git/hooks/ctags
-    # df - Changes between the index and your last commit; what you would be committing if you run "git commit" without "-a" option.
-    df = diff --cached
-    # fa - Fetch all remotes
-    fa = fetch --all
-    # find - REgex Search in commit names, report who, when, what modifications
-    find = log --all --pretty=format:\"%C(yellow)%h%C(reset) %C(green)%an%C(reset) %s %C(blue)(%ar)%C(reset)\n%b\" --name-status --grep
-    # filelog - Show git log with chunk info
-    filelog = log -u
     # la - list aliases alphabetically
     la = "!git config -l | grep alias | cut -c 7- | sort | less"
-    # ld - oneline history with date and username
-    ld = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=relative
-    # ll - oneline with userinfo and num stats
-    ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
-    # locate - Search in file paths
-    locate = "!git ls-files | grep --color=auto"
-    # logf - log with separate commit/author data (different when patches applied)
-    logf = log --pretty=fuller
-    # lol - oneline abbreviated comments with graph
-    lol = log --graph --decorate --pretty=oneline --abbrev-commit
-    # lola - all branches oneline abbreviated comments with graph
-    lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+    # root - Show the repository root folder
+    root = rev-parse --show-toplevel
+    # contributors - List contributors with number of commits
+	contributors = shortlog --summary --numbered
+    # cloneurl - get the remote url of the repository
+    cloneurl = config --get remote.origin.url
+    # allfiles - list all files that has ever been added to the repository, sorted by path
+    allfiles = !git log --pretty=format: --name-only --diff-filter=A | sort -u
+    # undelete - undelete a file to the last known state, you must use the full path, useful with grepped allfiles
+    undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"' -
+	# delmerged - Remove branches that have already been merged with master a.k.a. ‘delete merged’
+	delmerged = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
     # new - Show last commit without merges in one line with abbreviated commithash
     new = log --abbrev-commit --pretty=oneline --no-merges @{1}..
     # pend - Show pending commits
     pend = log @{upstream}..
-    # rlog -
-    rlog = log --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%cr%C(green) %cn %C(reset)%s%C(reset)\"
-    # allfiles - list all files that has ever been added to the repository, sorted by path
-    allfiles = !git log --pretty=format: --name-only --diff-filter=A | sort -u
-    # undelete - undelete a file to the last known state
-    undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"' -
-    # undo last commit in the local history.
-    undo = reset HEAD~
-    # root - Show the repository root folder
-    root = rev-parse --show-toplevel
-    # spull - git pull in an svn repository
-    spull = !git svn fetch && git-svn rebase
-    # spull - git push in an svn repository
-    spush = !git svn dcommit
-    # ssu - stash untracked and unstaged files
-    ssu = stash -k -u
-    # ssp - stash only selected chunks
-    ssp = stash --patch
-    # pcst - Create a patch from the last stash (https://stackoverflow.com/a/22819771/9174012)
-    pcst = !git stash show -p > laststash.patch && git diff `git hash-object -t tree /dev/null` stash^3 >> laststash.patch
-    # pclc - Create a patch from the last commit
-    pclc = !git format-patch -n HEAD^ --stdout > ./lastcommit.patch
-    # up - git fetch && git rebase (instead of fetch&merge)
+    # retag - Remove the old tag with this name and tag the latest commit with it.
+	retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
+    # ctags -
+    ctags = !.git/hooks/ctags
+    # up - fetch & rebase instead of fetch & merge
     up = pull --rebase
+    # undo - undo last commit in the local history.
+    undo = reset HEAD~
+    # hreset - Hard reset, clear working directory.
+    hreset = reset --hard
+
+    # Commit
+
+    # ac - add the current working tree changes to the previous commit
+    ac = !git add . && git commit --am
+    # amend - amend commit and show the modified chunks
+    amend = commit --amend -v
+    # ci - commit with showing the chunks
+    ci = commit -v
+
+    # Diffs
+
+    # d - Show the diff between the latest commit and the current state
+	d = !"git diff-index --quiet HEAD -- || clear; git --no-pager diff --patch-with-stat"
+    # df - Changes between the index and your last commit; what you would be committing if you run "git commit" without "-a" option.
+    df = diff --cached
     # wdiff - show the differences colored in line
     wdiff = diff --color-words
+
+    # Find
+
+    # ack - Find file content grouped by files
+    ack = -c color.grep.filename='bold green' -c color.grep.match='black yellow' grep --break --heading -n
+    # fb - Find branches containing commit
+	fb = "!f() { git branch -a --contains $1; }; f"
+	# ft - Find tags containing commit
+	ft = "!f() { git describe --always --contains $1; }; f"
+	# fc - Find commits by source code
+	fc = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(red)%d' --decorate --date=short -S$1; }; f"
+	# fm - Find commits by commit message
+	fm = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(red)%d' --decorate --date=short --grep=$1; }; f"
+    # find - Find text in commit names. shorthash, name, shortmessage, relativedate
+    find = log --all --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%ar%C(reset) %s %C(green)(%an)%C(reset)\n%b\" --name-status --grep
+    # locate - Find file name
+    locate = "!git ls-files | grep --color=auto"
+
+    # Full histories
+
+    # lol - oneline graph, (decorate) abbr commit shortmessage
+    lol = log --graph --decorate --pretty=oneline --abbrev-commit
+    # lola - all branches oneline graph, (decorate) abbr commit shortmessage
+    lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+    # rlog - oneline shorthash, relativedate, (decoration), shortmessage, name
+    rlog = log --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%cr%C(reset) %C(red)%d%C(reset) %s %C(green)(%cn)%C(reset)\"
+    # ll - oneline shorthash (decorate) message, username, file num stats
+    ll = log --pretty=format:"%C(yellow)%h%C(red)%d\\ %C(reset)%s\\ %C(green)[%cn]%C(reset)" --decorate --numstat
+    # filelog - Show git log with chunk info
+    filelog = log -u
+    # logf - log with separate commit/author data (different when patches applied)
+    logf = log --pretty=fuller
+
     # Simple abbreviations
+
     br = branch
+    cp = cherry-pick
     mr = merge
     mt = mergetool
     st = status
     co = checkout
+    # fa - Fetch all remotes
+    fa = fetch --all
+
+    # Stash related
+
     sa = stash apply
     sl = stash list
     sp = stash pop
     ss = stash save
+    # ssu - stash untracked and unstaged files
+    ssu = stash -k -u
+    # ssp - stash only selected chunks
+    ssp = stash --patch
+
+    # Patches
+
+    # pcst - Create a patch from the top of the stash (https://stackoverflow.com/a/22819771/9174012)
+    pcst = !git stash show -p > laststash.patch && git diff `git hash-object -t tree /dev/null` stash^3 >> laststash.patch
+    # pclc - Create a patch from the last commit
+    pclc = !git format-patch -n HEAD^ --stdout > ./lastcommit.patch
+
+    # SVN
+
+    # spull - git pull in an svn repository
+    spull = !git svn fetch && git-svn rebase
+    # spull - git push in an svn repository
+    spush = !git svn dcommit
 [color]
     ui = auto
 [diff]
@@ -91,6 +134,8 @@
     conflictstyle = diff3
 [push]
     default = simple
+[stash]
+	showPatch = true
 [apply]
     whitespace = fix
 [help]
