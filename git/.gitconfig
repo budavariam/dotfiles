@@ -103,6 +103,7 @@
     # Stash related
 
     sa = stash apply
+    sd = stash drop
     sl = stash list
     sp = stash pop
     ss = stash save
@@ -124,6 +125,11 @@
     spull = !git svn fetch && git-svn rebase
     # spull - git push in an svn repository
     spush = !git svn dcommit
+
+    # Typos
+
+    # git - Run the command even if you have multiple git prefix in it.
+    git = !exec git
 [color]
     ui = auto
 [diff]
