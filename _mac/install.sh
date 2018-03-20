@@ -20,3 +20,5 @@ brew cask install google-chrome
 brew cask install meld
 # ack-grep
 brew install ack
+# tree
+brew install tree
