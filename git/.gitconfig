@@ -106,7 +106,7 @@
     sd = stash drop
     sl = stash list
     sp = stash pop
-    ss = stash save
+    ss = stash push
     # ssu - stash untracked and unstaged files
     ssu = stash -k -u
     # ssp - stash only selected chunks
@@ -140,6 +140,9 @@
 [merge]
     tool = kdiff3
     conflictstyle = diff3
+    log = true
+    stat = true
+    verbosity = 2
 [push]
     default = simple
 [stash]
@@ -152,3 +155,9 @@
     enabled = 1
 [credential]
     helper = cache --timeout=3600
+[difftool "sourcetree"]
+	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
+	path =
+[mergetool "sourcetree"]
+	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
+	trustExitCode = true
