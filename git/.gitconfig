@@ -92,6 +92,7 @@
     # Simple abbreviations
 
     br = branch
+    ba = branch --all
     cp = cherry-pick
     mr = merge
     mt = mergetool
