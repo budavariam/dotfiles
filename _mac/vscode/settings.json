@@ -8,6 +8,7 @@
         "suppressLineUncommittedWarning": false,
         "suppressNoRepositoryWarning": false,
         "suppressResultsExplorerNotice": true,
+        "suppressShowKeyBindingsNotice": true,
         "suppressUpdateNotice": false,
         "suppressWelcomeNotice": true
     },
@@ -16,11 +17,10 @@
     "editor.minimap.enabled": false,
     "git.enableSmartCommit": true,
     "explorer.confirmDragAndDrop": false,
-    "jshint.enable": true,
-    "trailing-spaces.trimOnSave": false,
     "workbench.iconTheme": "vscode-icons",
-    "diffEditor.ignoreTrimWhitespace": false,
-    "gitlens.keymap": "alternate",
+    "diffEditor.ignoreTrimWhitespace": true,
+    "gitlens.keymap": "chorded",
+    "vsicons.projectDetection.autoReload": true,
     // "python.linting.pylintPath": "/usr/local/bin/python3",
     "python.pythonPath": "/usr/local/bin/python3"
 }
