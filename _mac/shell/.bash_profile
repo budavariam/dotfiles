@@ -23,3 +23,8 @@ PS1='$(__git_ps1 "(%s) ")[\j]'$PS1
 export PATH="$PATH:$HOME/.global-modules/bin"
 
 export CLICOLOR=1
+
+# Git bash completion
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+  . $(brew --prefix)/etc/bash_completion
+fi
