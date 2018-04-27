@@ -8,7 +8,7 @@ declare -r DOTFILES_UTILS_URL="https://raw.githubusercontent.com/$GITHUB_REPOSIT
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-DOTFILES_DIRECTORY="${HOME}/project/dotfiles"
+DOTFILES_DIRECTORY="`pwd`"
 VSCODE="${HOME}/Library/Application Support/Code/User"
 
 linkhome() {
@@ -28,11 +28,12 @@ linkhome "_mac/shell/.git-prompt.sh"      ".git-prompt.sh"
 linkhome "_mac/shell/.bash_aliases"       ".bash_aliases"
 linkhome "_mac/shell/.bash_profile"       ".bash_profile"
 linkhome "_mac/shell/.bashrc"             ".bashrc"
+linkhome "_mac/git/.gitconfig.local"      ".gitconfig.local"
 linkhome "git/.gitattributes"             ".gitattributes"
 linkhome "git/.gitignore"                 ".gitignore"
 linkhome "git/.gitconfig"                 ".gitconfig"
 linkhome "vim/.vimrc"                     ".vimrc"
-mkdir ~/.global-modules
+mkdir -p ~/.global-modules
 linkhome "npm/.npmrc"                     ".npmrc"
 linkvscode "_mac/vscode/keybindings.json" "keybindings.json"
 linkvscode "_mac/vscode/settings.json"    "settings.json"

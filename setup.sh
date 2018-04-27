@@ -8,7 +8,7 @@ declare -r DOTFILES_UTILS_URL="https://raw.githubusercontent.com/$GITHUB_REPOSIT
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-DOTFILES_DIRECTORY="${HOME}/project/dotfiles"
+DOTFILES_DIRECTORY="`pwd`"
 VSCODE="${HOME}/.config/Code/User"
 
 linkhome() {
@@ -22,7 +22,7 @@ linkvscode(){
 }
 
 printf "Create Symlinks\n"
-# Create the necessary symbolic links between the `.dotfiles` and the appropriate directory. 
+# Create the necessary symbolic links between the `.dotfiles` and the appropriate directory.
 # The `bash_profile` sources other files directly from the `dotfiles` repository.
 linkhome "shell/.bashrc"             ".bashrc"
 linkhome "shell/.bash_profile"       ".bash_profile"
@@ -30,7 +30,7 @@ linkhome "git/.gitattributes"        ".gitattributes"
 linkhome "git/.gitignore"            ".gitignore"
 linkhome "git/.gitconfig"            ".gitconfig"
 linkhome "vim/.vimrc"                ".vimrc"
-mkdir ~/.global-modules
+mkdir -p ~/.global-modules
 linkhome "npm/.npmrc"                ".npmrc"
 linkvscode "vscode/keybindings.json" "keybindings.json"
 linkvscode "vscode/settings.json"    "settings.json"
