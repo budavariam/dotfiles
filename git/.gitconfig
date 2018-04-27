@@ -1,3 +1,5 @@
+[include]
+    path = .gitconfig.local
 [http]
     sslVerify = false
 [user]
@@ -77,7 +79,7 @@
     # Full histories
 
     # lol - oneline graph, (decorate) abbr commit shortmessage
-    lol = log --graph --decorate --pretty=oneline --abbrev-commit
+	lol = log --graph --decorate --pretty=oneline --abbrev-commit
     # lola - all branches oneline graph, (decorate) abbr commit shortmessage
     lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
     # rlog - oneline shorthash, relativedate, (decoration), shortmessage, name
