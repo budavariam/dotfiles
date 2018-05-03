@@ -106,10 +106,12 @@
     # Stash related
 
     sa = stash apply
+    sb = stash branch
     sd = stash drop
     sl = stash list
     sp = stash pop
     ss = stash push
+    ssh = stash show
     # ssu - stash untracked and unstaged files
     ssu = stash -k -u
     # ssp - stash only selected chunks
