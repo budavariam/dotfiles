@@ -22,5 +22,6 @@
     "gitlens.keymap": "chorded",
     "vsicons.projectDetection.autoReload": true,
     // "python.linting.pylintPath": "/usr/local/bin/python3",
+    "npm.enableScriptExplorer": true,
     "python.pythonPath": "/usr/local/bin/python3"
 }
