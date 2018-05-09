@@ -100,6 +100,7 @@
     mt = mergetool
     st = status
     co = checkout
+    cr = clone --recursive
     # fa - Fetch all remotes
     fa = fetch --all
 
@@ -126,12 +127,15 @@
     # pcwt - Create a patch from the current working tree, with untracked files
     pcwt = !git add . && git diff HEAD > working_tree.patch | git reset
 
+    # spull - auto-update submodules on pull
+    spull = "__git_spull() { git pull \"$@\" && git submodule sync --recursive && git submodule update --init --recursive; }; __git_spull"
+
     # SVN
 
-    # spull - git pull in an svn repository
-    spull = !git svn fetch && git-svn rebase
-    # spull - git push in an svn repository
-    spush = !git svn dcommit
+    # svpull - git pull in an svn repository
+	svpull = !git svn fetch && git-svn rebase
+    # svpull - git push in an svn repository
+    svpush = !git svn dcommit
 
     # Typos
 
@@ -142,6 +146,7 @@
 [diff]
     renames = copy
     algorithm = patience
+    submodule = log
 [merge]
     tool = kdiff3
     conflictstyle = diff3
@@ -166,3 +171,5 @@
 [mergetool "sourcetree"]
 	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
+[status]
+	submoduleSummary = true
