@@ -127,6 +127,15 @@
     # pcwt - Create a patch from the current working tree, with untracked files
     pcwt = !git add . && git diff HEAD > working_tree.patch | git reset
 
+    # Subtrees
+
+    # sba - "subtree add": 'git sba <destination folder> <repository uri>'
+    sba = "!f() { git subtree add --prefix $1 $2 master --squash; }; f"
+    # sbu - "subtree update" 'git sbu <destination folder> <repository uri>'
+    sbu = "!f() { git subtree pull --prefix $1 $2 master --squash; }; f"
+
+    # Submodules
+
     # spull - auto-update submodules on pull
     spull = "__git_spull() { git pull \"$@\" && git submodule sync --recursive && git submodule update --init --recursive; }; __git_spull"
 
