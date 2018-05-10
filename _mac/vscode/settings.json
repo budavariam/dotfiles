@@ -23,5 +23,7 @@
     "vsicons.projectDetection.autoReload": true,
     // "python.linting.pylintPath": "/usr/local/bin/python3",
     "npm.enableScriptExplorer": true,
+    "markdown.extension.toc.levels": "2..4", 
+    "markdown.extension.toc.unorderedList.marker": "*", 
     "python.pythonPath": "/usr/local/bin/python3"
 }
