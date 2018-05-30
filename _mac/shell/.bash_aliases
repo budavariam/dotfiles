@@ -13,6 +13,26 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='alias-alert'
+
+function alias-alert() {
+    LAST_COMMAND=`history | tail -n1 | sed $'s/^[[:space:]]*[0-9]*[[:space:]]*//;s/[;&|][[:space:]]*alert$//'`;
+    osascript -e "display notification \"${LAST_COMMAND//\"/\\\"}\" with title \"Finished task\"";
+}
+
+# Add a custom notification after a long running command.  Use like so:
+#   sleep 10; notify 'title' 'woken up'
+alias notify='alias-custom-notification'
+
+function alias-custom-notification() {
+    # Param 1: Title
+    # Param 2: Description
+    # For a basic safety measure it escapes quotemarks in the bash variables.
+    osascript -e "display notification \"${2//\"/\\\"}\" with title \"${1//\"/\\\"}\"";
+}
+
 # Update/reload bash_profile
 alias bashreload="source ~/.bash_profile"
 
