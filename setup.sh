@@ -26,5 +26,5 @@ mkdir -p ~/.global-modules
 linkhome "npm/.npmrc"                ".npmrc"
 linkvscode "vscode/keybindings.json" "keybindings.json"
 linkvscode "vscode/settings.json"    "settings.json"
-
+linkvscode "vscode/snippets/"        "snippets"
 

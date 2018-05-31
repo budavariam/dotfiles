@@ -1,0 +1,13 @@
+{
+	"Create a map item": {
+		"prefix": "map",
+		"body": [
+			"$1: (",
+        	"    background-image: '/$1.png',",
+			"    width: $2px,",
+			"    height: $3px,",
+			"),"
+		],
+		"description": "Create a map item"
+	}
+}

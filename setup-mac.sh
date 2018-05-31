@@ -29,3 +29,4 @@ mkdir -p ~/.global-modules
 linkhome "npm/.npmrc"                     ".npmrc"
 linkvscode "_mac/vscode/keybindings.json" "keybindings.json"
 linkvscode "_mac/vscode/settings.json"    "settings.json"
+linkvscode "vscode/snippets/"             "snippets"

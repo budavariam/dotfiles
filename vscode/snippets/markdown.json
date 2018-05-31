@@ -1,0 +1,37 @@
+{
+    "New todo": {
+		"prefix": "new",
+		"body": [
+			"* [ - ] $1"
+		],
+		"description": "A new line for todo"
+	},
+    "Done todo": {
+		"prefix": "done",
+		"body": [
+			"* [ + ] $1"
+		],
+		"description": "A new line for an already ready task"
+	},
+    "Url": {
+		"prefix": "url",
+		"body": [
+			"[$1]($CLIPBOARD)"
+		],
+		"description": "Add a basic link"
+	},
+    "Read urll": {
+		"prefix": "read",
+		"body": [
+			"* [ - ] [$1]($CLIPBOARD)"
+		],
+		"description": "Add a todo for a link"
+	},
+    "source": {
+		"prefix": "source",
+		"body": [
+			"[source]($CLIPBOARD)"
+		],
+		"description": "Add source"
+	}
+}
