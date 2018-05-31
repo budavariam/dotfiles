@@ -12,6 +12,8 @@
     # https://git-scm.com/docs/git-update-index#_untracked_cache
     untrackedCache = true
 [alias]
+    # whoami - shows user and email settings from the local config file
+    whoami = "!git config -l | grep '^user'| awk -F '=' '{print $2}'"
     # la - list aliases alphabetically
     la = "!git config -l | grep alias | cut -c 7- | sort | less"
     # root - Show the repository root folder
