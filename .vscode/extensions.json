@@ -29,7 +29,6 @@
 		//GIT
 		"eamodio.gitlens",
 		"donjayamanne.githistory",
-		"pprice.better-merge",
 		//Tools
 		"donjayamanne.bower",
 		"eg2.vscode-npm-script",
