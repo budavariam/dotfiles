@@ -14,11 +14,11 @@
 		"description": "A new line for an already ready task"
 	},
     "Url": {
-		"prefix": "url",
+		"prefix": "url-from-selection",
 		"body": [
-			"[$1]($CLIPBOARD)"
+			"[$TM_SELECTED_TEXT]($CLIPBOARD)"
 		],
-		"description": "Add a basic link"
+		"description": "Add a basic link from the selected text"
 	},
     "Read urll": {
 		"prefix": "read",
