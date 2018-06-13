@@ -149,6 +149,13 @@
     # svpull - git push in an svn repository
     svpush = !git svn dcommit
 
+    # Tags
+
+    # taglist - list tags with the correspondent commits
+    taglist = show-ref --tags
+    # tagdel - delete a local tag: 'git tagdel tagName' (remote delete: git push --delete origin tagName)
+    tagdel = tag -d
+
     # Typos
 
     # git - Run the command even if you have multiple git prefix in it.
@@ -179,7 +186,7 @@
     helper = cache --timeout=3600
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
-	path = 
+	path =
 [mergetool "sourcetree"]
 	cmd = /Applications/Sourcetree.app/Contents/Resources/opendiff-w.sh \"$LOCAL\" \"$REMOTE\" -ancestor \"$BASE\" -merge \"$MERGED\"
 	trustExitCode = true
