@@ -103,6 +103,8 @@
     mt = mergetool
     st = status
     co = checkout
+    # cop - Check out the previous branch. Shorter version: `git checkout -`
+    cop = checkout @{-1}
     cr = clone --recursive
     # fa - Fetch all remotes
     fa = fetch --all
