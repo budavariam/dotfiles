@@ -93,6 +93,8 @@
     filelog = log -u
     # logf - log with separate commit/author data (different when patches applied)
     logf = log --pretty=fuller
+    # fhistory - log the commits and amount of changes of a file. e.g.: `git fhistory README.md`
+    fhistory = log --pretty=format:"%h%x09%an%x09%ad%x09%s" --date=iso --follow --stat --
 
     # Simple abbreviations
 
