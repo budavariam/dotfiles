@@ -71,9 +71,9 @@
     # ft - Find tags containing commit
     ft = "!f() { git describe --always --contains $1; }; f"
     # fc - Find commits by source code
-    fc = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(red)%d' --decorate --date=short -S$1; }; f"
+    fc = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(auto)%d' --decorate --date=short -S$1; }; f"
     # fm - Find commits by commit message
-    fm = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(red)%d' --decorate --date=short --grep=$1; }; f"
+    fm = "!f() { git log --pretty=format:'%C(yellow)%h  %C(blue)%ad  %C(reset)%s%C(green)  [%cn] %C(auto)%d' --decorate --date=short --grep=$1; }; f"
     # find - Find text in commit names. shorthash, name, shortmessage, relativedate
     find = log --all --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%ar%C(reset) %s %C(green)(%an)%C(reset)\n%b\" --name-status --grep
     # locate - Find file name
@@ -86,11 +86,11 @@
     # lola - all branches oneline graph, (decorate) abbr commit shortmessage
     lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
     # rlog - Relative date log (oneline shorthash, relativedate, (decoration), shortmessage, name)
-    rlog = log --graph --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%cr%C(reset) %C(red)%d%C(reset) %s %C(green)(%cn)%C(reset)\"
+    rlog = log --graph --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%cr%C(reset) %C(auto)%d %s %C(green)(%cn)%C(reset)\"
     # elog - Exact date log (oneline shorthash, relativedate, (decoration), shortmessage, name)
-    elog = log --graph --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%ci%C(reset) %C(red)%d%C(reset) %s %C(green)(%cn)%C(reset)\"
+    elog = log --graph --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%ci%C(reset) %C(auto)%d%C(reset) %s %C(green)(%cn)%C(reset)\"
     # ll - oneline shorthash (decorate) message, username, file num stats
-    ll = log --pretty=format:"%C(yellow)%h%C(red)%d\\ %C(reset)%s\\ %C(green)[%cn]%C(reset)" --decorate --numstat
+    ll = log --pretty=format:"%C(yellow)%h%C(auto)%d\\ %C(reset)%s\\ %C(green)[%cn]%C(reset)" --decorate --numstat
     # filelog - Show git log with chunk info
     filelog = log -u
     # logf - log with separate commit/author data (different when patches applied)
