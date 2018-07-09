@@ -85,8 +85,10 @@
 	lol = log --graph --decorate --pretty=oneline --abbrev-commit
     # lola - all branches oneline graph, (decorate) abbr commit shortmessage
     lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
-    # rlog - oneline shorthash, relativedate, (decoration), shortmessage, name
-    rlog = log --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%cr%C(reset) %C(red)%d%C(reset) %s %C(green)(%cn)%C(reset)\"
+    # rlog - Relative date log (oneline shorthash, relativedate, (decoration), shortmessage, name)
+    rlog = log --graph --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%cr%C(reset) %C(red)%d%C(reset) %s %C(green)(%cn)%C(reset)\"
+    # elog - Exact date log (oneline shorthash, relativedate, (decoration), shortmessage, name)
+    elog = log --graph --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%ci%C(reset) %C(red)%d%C(reset) %s %C(green)(%cn)%C(reset)\"
     # ll - oneline shorthash (decorate) message, username, file num stats
     ll = log --pretty=format:"%C(yellow)%h%C(red)%d\\ %C(reset)%s\\ %C(green)[%cn]%C(reset)" --decorate --numstat
     # filelog - Show git log with chunk info
