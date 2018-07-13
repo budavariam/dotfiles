@@ -3,11 +3,11 @@
 [http]
     sslVerify = false
 [user]
-    name = Mátyás Budavári
-    email = budavariam@gmail.com
+	name = Mátyás Budavári
+	email = budavariam@gmail.com
 [core]
     editor = vim
-    excludesfile = ~/.gitignore
+	excludesfile = ~/.gitignore
     # Speed up commands involving untracked files such as `git status`.
     # https://git-scm.com/docs/git-update-index#_untracked_cache
     untrackedCache = true
@@ -168,6 +168,8 @@
     git = !exec git
 [color]
     ui = auto
+[color "diff"]
+	whitespace = red reverse
 [diff]
     renames = copy
     algorithm = patience
