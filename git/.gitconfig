@@ -170,6 +170,10 @@
     ui = auto
 [color "diff"]
 	whitespace = red reverse
+[color "status"]
+	added = yellow
+	changed = green
+	untracked = cyan
 [diff]
     renames = copy
     algorithm = patience
