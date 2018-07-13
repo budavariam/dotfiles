@@ -1,29 +1,21 @@
 {
     "window.zoomLevel": 0,
-    "gitlens.advanced.messages": {
-        "suppressCommitHasNoPreviousCommitWarning": false,
-        "suppressCommitNotFoundWarning": false,
-        "suppressFileNotUnderSourceControlWarning": false,
-        "suppressGitVersionWarning": false,
-        "suppressLineUncommittedWarning": false,
-        "suppressNoRepositoryWarning": false,
-        "suppressResultsExplorerNotice": true,
-        "suppressShowKeyBindingsNotice": true,
-        "suppressUpdateNotice": false,
-        "suppressWelcomeNotice": true
-    },
     "explorer.confirmDelete": false,
     "git.autofetch": true,
     "editor.minimap.enabled": false,
-    "git.enableSmartCommit": true,
     "explorer.confirmDragAndDrop": false,
     "workbench.iconTheme": "vscode-icons",
     "diffEditor.ignoreTrimWhitespace": true,
     "gitlens.keymap": "chorded",
     "vsicons.projectDetection.autoReload": true,
-    // "python.linting.pylintPath": "/usr/local/bin/python3",
     "npm.enableScriptExplorer": true,
-    "markdown.extension.toc.levels": "2..4", 
-    "markdown.extension.toc.unorderedList.marker": "*", 
-    "python.pythonPath": "/usr/local/bin/python3"
+    "markdown.extension.toc.levels": "2..4",
+    "markdown.extension.toc.unorderedList.marker": "*",
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": false
+    },
+    "gitlens.historyExplorer.enabled": true,
+    "gitlens.advanced.messages": {
+        "suppressShowKeyBindingsNotice": true
+    }
 }
