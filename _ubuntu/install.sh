@@ -38,3 +38,6 @@ vim -es -c '%s/^\(Exec=\/opt\/google\/chrome\/chrome\)$/\1 %U/g' -c wq "$HOME/.l
 # Add a space and %U: "Exec=/opt/google/chrome/chrome %U"
 # Source: https://askubuntu.com/a/701775/785947
 # I have automated it with vim ex mode. Regex match the line and replace it with the added extra 3 characters. Note that the capture group parenthesis has to be escaped.
+
+# Install nvm - node version manager
+# curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
