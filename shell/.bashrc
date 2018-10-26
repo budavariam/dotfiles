@@ -58,14 +58,13 @@ xterm*|rxvt*)
     ;;
 esac
 
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
-
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
+DOTFILES_FOLDER="$HOME/project/dotfiles/shell"
+.  $DOTFILES_FOLDER/.bash_aliases
+.  $DOTFILES_FOLDER/.bash_exports
+.  $DOTFILES_FOLDER/.bash_functions
+.  $DOTFILES_FOLDER/.bash_options
+.  $DOTFILES_FOLDER/.bash_prompt
+. /etc/profile.d/vte-2.91.sh
 
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
@@ -77,9 +76,6 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
-
-[ -n "$PS1" ] \
-    && . ~/.bash_profile
 
 # Add RVM, and global node modules fodler to PATH. Make sure this is the last PATH variable change.
 export PATH="$PATH:$HOME/.global-modules/bin:$HOME/.rvm/bin"
