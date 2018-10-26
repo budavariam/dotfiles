@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them directly to .bashrc.
+# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+
 # Projects
 alias cs="cd ~/project"
 alias howto="code ~/project/todolog"
