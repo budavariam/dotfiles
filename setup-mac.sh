@@ -2,8 +2,10 @@
 
 DOTFILES_DIRECTORY="`pwd`"
 VSCODE="${HOME}/Library/Application Support/Code/User"
+TEMP="${HOME}/.tmpdotfiles/"
 
 linkhome() {
+    cp "${HOME}/${2}" "$TEMP" 2>/dev/null
     # Force create/replace the symlink.
     ln -fs "${DOTFILES_DIRECTORY}/${1}" "${HOME}/${2}"
 }
@@ -14,6 +16,7 @@ linkvscode(){
 }
 
 printf "Create Symlinks\n"
+mkdir -p $TEMP
 # Create the necessary symbolic links between the `.dotfiles` and the appropriate directory.
 # The `bash_profile` sources other files directly from the `dotfiles` repository.
 linkhome "_mac/shell/.git-prompt.sh"      ".git-prompt.sh"
