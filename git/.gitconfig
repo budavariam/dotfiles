@@ -40,7 +40,7 @@
     # hreset - Hard reset, clear working directory.
     hreset = reset --hard
     # standup - what I did yesterday or last friday (+adds format, %u day of week (1..7); 1 is Monday)
-    standup = "!f() { [[ '1' -eq $(date +%u) ]] && echo 'last friday' || echo 'yesterday'; }; git log --since=$(f) --author=$(git config user.email)"
+    standup = "!f() { [[ '1' -eq $(date +%u) ]] && echo 'last friday' || echo 'yesterday'; }; git log --all --since=$(f) --author=$(git config user.email)"
 
     # Commit
 
