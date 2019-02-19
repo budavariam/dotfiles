@@ -35,8 +35,8 @@
     ctags = !.git/hooks/ctags
     # up - fetch & rebase instead of fetch & merge
     up = pull --rebase
-    # undo - undo last commit in the local history.
-    undo = reset HEAD~
+    # undo - undo last commit in the local history, and print its commit message.
+    undo = "!git log -1 --pretty=%B | cat; git reset HEAD~"
     # hreset - Hard reset, clear working directory.
     hreset = reset --hard
     # standup - what I did yesterday or last friday (+adds format, %u day of week (1..7); 1 is Monday)
