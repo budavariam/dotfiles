@@ -137,6 +137,8 @@
     pclc = !git format-patch -n HEAD^ --stdout > ./lastcommit.patch
     # pcwt - Create a patch from the current working tree, with untracked files
     pcwt = !git add . && git diff HEAD > working_tree.patch | git reset
+    # pcwt - Create a patch from the staged changes
+    pcsg = !git diff --cached HEAD > staged.patch
 
     # Subtrees
 
