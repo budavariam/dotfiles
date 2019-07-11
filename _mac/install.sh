@@ -13,6 +13,8 @@ brew install ack
 brew install tree
 # midnight commander
 brew install mc
+# fzf
+brew install fzf
 
 # install cask to install other programs
 brew tap caskroom/cask
