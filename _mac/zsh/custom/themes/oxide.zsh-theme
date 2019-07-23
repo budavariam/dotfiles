@@ -32,11 +32,13 @@ if [[ "${terminfo[colors]}" -ge 256 ]]; then
     oxide_orange="%F{179}"
     oxide_red="%F{167}"
     oxide_limegreen="%F{107}"
+    oxide_lime="%F{150}"
 else
     oxide_turquoise="%F{cyan}"
     oxide_orange="%F{yellow}"
     oxide_red="%F{red}"
     oxide_limegreen="%F{green}"
+    oxide_lime="%F{green}"
 fi
 
 # Reset color.
@@ -69,4 +71,4 @@ zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
 add-zsh-hook precmd vcs_info
 
 # Oxide prompt style.
-PROMPT=$'\n%{$oxide_limegreen%}%~%{$oxide_reset_color%} ${vcs_info_msg_0_}\n%(?.%{%F{white}%}.%{$oxide_red%})%(!.#.❯)%{$oxide_reset_color%} '
+PROMPT=$'\n%{$oxide_lime%}[%D{%T}] %{$oxide_limegreen%}%~%{$oxide_reset_color%} ${vcs_info_msg_0_}\n%(?.%{%F{white}%}.%{$oxide_red%})%(!.#.❯)%{$oxide_reset_color%} '
