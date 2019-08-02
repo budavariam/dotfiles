@@ -1,3 +1,4 @@
+# zmodload zsh/zprof # for profiling run: time  zsh -i -c exit and add 'zprof' at the end of this file
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -103,3 +104,5 @@ alias howto="code ~/project/todolog"
 alias dotfiles="code ~/project/dotfiles"
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# zprof # add this for profiling startup time
