@@ -102,7 +102,9 @@ source $ZSH/oh-my-zsh.sh
 alias cs="cd ~/project"
 alias howto="code ~/project/todolog"
 alias dotfiles="code ~/project/dotfiles"
+# fzf
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+# auto generated on fzf install
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # zprof # add this for profiling startup time

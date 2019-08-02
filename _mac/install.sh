@@ -15,6 +15,8 @@ brew install tree
 brew install mc
 # fzf
 brew install fzf
+# ag
+brew install the_silver_searcher
 
 # install cask to install other programs
 brew tap caskroom/cask
