@@ -31,6 +31,8 @@
     delmerged = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
     # lstmerged - List branches that have already been merged into master a.k.a. ‘list merged’
     lstmerged = "!git branch --merged | grep -v '\\*'"
+    # recent - List recently visited branches
+    recent = "!f() { git reflog | egrep -io 'moving from ([^[:space:]]+)' | awk '{ print $3 }' | awk ' !x[$0]++' | head -n${1-10}; }; f"
     # retag - Remove the old tag with this name and tag the latest commit with it.
     retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
     # ctags -
