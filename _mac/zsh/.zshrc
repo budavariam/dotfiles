@@ -102,6 +102,9 @@ source $ZSH/oh-my-zsh.sh
 alias cs="cd ~/project"
 alias howto="code ~/project/todolog"
 alias dotfiles="code ~/project/dotfiles"
+
+alias k="kubectl"
+alias p4merge="/Applications/p4merge.app/Contents/MacOS/p4merge"
 # fzf
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 # auto generated on fzf install

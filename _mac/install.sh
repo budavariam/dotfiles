@@ -30,6 +30,8 @@ brew cask install google-chrome
 brew cask install meld
 # iterm 2
 brew cask install iterm2
+# p4merge
+brew cask install p4v
 
 # zsh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
