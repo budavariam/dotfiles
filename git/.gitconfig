@@ -33,6 +33,8 @@
     lstmerged = "!git branch --merged | grep -v '\\*'"
     # recent - List recently visited branches
     recent = "!f() { git reflog | egrep -io 'moving from ([^[:space:]]+)' | awk '{ print $3 }' | awk ' !x[$0]++' | head -n${1-10}; }; f"
+    # brage - List all branches ordered by committerdate, show refs and relative date
+    brage = "branch -v --sort=-committerdate --format='%(authordate:short) %(color:red)%(objectname:short) %(color:yellow)%(refname:short)%(color:reset) (%(color:green)%(committerdate:relative)%(color:reset)) [%(color:magenta)%(authorname)%(color:reset)]'"
     # retag - Remove the old tag with this name and tag the latest commit with it.
     retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
     # ctags -
@@ -208,7 +210,7 @@
 [rerere]
     enabled = 1
 [credential]
-    helper = cache --timeout=3600
+	helper = cache --timeout=3600
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
 	path =
