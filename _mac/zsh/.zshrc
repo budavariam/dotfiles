@@ -63,10 +63,20 @@ ZSH_THEME="oxide"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
+
+# fzf configurations
+export FZF_BASE=~/.fzf.zsh
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+# Uncomment the following line to disable fuzzy completion
+# export DISABLE_FZF_AUTO_COMPLETION="true"
+# Uncomment the following line to disable key bindings (CTRL-T, CTRL-R, ALT-C)
+# export DISABLE_FZF_KEY_BINDINGS="true"
+
 plugins=(
   git
   zsh-autosuggestions
   zsh-syntax-highlighting
+  fzf
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -106,9 +116,5 @@ alias dotfiles="code ~/project/dotfiles"
 
 alias k="kubectl"
 alias p4merge="/Applications/p4merge.app/Contents/MacOS/p4merge"
-# fzf
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
-# auto generated on fzf install
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # zprof # add this for profiling startup time
