@@ -72,11 +72,25 @@ export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 # Uncomment the following line to disable key bindings (CTRL-T, CTRL-R, ALT-C)
 # export DISABLE_FZF_KEY_BINDINGS="true"
 
+# docker autocompletion debug
+#fpath+=($ZSH/plugins/docker)
+# autoload -U compinit && compinit
+# in case it doesn't work try to `rm ~/.zcompdump*`.
+
+# # zsh-syntax-highlighting
+# ## more info: https://github.com/zsh-users/zsh-syntax-highlighting/tree/master/docs/highlighters
+# ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
+# typeset -gA ZSH_HIGHLIGHT_STYLES
+# ZSH_HIGHLIGHT_STYLES[alias]='fg=magenta,bold' # To differentiate aliases from other command types
+# ZSH_HIGHLIGHT_STYLES[globbing]='fg=cyan' # To make globbing characters visible on black bg as well
+
 plugins=(
   git
   zsh-autosuggestions
-  zsh-syntax-highlighting
+#  zsh-syntax-highlighting
   fzf
+  docker
+  kubectl
 )
 
 source $ZSH/oh-my-zsh.sh
