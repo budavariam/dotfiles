@@ -48,7 +48,7 @@ oxide_reset_color="%f"
 FMT_UNSTAGED="%{$oxide_reset_color%} %{$oxide_orange%}●"
 FMT_STAGED="%{$oxide_reset_color%} %{$oxide_limegreen%}✚"
 FMT_ACTION="(%{$oxide_limegreen%}%a%{$oxide_reset_color%})"
-FMT_VCS_STATUS="on %{$oxide_turquoise%} %b%u%c%{$oxide_reset_color%}"
+FMT_VCS_STATUS="on %{$oxide_turquoise%}%b%u%c%{$oxide_reset_color%}"
 
 zstyle ':vcs_info:*' enable git svn
 zstyle ':vcs_info:*' check-for-changes true
@@ -82,4 +82,4 @@ P_GIT='${vcs_info_msg_0_}'
 P_SYMBOL='%(?.%{%F{white}%}.%{$oxide_red%})%(!.#.❯)%{$oxide_reset_color%}'
 
 # Oxide prompt style.
-PROMPT=$'\n'$P_TIME' '$P_JOBS' '$P_FOLDER' '$P_GIT$'\n'$P_SYMBOL' '
+PROMPT=$'\n'$P_FOLDER' '$P_GIT$'\n'$P_SYMBOL' '
