@@ -144,6 +144,13 @@ set expandtab
 
 
 "------------------------------------------------------------
+"
+" Other
+
+" split windows to the bottom
+set splitbelow
+
+"------------------------------------------------------------
 " Mappings {{{1
 "
 " Useful mappings
@@ -163,3 +170,9 @@ nnoremap <Up> :echoe "Use k instead of 'Up'"<CR>
 nnoremap <Right> :echoe "Use l instead of 'Right'"<CR>
 
 "------------------------------------------------------------
+" Folds {{{1
+"
+" Save and load folding states upon quitting
+
+au BufWinLeave ?* mkview
+au BufWinEnter ?* silent loadview
