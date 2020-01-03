@@ -82,4 +82,4 @@ P_GIT='${vcs_info_msg_0_}'
 P_SYMBOL='%(?.%{%F{white}%}.%{$oxide_red%})%(!.#.❯)%{$oxide_reset_color%}'
 
 # Oxide prompt style.
-PROMPT=$'\n'$P_FOLDER' '$P_GIT$'\n'$P_SYMBOL' '
+PROMPT=$''$P_FOLDER' '$P_GIT$'\n'$P_SYMBOL' '
