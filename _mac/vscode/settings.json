@@ -17,6 +17,7 @@
     "gitlens.historyExplorer.enabled": true,
     "gitlens.advanced.messages": {
         "suppressShowKeyBindingsNotice": true
+    "go.formatTool": "goimports",
     }
     "editor.fontFamily": "Jetbrains Mono, Menlo, Monaco, 'Courier New', monospace",
     "editor.fontLigatures": true
