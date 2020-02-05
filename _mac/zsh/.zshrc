@@ -91,6 +91,7 @@ plugins=(
   fzf
   docker
   kubectl
+  kube-ps1
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -128,7 +129,13 @@ alias cs="cd ~/project"
 alias howto="code ~/project/todolog"
 alias dotfiles="code ~/project/dotfiles"
 
-alias k="kubectl"
 alias p4merge="/Applications/p4merge.app/Contents/MacOS/p4merge"
 
+# kube-ps1 config
+export KUBE_PS1_COLOR_SYMBOL="%F{blue}"
+export KUBE_PS1_COLOR_CONTEXT="%F{173}"
+export KUBE_PS1_COLOR_NS="%F{69}"
+export KUBE_PS1_PREFIX=''
+export KUBE_PS1_SUFFIX=''
+PROMPT='$(kube_ps1) '$PROMPT
 # zprof # add this for profiling startup time
