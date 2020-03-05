@@ -110,6 +110,11 @@
     # fhistory - log the commits and amount of changes of a file. e.g.: `git fhistory README.md`
     fhistory = log --pretty=format:"%h%x09%an%x09%ad%x09%s" --date=iso --follow --stat --
 
+    # Ignore
+    unignore = update-index --no-assume-unchanged
+    ignore = update-index --assume-unchanged
+    ignored = ls-files -v &#124; grep '^\[\[:lower:\]\]'
+
     # Simple abbreviations
 
     br = branch
