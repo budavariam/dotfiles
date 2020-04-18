@@ -85,13 +85,14 @@ export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 # ZSH_HIGHLIGHT_STYLES[globbing]='fg=cyan' # To make globbing characters visible on black bg as well
 
 plugins=(
+  fzf-tab # to turn it on and off: toggle-fzf-tab 
   git
   zsh-autosuggestions
 #  zsh-syntax-highlighting
   fzf
   docker
   kubectl
-  kube-ps1
+  kube-ps1 # to turn it on and off: kubeon/kubeoff
 )
 
 source $ZSH/oh-my-zsh.sh
