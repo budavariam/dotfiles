@@ -120,6 +120,7 @@
     br = branch
     ba = branch --all
     cp = cherry-pick
+    cpx = cherry-pick -x # include commit hash in the commit as a reference
     mr = merge
     mt = mergetool
     st = status
