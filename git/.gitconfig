@@ -101,6 +101,8 @@
     logr = log --graph --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%cr%C(reset) %C(auto)%d %s %C(green)(%cn)%C(reset)\"
     # loge - Exact date log (oneline shorthash, relativedate, (decoration), shortmessage, name)
     loge = log --graph --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%ci%C(reset) %C(auto)%d%C(reset) %s %C(green)(%cn)%C(reset)\"
+    # logn - Exact date log (oneline shorthash, relativedate, name, (decoration), shortmessage)
+    logn = log --graph --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%ci%C(reset) %C(green)(%cn)%C(reset) %C(auto)%d%C(reset) %s\"
     # ll - oneline shorthash (decorate) message, username, file num stats
     ll = log --pretty=format:"%C(yellow)%h%C(auto)%d\\ %C(reset)%s\\ %C(green)[%cn]%C(reset)" --decorate --numstat
     # logfile - Show git log with chunk info
