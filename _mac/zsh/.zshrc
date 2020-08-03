@@ -139,4 +139,13 @@ export KUBE_PS1_COLOR_NS="%F{69}"
 export KUBE_PS1_PREFIX=''
 export KUBE_PS1_SUFFIX=''
 PROMPT='$(kube_ps1) '$PROMPT
+
+function devproxy() {
+  TOGGLE=${1:-on}
+  NETWORKSERVICE=${2:-"Wi-fi"}
+  networksetup -setwebproxystate "$NETWORKSERVICE" "$TOGGLE";
+  networksetup -setsecurewebproxystate "$NETWORKSERVICE" "$TOGGLE";
+  echo "HTTP and HTTPS proxy turned $TOGGLE for $NETWORKSERVICE"
+}
+
 # zprof # add this for profiling startup time
