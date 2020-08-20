@@ -20,7 +20,7 @@
     # root - Show the repository root folder
     root = rev-parse --show-toplevel
     # contributors - List contributors with number of commits
-    contributors = shortlog --summary --numbered
+    contributors = shortlog --summary --numbered --email
     # cloneurl - get the remote url of the repository
     cloneurl = config --get remote.origin.url
     # allfiles - list all files that has ever been added to the repository, sorted by path
