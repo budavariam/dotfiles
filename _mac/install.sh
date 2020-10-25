@@ -38,3 +38,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/mas
 # zsh autosuggestion plugin
 git clone https://github.com/zsh-users/zsh-autosuggestions $ZSH_CUSTOM/plugins/zsh-autosuggestions
 git clone https://github.com/Aloxaf/fzf-tab ~ZSH_CUSTOM/plugins/fzf-tab
+
+brew install bash
+# sudo vim /etc/shells
+# add line to the file with the proper version number to whitelist in mac: /usr/local/Cellar/bash/5.0.0/bin/bash

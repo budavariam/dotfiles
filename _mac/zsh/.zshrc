@@ -92,6 +92,7 @@ plugins=(
   fzf
   docker
   kubectl
+  npm
   kube-ps1 # to turn it on and off: kubeon/kubeoff
 )
 
