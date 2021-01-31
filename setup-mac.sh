@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOTFILES_DIRECTORY="`pwd`"
+DOTFILES_DIRECTORY="${PWD}"
 VSCODE="${HOME}/Library/Application Support/Code/User"
 TEMP="${HOME}/.tmpdotfiles/"
 
@@ -26,7 +26,9 @@ linkhome "_mac/shell/.bashrc"             ".bashrc"
 linkhome "_mac/git/.gitconfig.local"      ".gitconfig.local"
 linkhome "_mac/zsh/.zshrc"                ".zshrc"
 linkhome "_mac/zsh/custom/themes"         ".oh-my-zsh/custom"
-linkhome "_mac/zsh/custom/plugins"         ".oh-my-zsh/custom"
+linkhome "_mac/zsh/custom/plugins"        ".oh-my-zsh/custom"
+linkhome "_mac/tmux/.tmux.conf"           ".tmux.conf"
+linkhome "_mac/screen/.screenrc"          ".screenrc"
 linkhome "git/.gitattributes"             ".gitattributes"
 linkhome "git/.gitignore"                 ".gitignore"
 linkhome "git/.gitconfig"                 ".gitconfig"
