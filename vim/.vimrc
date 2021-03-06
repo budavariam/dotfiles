@@ -176,3 +176,9 @@ nnoremap <Right> :echoe "Use l instead of 'Right'"<CR>
 
 au BufWinLeave ?* mkview
 au BufWinEnter ?* silent loadview
+
+" # Install codedark theme
+" cd /tmp
+" git clone https://github.com/tomasiser/vim-code-dark.git
+" cp -r vim-code-dark/* ~/.vim/
+colorscheme codedark
