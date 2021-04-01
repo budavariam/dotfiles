@@ -127,6 +127,16 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
+# kgpid usage: add an expression to grep to as the first parameter, can return more than one line. Example:
+## POD_ID=$(kgpid "my-simple-app" | head -1) && echo $POD_ID 
+alias kgpid='f() { PODNAME="$1"; k get pods -o name --field-selector=status.phase=Running | grep -E "${PODNAME}" }; f'
+alias kgq='k get quota'
+alias kge='k get events --sort-by=".lastTimestamp"'
+alias kex='f() { k exec -it "$1" -- /bin/bash; }; f '
+alias ksecret='f() { SECRET_NAME="$1"; k get secret $SECRET_NAME -o json | jq -r ".data | map_values(@base64d)" }; f'
+alias kplay='k create job playground --image=busybox -- tail -f /dev/null && echo "created job/playground" && sleep 5 && k exec -it job/playground -- /bin/sh'
+alias kstop='k delete job/playground'
+
 alias cs="cd ~/project"
 alias howto="code ~/project/todolog"
 alias dotfiles="code ~/project/dotfiles"
