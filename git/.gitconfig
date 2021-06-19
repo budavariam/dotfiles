@@ -26,7 +26,7 @@
     # allfiles - list all files that has ever been added to the repository, sorted by path
     allfiles = !git log --pretty=format: --name-only --diff-filter=A | sort -u
     # undelete - undelete a file to the last known state, you must use the full path, useful with grepped allfiles
-    undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"' -
+    undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD --all -- "$1")^ -- "$1"' -
     # delmerged - Remove branches that have already been merged with master a.k.a. ‘delete merged’
     delmerged = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
     # lstmerged - List branches that have already been merged into master a.k.a. ‘list merged’
@@ -208,7 +208,7 @@
     stat = true
     verbosity = 2
 [push]
-    default = simple
+    default = upstream
 [stash]
     showPatch = true
 [apply]

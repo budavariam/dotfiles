@@ -1,5 +1,5 @@
 {
-    "window.zoomLevel": 0,
+    "editor.rulers": [80,120],
     "explorer.confirmDelete": false,
     "git.autofetch": true,
     "editor.minimap.enabled": false,
