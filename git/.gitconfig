@@ -209,6 +209,7 @@
     verbosity = 2
 [push]
     default = upstream
+	followTags = true
 [stash]
     showPatch = true
 [apply]
