@@ -27,9 +27,9 @@
     allfiles = !git log --pretty=format: --name-only --diff-filter=A | sort -u
     # undelete - undelete a file to the last known state, you must use the full path, useful with grepped allfiles
     undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD --all -- "$1")^ -- "$1"' -
-    # delmerged - Remove branches that have already been merged with master a.k.a. ‘delete merged’
+    # delmerged - Remove branches that have already been merged with master a.k.a. 'delete merged'
     delmerged = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
-    # lstmerged - List branches that have already been merged into master a.k.a. ‘list merged’
+    # lstmerged - List branches that have already been merged into master a.k.a. 'list merged'
     lstmerged = "!git branch --merged | grep -v '\\*'"
     # recent - List recently visited branches
     recent = "!f() { git reflog | egrep -io 'moving from ([^[:space:]]+)' | awk '{ print $3 }' | awk ' !x[$0]++' | head -n${1-10}; }; f"
@@ -237,3 +237,20 @@
 	keepBackup = false
 [difftool "p4mergetool"]
 	cmd = /Applications/p4merge.app/Contents/Resources/launchp4merge $LOCAL $REMOTE
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+[gpg]
+	program = /usr/local/bin/gpg
+[pull]
+	ff = only
+[init]
+	defaultBranch = main
+
+[include]
+    path = ~/project/dotfiles/git/sensitive-gitconfig
+[includeIf "gitdir:~/project/personal/"]
+    path = ~/project/personal/.gitconfig
+    # echo """ [user]\n         email = budavariam@gmail.com""" >> ~/project/personal/.gitconfig 

@@ -12,3 +12,4 @@ Thumbs.db
 
 # Tmp folder to avoid overwriting before script run
 /tmp/
+sensitive-*
