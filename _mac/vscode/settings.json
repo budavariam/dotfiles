@@ -1,13 +1,17 @@
 {
     "editor.rulers": [80,120],
+    "workbench.colorCustomizations": {
+        "editorRuler.foreground": "#41414136"
+    },
     "explorer.confirmDelete": false,
-    "git.autofetch": true,
     "editor.minimap.enabled": false,
     "explorer.confirmDragAndDrop": false,
     "workbench.iconTheme": "vscode-icons",
     "diffEditor.ignoreTrimWhitespace": true,
     "gitlens.keymap": "chorded",
     "vsicons.projectDetection.autoReload": true,
+    "js/ts.implicitProjectConfig.checkJs": true,
+    "editor.wordWrap": "on",
     "npm.enableScriptExplorer": true,
     "markdown.extension.toc.levels": "2..4",
     "markdown.extension.toc.unorderedList.marker": "*",
