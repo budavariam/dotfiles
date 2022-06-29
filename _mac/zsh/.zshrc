@@ -99,6 +99,7 @@ plugins=(
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
+source $ZSH/custom/plugins/timer.zsh
 
 # export MANPATH="/usr/local/man:$MANPATH"
 
