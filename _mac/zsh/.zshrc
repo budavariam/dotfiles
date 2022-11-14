@@ -65,7 +65,6 @@ ZSH_THEME="oxide"
 # Add wisely, as too many plugins slow down shell startup.
 
 # fzf configurations
-export FZF_BASE=~/.fzf.zsh
 export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
 # Uncomment the following line to disable fuzzy completion
 # export DISABLE_FZF_AUTO_COMPLETION="true"
@@ -100,6 +99,7 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 source $ZSH/custom/plugins/timer.zsh
+source $ZSH/custom/plugins/sensitive-zshrc
 
 # export MANPATH="/usr/local/man:$MANPATH"
 
@@ -130,9 +130,22 @@ source $ZSH/custom/plugins/timer.zsh
 
 # kgpid usage: add an expression to grep to as the first parameter, can return more than one line. Example:
 ## POD_ID=$(kgpid "my-simple-app" | head -1) && echo $POD_ID 
+
+function kcsecret() {
+    NAME="$1"
+    FILEPATH="${2:-./${NAME}.json}"
+    # kubectl delete secret $NAME
+    # kubectl create secret generic "${NAME}" --from-file="./_${NAME}.json"
+    # kubectl create secret generic "${NAME}" --from-literal="${ITER_NAME}=${ITER_VALUE}"
+    SECRET_VALUE_PARAMS=$(jq -r '. | to_entries | .[] | "--from-literal=" + .key + "=" + .value' "$FILEPATH"  | tr "\n" " ")
+    eval "kubectl create secret generic ${NAME} ${SECRET_VALUE_PARAMS}"
+}
+
+alias noti='f() { osascript -e "display notification \"$2\" with title \"$1\" "; }; f '
 alias kgpid='f() { PODNAME="$1"; k get pods -o name --field-selector=status.phase=Running | grep -E "${PODNAME}" }; f'
 alias kgq='k get quota'
 alias kge='k get events --sort-by=".lastTimestamp"'
+alias kgps='k get pods --sort-by=".status.startTime"'
 alias kex='f() { k exec -it "$1" -- /bin/bash; }; f '
 alias ksecret='f() { SECRET_NAME="$1"; k get secret $SECRET_NAME -o json | jq -r ".data | map_values(@base64d)" }; f'
 alias kplay='k create job playground --image=busybox -- tail -f /dev/null && echo "created job/playground" && sleep 5 && k exec -it job/playground -- /bin/sh'
@@ -142,7 +155,7 @@ alias cs="cd ~/project"
 alias howto="code ~/project/todolog"
 alias dotfiles="code ~/project/dotfiles"
 
-alias p4merge="/Applications/p4merge.app/Contents/MacOS/p4merge"
+alias bsserve="f() { npx browser-sync@2.24.7 start -s -f . --no-notify --host $(ipconfig getifaddr en0) --port ${1:-9000} --ui-port ${2:-9001} }; f "
 
 # kube-ps1 config
 export KUBE_PS1_COLOR_SYMBOL="%F{blue}"
@@ -151,6 +164,24 @@ export KUBE_PS1_COLOR_NS="%F{69}"
 export KUBE_PS1_PREFIX=''
 export KUBE_PS1_SUFFIX=''
 PROMPT='$(kube_ps1) '$PROMPT
+
+
+HISTSIZE=10000000
+SAVEHIST=10000000
+
+setopt BANG_HIST                 # Treat the '!' character specially during expansion.
+setopt EXTENDED_HISTORY          # Write the history file in the ":start:elapsed;command" format.
+setopt INC_APPEND_HISTORY        # Write to the history file immediately, not when the shell exits.
+setopt SHARE_HISTORY             # Share history between all sessions.
+setopt HIST_EXPIRE_DUPS_FIRST    # Expire duplicate entries first when trimming history.
+setopt HIST_IGNORE_DUPS          # Don't record an entry that was just recorded again.
+setopt HIST_IGNORE_ALL_DUPS      # Delete old recorded entry if new entry is a duplicate.
+setopt HIST_FIND_NO_DUPS         # Do not display a line previously found.
+setopt HIST_IGNORE_SPACE         # Don't record an entry starting with a space.
+setopt HIST_SAVE_NO_DUPS         # Don't write duplicate entries in the history file.
+setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks before recording entry.
+setopt HIST_VERIFY               # Don't execute immediately upon history expansion.
+setopt HIST_BEEP                 # Beep when accessing nonexistent history.
 
 function devproxy() {
   TOGGLE=${1:-on}

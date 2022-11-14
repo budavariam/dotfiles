@@ -257,15 +257,21 @@
 
 ### https://dandavison.github.io/delta/configuration.html
 [core]
-    pager = delta
-
+    # turn ON/OFF by removing pager OR: call it with:
+    # GIT_PAGER=delta git log -p
+    # GIT_PAGER=less git log -p
+    pager = delta 
+[diff]
+    colorMoved = default
 [interactive]
     diffFilter = delta --color-only --features=interactive
 [delta]
+    navigate = true
     side-by-side = true
-    line-numbers-left-format = ""
-    line-numbers-right-format = "│ "
-[delta]
+    line-numbers = true
+    # #NOTE: disable line numbers:
+    # line-numbers-left-format = ""
+    # line-numbers-right-format = "│ "
     features = decorations
 
 [delta "interactive"]
