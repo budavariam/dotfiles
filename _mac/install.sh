@@ -19,19 +19,19 @@ brew install fzf
 brew install the_silver_searcher
 
 # install cask to install other programs
-brew tap caskroom/cask
+brew tap homebrew/cask
 # kdiff3
-brew cask install kdiff3
+brew install kdiff3 --cask
 # copyq
-brew cask install copyq
+brew install copyq --cask
 # chrome
-brew cask install google-chrome
+brew install google-chrome --cask
 # meld
-brew cask install meld
+brew install meld --cask
 # iterm 2
-brew cask install iterm2
+brew install iterm2 --cask
 # p4merge
-brew cask install p4v
+brew install p4v --cask
 # gnu sed
 brew install gnu-sed
 brew install less
@@ -41,8 +41,10 @@ brew install git-delta
 # zsh
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 # zsh autosuggestion plugin
-git clone https://github.com/zsh-users/zsh-autosuggestions $ZSH_CUSTOM/plugins/zsh-autosuggestions
-git clone https://github.com/Aloxaf/fzf-tab ~ZSH_CUSTOM/plugins/fzf-tab
+pushd ./zsh/custom/plugins
+    git clone https://github.com/zsh-users/zsh-autosuggestions 
+    git clone https://github.com/Aloxaf/fzf-tab
+popd
 
 brew install bash
 # sudo vim /etc/shells

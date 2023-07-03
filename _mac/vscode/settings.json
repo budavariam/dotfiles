@@ -27,5 +27,6 @@
     "peacock.affectTitleBar": false,
     "go.formatTool": "goimports",
     "editor.fontFamily": "Jetbrains Mono, Menlo, Monaco, 'Courier New', monospace",
-    "editor.fontLigatures": true
+    "editor.fontLigatures": true,
+    "workbench.sideBar.location": "right"
 }
