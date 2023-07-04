@@ -28,5 +28,11 @@
     "go.formatTool": "goimports",
     "editor.fontFamily": "Jetbrains Mono, Menlo, Monaco, 'Courier New', monospace",
     "editor.fontLigatures": true,
-    "workbench.sideBar.location": "right"
+    "workbench.sideBar.location": "right",
+    "[javascript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    }
 }
