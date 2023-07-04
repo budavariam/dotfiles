@@ -65,7 +65,7 @@ ZSH_THEME="oxide"
 # Add wisely, as too many plugins slow down shell startup.
 
 # fzf configurations
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --scrollbar --color scrollbar:red'
 # Uncomment the following line to disable fuzzy completion
 # export DISABLE_FZF_AUTO_COMPLETION="true"
 # Uncomment the following line to disable key bindings (CTRL-T, CTRL-R, ALT-C)
@@ -158,11 +158,16 @@ alias dotfiles="code ~/project/dotfiles"
 alias bsserve="f() { npx browser-sync@2.24.7 start -s -f . --no-notify --host $(ipconfig getifaddr en0) --port ${1:-9000} --ui-port ${2:-9001} }; f "
 
 # kube-ps1 config
+export KUBE_PS1_PREFIX=''
+export KUBE_PS1_SUFFIX=''
+# kube-ps1 old version config
 export KUBE_PS1_COLOR_SYMBOL="%F{blue}"
 export KUBE_PS1_COLOR_CONTEXT="%F{173}"
 export KUBE_PS1_COLOR_NS="%F{69}"
-export KUBE_PS1_PREFIX=''
-export KUBE_PS1_SUFFIX=''
+# kube-ps1 config newer version config
+export KUBE_PS1_SYMBOL_COLOR="blue"
+export KUBE_PS1_CTX_COLOR="173"
+export KUBE_PS1_NS_COLOR="69"
 PROMPT='$(kube_ps1) '$PROMPT
 
 
