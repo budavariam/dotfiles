@@ -49,3 +49,10 @@ popd
 brew install bash
 # sudo vim /etc/shells
 # add line to the file with the proper version number to whitelist in mac: /usr/local/Cellar/bash/5.0.0/bin/bash
+
+## ZSH addons
+
+git clone https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+git clone https://github.com/Pilaton/OhMyZsh-full-autoupdate.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/ohmyzsh-full-autoupdate
+git clone https://github.com/Aloxaf/fzf-tab ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fzf-tab
+

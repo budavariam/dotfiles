@@ -1,6 +1,7 @@
 # Oxide theme for Zsh
 #
 # Author: Diki Ananta <diki1aap@gmail.com>
+#   customized by: Mátyás Budavári <budavariam@gmail.com>
 # Repository: https://github.com/dikiaap/dotfiles
 # License: MIT
 

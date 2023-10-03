@@ -93,6 +93,7 @@ plugins=(
   kubectl
   npm
   kube-ps1 # to turn it on and off: kubeon/kubeoff
+  ohmyzsh-full-autoupdate
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -142,6 +143,7 @@ function kcsecret() {
 }
 
 alias noti='f() { osascript -e "display notification \"$2\" with title \"$1\" "; }; f '
+alias notis='f() { osascript -e "  display notification \"$2\" with title \"$1\" sound name \"Frog\" "; }; f '
 alias kgpid='f() { PODNAME="$1"; k get pods -o name --field-selector=status.phase=Running | grep -E "${PODNAME}" }; f'
 alias kgq='k get quota'
 alias kge='k get events --sort-by=".lastTimestamp"'
