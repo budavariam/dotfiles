@@ -94,6 +94,7 @@ plugins=(
   npm
   kube-ps1 # to turn it on and off: kubeon/kubeoff
   ohmyzsh-full-autoupdate
+  bam-vi-mode
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -172,6 +173,13 @@ export KUBE_PS1_CTX_COLOR="173"
 export KUBE_PS1_NS_COLOR="69"
 PROMPT='$(kube_ps1) '$PROMPT
 
+
+# vi-mode plugin settings
+# https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/vi-mode
+# MODE_INDICATOR="%F{white}+%f"
+# INSERT_MODE_INDICATOR="%F{yellow}+%f"
+PROMPT="\$(vi_mode_prompt_info) $PROMPT"
+RPROMPT="$RPROMPT \$(vi_mode_prompt_info)"
 
 HISTSIZE=10000000
 SAVEHIST=10000000
