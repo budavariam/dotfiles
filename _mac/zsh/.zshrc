@@ -206,9 +206,14 @@ function devproxy() {
   echo "HTTP and HTTPS proxy turned $TOGGLE for $NETWORKSERVICE"
 }
 
+export GOPATH=$HOME/go
+
 # pyenv
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
 # zprof # add this for profiling startup time
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
