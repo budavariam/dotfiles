@@ -16,7 +16,7 @@
     "markdown.extension.toc.levels": "2..4",
     "markdown.extension.toc.unorderedList.marker": "*",
     "editor.codeActionsOnSave": {
-        "source.organizeImports": false
+        "source.organizeImports": "never"
     },
     "gitlens.historyExplorer.enabled": true,
     "gitlens.advanced.messages": {
