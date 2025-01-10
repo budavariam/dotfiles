@@ -128,7 +128,7 @@ alt-b = 'workspace B'
 alt-c = 'workspace C'
 alt-d = 'workspace D'
 alt-e = 'workspace E'
-alt-f = 'workspace F'
+# alt-f = 'workspace F'
 alt-g = 'workspace G'
 alt-i = 'workspace I'
 alt-m = 'workspace M'
@@ -161,7 +161,7 @@ alt-shift-b = 'move-node-to-workspace B'
 alt-shift-c = 'move-node-to-workspace C'
 alt-shift-d = 'move-node-to-workspace D'
 alt-shift-e = 'move-node-to-workspace E'
-alt-shift-f = 'move-node-to-workspace F'
+# alt-shift-f = 'move-node-to-workspace F'
 alt-shift-g = 'move-node-to-workspace G'
 alt-shift-i = 'move-node-to-workspace I'
 alt-shift-m = 'move-node-to-workspace M'
@@ -230,7 +230,7 @@ run = 'move-node-to-workspace Q'
 
 [[on-window-detected]]
 if.app-id = 'com.spotify.client'
-run = 'move-node-to-workspace K'
+run = 'move-node-to-workspace U'
 
 [[on-window-detected]]
 if.app-id = 'com.apple.Notes'
@@ -258,7 +258,7 @@ run = 'move-node-to-workspace V'
 
 [[on-window-detected]]
 if.app-id = 'com.apple.finder'
-run = 'move-node-to-workspace F'
+run = 'move-node-to-workspace A'
 
 [[on-window-detected]]
 if.app-id = 'com.google.Chrome.app.cifhbcnohmdccbgoicgdjpfamggdegmo'
@@ -267,3 +267,10 @@ run = 'move-node-to-workspace T'
 [[on-window-detected]]
 if.app-id = 'com.google.Chrome.app.faolnafnngnfdaknnbpnkhgohbobgegn'
 run = 'move-node-to-workspace B'
+
+[[on-window-detected]]
+if.app-id = 'com.stengo.DeskPad'
+run = 'move-node-to-workspace D'
+
+# NOTE: if you're bothered by small icons in "mission control"
+# defaults write com.apple.dock expose-group-apps -bool true && killall Dock

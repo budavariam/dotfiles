@@ -4,21 +4,13 @@
 	"recommendations": [
 		// Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
 		//HTML
-        "wcwhitehead.bootstrap-3-snippets",
-        "mkaufman.htmlhint",
 		"Tyriar.lorem-ipsum",
 		//JS
-		"johnpapa.Angular1",
-        "msjsdiag.debugger-for-chrome",
 		"akamud.vscode-javascript-snippet-pack",
 		"paulhoughton.vscode-jscpd",
-        "dbaeumer.jshint",
         //Python
         "ms-python.python",
 		//CodeStyle
-		"HookyQR.beautify",
-        "glen-84.sass-lint",
-        "eg2.tslint",
         "dbaeumer.vscode-eslint",
         "nhoizey.gremlins",
         "DavidAnson.vscode-markdownlint",
@@ -29,10 +21,14 @@
 		//GIT
 		"eamodio.gitlens",
 		"donjayamanne.githistory",
+		"vivaxy.vscode-conventional-commits",
+		"ms-azuretools.vscode-docker",
+		"htmlhint.vscode-htmlhint",
+		"esbenp.prettier-vscode",
+		"ms-python.vscode-pylance",
+		"ms-vscode-remote.remote-containers",
+		"golang.go",
+		"christian-kohler.npm-intellisense",
 		//Tools
-		"donjayamanne.bower",
-		"eg2.vscode-npm-script",
-		"tanato.vscode-gulp",
-		"coderfee.open-html-in-browser"
 	]
 }
