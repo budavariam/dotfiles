@@ -179,6 +179,9 @@ alt-shift-x = 'move-node-to-workspace X'
 alt-shift-y = 'move-node-to-workspace Y'
 alt-shift-z = 'move-node-to-workspace Z'
 
+alt-shift-leftSquareBracket = 'move-workspace-to-display --wrap-around next'
+alt-shift-rightSquareBracket = 'focus-monitor --wrap-around next'
+
 # See: https://nikitabobko.github.io/AeroSpace/commands#workspace-back-and-forth
 alt-tab = 'workspace-back-and-forth'
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-workspace-to-monitor
