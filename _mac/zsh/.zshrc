@@ -103,6 +103,8 @@ source $ZSH/oh-my-zsh.sh
 source $ZSH/custom/plugins/timer.zsh
 source $ZSH/custom/plugins/sensitive-zshrc
 
+bindkey -r '^K' # iterm2 AI features add an extra ctrl+K
+
 # export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
