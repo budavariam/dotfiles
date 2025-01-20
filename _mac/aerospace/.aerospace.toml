@@ -14,6 +14,12 @@ after-startup-command = []
 # Start AeroSpace at login
 start-at-login = false
 
+exec-on-workspace-change = ['/bin/bash', '-c',
+    'mv /tmp/aerospace_ws.txt /tmp/aerospace_ws_prev.txt 2>/dev/null || true && echo "$AEROSPACE_FOCUSED_WORKSPACE" > /tmp/aerospace_ws.txt'
+]
+
+
+
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
@@ -179,6 +185,7 @@ alt-shift-x = 'move-node-to-workspace X'
 alt-shift-y = 'move-node-to-workspace Y'
 alt-shift-z = 'move-node-to-workspace Z'
 
+alt-leftSquareBracket = 'exec-and-forget aerospace workspace $(head -n 1 /tmp/aerospace_ws_prev.txt)'
 alt-shift-leftSquareBracket = 'move-workspace-to-display --wrap-around next'
 alt-shift-rightSquareBracket = 'focus-monitor --wrap-around next'
 
@@ -282,6 +289,10 @@ run = 'move-node-to-workspace C'
 [[on-window-detected]]
 if.app-id = 'org.jkiss.dbeaver.core.product'
 run = 'move-node-to-workspace X'
+
+[[on-window-detected]]
+if.app-id = 'Cisco-Systems.Spark'
+run = 'move-node-to-workspace I'
 
 # NOTE: if you're bothered by small icons in "mission control"
 # defaults write com.apple.dock expose-group-apps -bool true && killall Dock
