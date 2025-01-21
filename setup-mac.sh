@@ -1,42 +1,30 @@
 #!/bin/bash
 
-DOTFILES_DIRECTORY="${PWD}"
 VSCODE="${HOME}/Library/Application Support/Code/User"
 TEMP="${HOME}/.tmpdotfiles/"
 
-linkhome() {
-    cp "${HOME}/${2}" "$TEMP" 2>/dev/null
-    # Force create/replace the symlink.
-    ln -fs "${DOTFILES_DIRECTORY}/${1}" "${HOME}/${2}"
-}
+if ! command -v stow &>/dev/null; then
+  echo "stow is not installed. Installing it along other brew dependencies..."
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  pushd "_mac/brew" || exit 1
+    brew bundle install --file="$(pwd)/Brewfile"
+  popd || exit 1
+fi
 
-linkvscode(){
-    # Force create/replace the symlink.
-    ln -fs "${DOTFILES_DIRECTORY}/${1}" "${VSCODE}/${2}"
-}
+# Use stow to create symlinks
+pushd "_mac" || exit 1
+  stow -vt ~ aerospace
+  stow -vt ~ git
+  # stow -vt ~ iterm2 # need to set iterm2 manually
+  stow -vt ~ screen
+  stow -vt ~ shell
+  stow -vt ~ tmux
+  stow -vt ~ zsh
+  stow -vt ~ wezterm
+  stow -vt "${VSCODE}" vscode
+popd || exit 1
+stow -vt ~ git
+stow -vt ~ npm
+stow -vt ~ vim
 
-printf "Create Symlinks\n"
-mkdir -p $TEMP
-# Create the necessary symbolic links between the `.dotfiles` and the appropriate directory.
-# The `bash_profile` sources other files directly from the `dotfiles` repository.
-linkhome "_mac/shell/.git-prompt.sh"      ".git-prompt.sh"
-linkhome "_mac/shell/.bash_aliases"       ".bash_aliases"
-linkhome "_mac/shell/.bash_profile"       ".bash_profile"
-linkhome "_mac/shell/.bashrc"             ".bashrc"
-linkhome "_mac/git/.gitconfig.local"      ".gitconfig.local"
-linkhome "_mac/zsh/.zshrc"                ".zshrc"
-# rm -rf "${HOME}/.oh-my-zsh/custom/" # operation not permitted otherwise
-linkhome "_mac/zsh/custom/themes"         ".oh-my-zsh/custom"
-linkhome "_mac/zsh/custom/plugins"        ".oh-my-zsh/custom"
-linkhome "_mac/tmux/.tmux.conf"           ".tmux.conf"
-linkhome "_mac/screen/.screenrc"          ".screenrc"
-linkhome "_mac/aerospace/.aerospace.toml" ".aerospace.toml"
-linkhome "git/.gitattributes"             ".gitattributes"
-linkhome "git/.gitignore"                 ".gitignore"
-linkhome "git/.gitconfig"                 ".gitconfig"
-linkhome "vim/.vimrc"                     ".vimrc"
-mkdir -p ~/.global-modules
-linkhome "npm/.npmrc"                     ".npmrc"
-linkvscode "_mac/vscode/keybindings.json" "keybindings.json"
-linkvscode "_mac/vscode/settings.json"    "settings.json"
-linkvscode "vscode/snippets/"             "snippets"
+printf "Dotfiles setup complete. Backups of replaced files are stored in %s\n", "$TEMP"

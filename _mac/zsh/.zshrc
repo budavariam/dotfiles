@@ -1,6 +1,7 @@
 # zmodload zsh/zprof # for profiling run: time  zsh -i -c exit and add 'zprof' at the end of this file
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
+export PATH=$PATH:/opt/homebrew/bin
 
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
