@@ -1,7 +1,10 @@
 #!/bin/bash
 
-VSCODE="${HOME}/Library/Application Support/Code/User"
-TEMP="${HOME}/.tmpdotfiles/"
+FOLDER_VSCODE="${HOME}/Library/Application Support/Code/User"
+FOLDER_SKETCHYBAR="${HOME}/.config/sketchybar"
+FOLDER_TEMP="${HOME}/.tmpdotfiles/"
+
+mkdir -p "${FOLDER_SKETCHYBAR}"
 
 if ! command -v stow &>/dev/null; then
   echo "stow is not installed. Installing it along other brew dependencies..."
@@ -21,10 +24,11 @@ pushd "_mac" || exit 1
   stow -vt ~ tmux
   stow -vt ~ zsh
   stow -vt ~ wezterm
-  stow -vt "${VSCODE}" vscode
+  stow -vt "${FOLDER_VSCODE}" vscode
+  stow -vt "${FOLDER_SKETCHYBAR}" sketchybar
 popd || exit 1
 stow -vt ~ git
 stow -vt ~ npm
 stow -vt ~ vim
 
-printf "Dotfiles setup complete. Backups of replaced files are stored in %s\n", "$TEMP"
+printf "Dotfiles setup complete. Backups of replaced files are stored in %s\n", "${FOLDER_TEMP}"
