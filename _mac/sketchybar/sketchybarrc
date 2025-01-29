@@ -12,7 +12,7 @@ PLUGIN_DIR="$CONFIG_DIR/plugins"
 # If you are looking for other colors, see the color picker:
 # https://felixkratz.github.io/SketchyBar/config/tricks#color-picker
 
-sketchybar --bar position=top height=40 blur_radius=30 color=0x40000000
+sketchybar --bar position=top height=40 blur_radius=30 color=0xff001526
 
 ##### Changing Defaults #####
 # We now change some default values, which are applied to all further items.
@@ -65,7 +65,32 @@ sketchybar --add item chevron left \
            --set chevron icon= label.drawing=off \
            --add item front_app left \
            --set front_app icon.drawing=off script="$PLUGIN_DIR/front_app.sh" \
-           --subscribe front_app front_app_switched
+           --subscribe front_app front_app_switched \
+           --add event aerospace_workspace_change \
+           --add item current_workspace left \
+           --subscribe current_workspace aerospace_workspace_change \
+           --set current_workspace \
+                 background.color=0x88000000 \
+                 background.corner_radius=5 \
+                 popup.height=20 \
+                 background.height=5 \
+                 background.padding_left=5 \
+                 background.padding_right=5 \
+                 script="$CONFIG_DIR/plugins/aerospace.sh" \
+                 click_script="sketchybar --set current_workspace popup.drawing=toggle" \
+                 popup.align=center
+
+for sid in $(aerospace list-workspaces --all); do
+    sketchybar --add item space.s_$sid popup.current_workspace \
+               --set space.s_$sid \
+                     label="$sid" \
+                     padding_left=2 \
+                     padding_right=2 \
+                     background.color=0x55000000 \
+                     background.drawing=on \
+                     background.corner_radius=2 \
+                     click_script="aerospace workspace $sid && sketchybar --set current_workspace label=\"$sid\" && sketchybar --set current_workspace popup.drawing=off"
+done
 
 ##### Adding Right Items #####
 # In the same way as the left items we can add items to the right side.
@@ -85,7 +110,21 @@ sketchybar --add item clock right \
            --subscribe volume volume_change \
            --add item battery right \
            --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
-           --subscribe battery system_woke power_source_change
+           --subscribe battery system_woke power_source_change \
+           --add item vpn_status right \
+           --set vpn_status icon="􀞡" update_freq=5 label.drawing=off script="$CONFIG_DIR/plugins/vpn_status.sh" \
+           --add item wifi_status right \
+           --subscribe wifi_status wifi_change \
+           --set wifi_status icon="􁣡" label.drawing=off script="$CONFIG_DIR/plugins/wifi_status.sh" \
+           --add event focus_mode_change \
+           --trigger focus_mode_change \
+           --add item focus_status right \
+           --subscribe focus_status focus_mode_change \
+           --set focus_status \
+                 icon="󰸘" \
+                 label.drawing=off \
+                 update_freq=60 \
+                 script="$CONFIG_DIR/plugins/focus_status.sh"
 
 ##### Force all scripts to run the first time (never do this in a script) #####
 sketchybar --update
