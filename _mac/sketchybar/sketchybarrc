@@ -80,7 +80,7 @@ sketchybar --add item logo left \
                  popup.align=center \
            --add item weather left \
            --set weather \
-              update_freq=5 \
+              update_freq=600 \
               script="$CONFIG_DIR/plugins/weather.sh" \
               background.drawing=on
 
