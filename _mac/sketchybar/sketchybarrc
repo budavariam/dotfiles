@@ -77,7 +77,12 @@ sketchybar --add item logo left \
                  popup.height=20 \
                  script="$CONFIG_DIR/plugins/aerospace.sh" \
                  click_script="sketchybar --set current_workspace popup.drawing=toggle" \
-                 popup.align=center
+                 popup.align=center \
+           --add item weather left \
+           --set weather \
+              update_freq=5 \
+              script="$CONFIG_DIR/plugins/weather.sh" \
+              background.drawing=on
 
 for sid in $(aerospace list-workspaces --all); do
     sketchybar --add item space.s_$sid popup.current_workspace \
