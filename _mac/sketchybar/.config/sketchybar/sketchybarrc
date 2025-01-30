@@ -1,0 +1,96 @@
+# This is a demo config to showcase some of the most important commands.
+# It is meant to be changed and configured, as it is intentionally kept sparse.
+# For a (much) more advanced configuration example see my dotfiles:
+# https://github.com/FelixKratz/dotfiles
+# sketchybar --reload
+
+PLUGIN_DIR="$PLUGIN_DIR"
+source "$HOME/.config/sketchybar/variables.sh" # Loads all defined colors
+
+##### Bar Appearance #####
+# Configuring the general appearance of the bar.
+# These are only some of the options available. For all options see:
+# https://felixkratz.github.io/SketchyBar/config/bar
+# If you are looking for other colors, see the color picker:
+# https://felixkratz.github.io/SketchyBar/config/tricks#color-picker
+
+sketchybar --bar position=top height=40 blur_radius=30 color=0xff001526
+
+##### Changing Defaults #####
+# We now change some default values, which are applied to all further items.
+# For a full list of all available item properties see:
+# https://felixkratz.github.io/SketchyBar/config/items
+
+default=(
+      updates=when_shown
+      padding_left=5
+      padding_right=5
+      icon.font="$FONT:Bold:13.5"
+      icon.color="$ICON_COLOR"
+      icon.padding_left="$PADDINGS"
+      icon.padding_right="$PADDINGS"
+      label.font="$FONT:Bold:13.0"
+      label.color="$LABEL_COLOR"
+      label.padding_left="$PADDINGS"
+      label.padding_right="$PADDINGS"
+      background.padding_right="$PADDINGS"
+      background.padding_left="$PADDINGS"
+      background.color="$BACKGROUND_COLOR"
+      background.corner_radius="$CORNER_RADIUS"
+      background.drawing="off"
+      background.height=26
+      background.border_width="$BORDER_WIDTH"
+      popup.background.border_width=1
+      popup.background.corner_radius="$POPUP_CORNER_RADIUS"
+      popup.background.border_color="$POPUP_BORDER_COLOR"
+      popup.background.color="$POPUP_BACKGROUND_COLOR"
+      popup.background.shadow.drawing="$SHADOW"
+)
+
+sketchybar --bar height=32 \
+      color="$BAR_COLOR" \
+      shadow="$SHADOW" \
+      position=top \
+      sticky=on \
+      blur_radius=0 \
+      notch_width=200 \
+      --default "${default[@]}"
+
+##### Adding Mission Control Space Indicators #####
+# Let's add some mission control spaces:
+# https://felixkratz.github.io/SketchyBar/config/components#space----associate-mission-control-spaces-with-an-item
+# to indicate active and available mission control spaces.
+
+##### Adding Left Items #####
+# We add some regular items to the left side of the bar, where
+# only the properties deviating from the current defaults need to be set
+
+source "$ITEM_DIR/logo.sh"
+source "$ITEM_DIR/aerospace.sh"
+source "$ITEM_DIR/front_app.sh"
+source "$ITEM_DIR/weather.sh"
+
+##### Adding Right Items #####
+# In the same way as the left items we can add items to the right side.
+# Additional position (e.g. center) are available, see:
+# https://felixkratz.github.io/SketchyBar/config/items#adding-items-to-sketchybar
+
+# Some items refresh on a fixed cycle, e.g. the clock runs its script once
+# every 10s. Other items respond to events they subscribe to, e.g. the
+# volume.sh script is only executed once an actual change in system audio
+# volume is registered. More info about the event system can be found here:
+# https://felixkratz.github.io/SketchyBar/config/events
+
+source "$ITEM_DIR/clock.sh"
+source "$ITEM_DIR/os.sh"
+source "$ITEM_DIR/cpu.sh"
+source "$ITEM_DIR/network.sh"
+
+## NOTE
+## SYSTEM EVENTS:
+### https://github.com/FelixKratz/SketchyBar/discussions/151
+### https://developer.apple.com/documentation/foundation/nsnotificationname
+### log show --predicate 'eventMessage contains[c] "register name"' --last 1h | awk '{ print $12 }' | sort | uniq -c | sort
+
+##### Force all scripts to run the first time (never do this in a script) #####
+sketchybar --update

@@ -1,10 +1,7 @@
 #!/bin/bash
 
 FOLDER_VSCODE="${HOME}/Library/Application Support/Code/User"
-FOLDER_SKETCHYBAR="${HOME}/.config/sketchybar"
 FOLDER_TEMP="${HOME}/.tmpdotfiles/"
-
-mkdir -p "${FOLDER_SKETCHYBAR}"
 
 if ! command -v stow &>/dev/null; then
   echo "stow is not installed. Installing it along other brew dependencies..."
@@ -21,11 +18,11 @@ pushd "_mac" || exit 1
   # stow -vt ~ iterm2 # need to set iterm2 manually
   stow -vt ~ screen
   stow -vt ~ shell
+  stow -vt ~ sketchybar
   stow -vt ~ tmux
   stow -vt ~ zsh
-  stow -vt ~ wezterm
   stow -vt "${FOLDER_VSCODE}" vscode
-  stow -vt "${FOLDER_SKETCHYBAR}" sketchybar
+  stow -vt ~ wezterm
 popd || exit 1
 stow -vt ~ git
 stow -vt ~ npm
