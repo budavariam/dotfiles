@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "$SENDER" >> /tmp/asd
+# echo "$SENDER" >> /tmp/.debug_sketchbar
 if [[ "$SENDER" == "mouse.entered" ]]; then
 	sketchybar --set cpu label.drawing=on
 elif [[ "$SENDER" == "mouse.exited" ]]; then

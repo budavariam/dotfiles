@@ -1,6 +1,15 @@
 #!/bin/zsh
 # FORKED FROM: https://github.com/FelixKratz/SketchyBar/discussions/12#discussioncomment-1634025
 
+CITY="Budapest"
+CITY=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$CITY'))")
+
+# echo "$SENDER" >> /tmp/.debug_sketchbar
+if [[ "$SENDER" == "mouse.clicked" ]]; then;
+    open "https://www.idokep.hu/idojaras/$CITY"
+    exit 0
+fi
+
 API_KEY_FILE="$CONFIG_DIR/plugins/sensitive-weather.sh"
 if [ -f "$API_KEY_FILE" ]; then
     source "$API_KEY_FILE"
@@ -11,7 +20,6 @@ fi
 
 # Configuration
 # API_KEY="" # SOURCED FROM SECRET FILE
-CITY="Budapest"
 
 # Simplified weather icon mappings - common conditions only
 weather_icons_day=(
@@ -116,8 +124,6 @@ weather_icons_night=(
     [1282]=  # Moderate or heavy snow with thunder/395
 )
 
-CITY=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$CITY'))")
-
 # Fetch weather data
 data=$(curl -s "http://api.weatherapi.com/v1/current.json?key=$API_KEY&q=$CITY")
 
@@ -131,6 +137,5 @@ prefix=$([ "$is_day" = "1" ] && echo "day" || echo "night")
 
 [ "$is_day" = "1" ] && icon=$weather_icons_day[$condition] || icon=$weather_icons_night[$condition]
 
-echo $icon
 # Update SketchyBar
 sketchybar -m --set weather icon="$icon" label="${temp}°C"

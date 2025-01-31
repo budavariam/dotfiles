@@ -2,7 +2,7 @@
 # It is meant to be changed and configured, as it is intentionally kept sparse.
 # For a (much) more advanced configuration example see my dotfiles:
 # https://github.com/FelixKratz/dotfiles
-# sketchybar --reload
+# sketchybar --reload && rm -f /tmp/.debug_sketchbar && touch /tmp/.debug_sketchbar && tail -f /tmp/.debug_sketchbar
 
 PLUGIN_DIR="$PLUGIN_DIR"
 source "$HOME/.config/sketchybar/variables.sh" # Loads all defined colors
@@ -69,6 +69,7 @@ source "$ITEM_DIR/logo.sh"
 source "$ITEM_DIR/aerospace.sh"
 source "$ITEM_DIR/front_app.sh"
 source "$ITEM_DIR/weather.sh"
+source "$ITEM_DIR/spotify.sh"
 
 ##### Adding Right Items #####
 # In the same way as the left items we can add items to the right side.

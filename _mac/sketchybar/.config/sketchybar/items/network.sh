@@ -4,8 +4,9 @@ COLOR="$WHITE"
 
 sketchybar --add item vpn_status right \
     --set vpn_status icon="􀞡" update_freq=30 background.drawing=off label.drawing=off script="$PLUGIN_DIR/vpn_status.sh" \
+    --subscribe vpn_status mouse.entered mouse.exited \
     --add item wifi_status right \
-    --subscribe wifi_status wifi_change \
+    --subscribe wifi_status wifi_change mouse.entered mouse.exited \
     --set wifi_status icon="􁣡" background.drawing=off label.drawing=off script="$PLUGIN_DIR/wifi_status.sh" \
     --add bracket b_network wifi_status vpn_status \
     --set b_network \

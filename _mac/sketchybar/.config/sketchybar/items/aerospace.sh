@@ -7,7 +7,7 @@ sketchybar --add event aerospace_workspace_change \
     --subscribe current_workspace aerospace_workspace_change \
     --set current_workspace \
         display=active \
-        icon="􀣳" \
+        icon="􀢹" \
         popup.height=20 \
         script="$PLUGIN_DIR/aerospace.sh" \
         click_script="sketchybar --set current_workspace popup.drawing=toggle" \

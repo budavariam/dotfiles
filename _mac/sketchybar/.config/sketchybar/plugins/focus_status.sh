@@ -14,7 +14,7 @@ elif [[ "$SENDER" == "forced" ]]; then
 fi
 
 if [[ "$FOCUS_IS_ON" == true ]]; then
-    sketchybar --set focus_status icon="􀆺" icon.color=0xFFFFFFFF
+    sketchybar --set focus_status icon="􀆺" icon.color=0xff5e5ce6
 else
     sketchybar --set focus_status icon="􀆹" icon.color=0xFF888888
 fi

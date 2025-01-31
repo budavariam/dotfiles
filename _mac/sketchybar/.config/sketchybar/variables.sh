@@ -9,6 +9,7 @@ BLUE=0xff7aa2f7
 CYAN=0xff7dcfff
 GREEN=0xff9ece6a
 YELLOW=0xffe0af68
+PURPLE=0xff5e5ce6
 ORANGE=0xffff9e64
 RED=0xfff7768e
 
