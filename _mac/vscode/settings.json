@@ -42,5 +42,9 @@
     "git.autofetch": true,
     "[json]": {
         "editor.defaultFormatter": "vscode.json-language-features"
-    }
+    },
+    "[css]": {
+        "editor.defaultFormatter": "vscode.css-language-features"
+    },
+    "terminal.integrated.fontFamily": "monospace"
 }
