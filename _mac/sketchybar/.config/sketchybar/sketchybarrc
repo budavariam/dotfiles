@@ -65,7 +65,7 @@ sketchybar --bar height=32 \
 # We add some regular items to the left side of the bar, where
 # only the properties deviating from the current defaults need to be set
 
-source "$ITEM_DIR/logo.sh"
+source "$ITEM_DIR/notification.sh"
 source "$ITEM_DIR/aerospace.sh"
 source "$ITEM_DIR/front_app.sh"
 source "$ITEM_DIR/weather.sh"

@@ -2,7 +2,7 @@
 
 if [[ "$(osascript -e 'application "Spotify" is running')" != "true" ]]; then
   echo "Spotify is not running"
-  sketchybar --set spotify.name label=""
+  sketchybar --set spotify.name label="" label.drawing=off
   exit 0
 fi
 
@@ -72,9 +72,9 @@ update() {
     if [ "$PLAYING" -eq 0 ]; then
         # If playing, set appropriate labels and icons
         if [ -z "$ARTIST" ]; then
-            args+=("--set" "spotify.name" "label=$ALBUM 􀉮 $TRACK" "drawing=on")
+            args+=("--set" "spotify.name" "label=$ALBUM 􀉮 $TRACK" "label.drawing=on")
         else
-            args+=("--set" "spotify.name" "label=$ARTIST 􀉮 $TRACK" "drawing=on")
+            args+=("--set" "spotify.name" "label=$ARTIST 􀉮 $TRACK" "label.drawing=on")
         fi
         
         args+=(

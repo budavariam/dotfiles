@@ -209,6 +209,18 @@ function devproxy() {
   echo "HTTP and HTTPS proxy turned $TOGGLE for $NETWORKSERVICE"
 }
 
+function toolbar_notify() {
+  local EVENT_NAME="notification_update"
+  local MESSAGE="${1:-}"
+  
+  if [[ -z "$MESSAGE" ]]; then
+    echo "Usage: toolbar_notify <message>"
+    return 1
+  fi
+
+  sketchybar --trigger "$EVENT_NAME" VAR="$MESSAGE"
+}
+
 # pyenv
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"

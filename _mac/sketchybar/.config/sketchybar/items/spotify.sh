@@ -10,15 +10,17 @@ sketchybar --add item spotify.name left                                     \
                  icon=♫                                                     \
                  background.padding_left=0                                  \
                  icon.padding_left="${INNER_PADDINGS}"                      \
-                 icon.padding_right=0                                       \
+                 icon.padding_right="${INNER_PADDINGS}"                     \
+                 label.padding_right="${INNER_PADDINGS}"                    \
+                 label.padding_left=0                                       \
                  script="$PLUGIN_DIR/spotify.sh"                            \
                  background.border_color=0x77ADADAD                         \
                  label.max_chars=54                                         \
                  icon.color="$COLOR"                                        \
                  background.border_color="$COLOR"                           \
-                popup.horizontal=on                 \
-                popup.align=center                    \
-                popup.background.image.scale=0.5    \
+                popup.horizontal=on                                         \
+                popup.align=center                                          \
+                popup.background.image.scale=0.5                            \
             --add       item            spotify.back popup.spotify.name     \
             --set       spotify.back    icon=􀊎                              \
                                         icon.padding_left=5                 \
@@ -52,16 +54,14 @@ sketchybar --add item spotify.name left                                     \
                                         label.drawing=off                   \
                                         script="$PLUGIN_DIR/spotify.sh"     \
             --subscribe spotify.shuffle mouse.clicked                       \
-            --add      bracket b_spotify spotify.name        \
+            --add      bracket b_spotify spotify.name                       \
                                                 spotify.back                \
                                                 spotify.play                \
                                                 spotify.next                \
                                                 spotify.shuffle             \
                                                 spotify.repeat              \
             --set b_spotify                                                 \
-                    icon.padding_left=10                                    \
                     label.color="$COLOR"                                    \
-                    label.padding_right=10                                  \
                     background.drawing=on                                   \
                     background.corner_radius="$CORNER_RADIUS"               \
                     background.padding_right=5                              \
