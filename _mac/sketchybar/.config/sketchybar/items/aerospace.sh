@@ -18,7 +18,8 @@ sketchybar --add event aerospace_workspace_change \
         background.color="$BAR_COLOR" \
         label.color="$COLOR" \
         label.padding_right="$INNER_PADDINGS" \
-        icon.padding_left="$INNER_PADDINGS"
+        icon.padding_left="$INNER_PADDINGS" \
+        icon.padding_right="6"
 
 for sid in $(aerospace list-workspaces --all); do
     sketchybar --add item space.s_$sid popup.current_workspace \

@@ -287,6 +287,10 @@ if.app-id = 'com.stengo.DeskPad'
 run = 'move-node-to-workspace D'
 
 [[on-window-detected]]
+if.app-id = 'com.bohemiancoding.sketch3'
+run = 'move-node-to-workspace D'
+
+[[on-window-detected]]
 if.app-id = 'com.DanPristupov.Fork'
 run = 'move-node-to-workspace C'
 
