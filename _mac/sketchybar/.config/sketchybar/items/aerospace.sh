@@ -4,13 +4,12 @@ COLOR="$WHITE"
 
 sketchybar --add event aerospace_workspace_change \
     --add item current_workspace right \
-    --subscribe current_workspace aerospace_workspace_change \
+    --subscribe current_workspace aerospace_workspace_change mouse.clicked \
     --set current_workspace \
         display=active \
         icon="􀢹" \
         popup.height=20 \
         script="$PLUGIN_DIR/aerospace.sh" \
-        click_script="sketchybar --set current_workspace popup.drawing=toggle" \
         popup.align=center \
         background.drawing=on \
         background.padding_right="$PADDINGS" \
