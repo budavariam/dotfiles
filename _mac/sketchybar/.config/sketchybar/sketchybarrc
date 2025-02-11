@@ -66,7 +66,6 @@ sketchybar --bar height=32 \
 # only the properties deviating from the current defaults need to be set
 
 source "$ITEM_DIR/notification.sh"
-source "$ITEM_DIR/aerospace.sh"
 source "$ITEM_DIR/front_app.sh"
 source "$ITEM_DIR/weather.sh"
 source "$ITEM_DIR/spotify.sh"
@@ -84,6 +83,7 @@ source "$ITEM_DIR/spotify.sh"
 
 source "$ITEM_DIR/clock.sh"
 source "$ITEM_DIR/os.sh"
+source "$ITEM_DIR/aerospace.sh"
 source "$ITEM_DIR/cpu.sh"
 source "$ITEM_DIR/network.sh"
 

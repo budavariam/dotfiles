@@ -3,7 +3,7 @@
 COLOR="$WHITE"
 
 sketchybar --add event aerospace_workspace_change \
-    --add item current_workspace left \
+    --add item current_workspace right \
     --subscribe current_workspace aerospace_workspace_change \
     --set current_workspace \
         display=active \
