@@ -41,4 +41,4 @@ fi
 
 # The item invoking this script (name $NAME) will get its icon and label
 # updated with the current battery status
-sketchybar --set "$NAME" icon="$ICON" label="${PERCENTAGE}%" label.color="${COLOR}"
+sketchybar --set "$NAME" icon="$ICON" icon.color="${COLOR}" label="${PERCENTAGE}%" # label.color="${COLOR}"
