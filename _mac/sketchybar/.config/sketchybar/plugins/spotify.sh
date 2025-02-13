@@ -72,9 +72,9 @@ update() {
     if [ "$PLAYING" -eq 0 ]; then
         # If playing, set appropriate labels and icons
         if [ -z "$ARTIST" ]; then
-            args+=("--set" "spotify.name" "label=$ALBUM 􀉮 $TRACK" "label.drawing=on")
+            args+=("--set" "spotify.name" "label=$TRACK 􀉮 $ALBUM" "label.drawing=on")
         else
-            args+=("--set" "spotify.name" "label=$ARTIST 􀉮 $TRACK" "label.drawing=on")
+            args+=("--set" "spotify.name" "label=$TRACK 􀉮 $ARTIST" "label.drawing=on")
         fi
         
         args+=(
@@ -111,10 +111,10 @@ get_info() {
     echo "Paused"
     else
         # echo "Playing"
-        song=$(osascript -e 'tell application "Spotify" to name of current track as string')
-        artist=$(osascript -e 'tell application "Spotify" to artist of current track as string')
-        sketchybar --set spotify.name label="$song 􀉮 $artist"
-        # echo "$song - $artist" >> /tmp/.debug_sketchbar
+        TRACK=$(osascript -e 'tell application "Spotify" to name of current track as string')
+        ARTIST=$(osascript -e 'tell application "Spotify" to artist of current track as string')
+        sketchybar --set spotify.name label="$TRACK 􀉮 $ARTIST"
+        # echo "$TRACK - $ARTIST" >> /tmp/.debug_sketchbar
     fi
 
 }
