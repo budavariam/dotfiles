@@ -4,6 +4,20 @@
 CITY="Budapest"
 CITY=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$CITY'))")
 
+# Color definitions
+SUNNY_DAY="0xffFFB74D"      # Bright orange for sunny day
+SUNNY_NIGHT="0xff4A90E2"    # Deep blue for clear night
+CLOUDY_DAY="0xff78909C"     # Blue-grey for cloudy day
+CLOUDY_NIGHT="0xff455A64"   # Darker blue-grey for cloudy night
+RAIN_DAY="0xff4FC3F7"       # Light blue for rain during day
+RAIN_NIGHT="0xff0288D1"     # Darker blue for rain during night
+SNOW_DAY="0xffE0E0E0"       # Light grey for snow during day
+SNOW_NIGHT="0xff9E9E9E"     # Darker grey for snow during night
+THUNDER_DAY="0xffFDD835"    # Bright yellow for thunder during day
+THUNDER_NIGHT="0xffF9A825"  # Amber for thunder during night
+FOG_DAY="0xffB0BEC5"       # Light blue-grey for fog during day
+FOG_NIGHT="0xff78909C"     # Darker blue-grey for fog during night
+
 # echo "$SENDER" >> /tmp/.debug_sketchbar
 if [[ "$SENDER" == "mouse.clicked" ]]; then;
     open "https://www.idokep.hu/idojaras/$CITY"
@@ -124,6 +138,110 @@ weather_icons_night=(
     [1282]=  # Moderate or heavy snow with thunder/395
 )
 
+
+# Weather icon colors
+weather_colors_day=(
+    [1000]="$SUNNY_DAY"     # Sunny
+    [1003]="$CLOUDY_DAY"    # Partly cloudy
+    [1006]="$CLOUDY_DAY"    # Cloudy
+    [1009]="$CLOUDY_DAY"    # Overcast
+    [1030]="$FOG_DAY"       # Mist
+    [1063]="$RAIN_DAY"      # Patchy rain
+    [1066]="$SNOW_DAY"      # Patchy snow
+    [1069]="$SNOW_DAY"      # Patchy sleet
+    [1072]="$SNOW_DAY"      # Patchy freezing drizzle
+    [1087]="$THUNDER_DAY"   # Thundery outbreaks
+    [1114]="$SNOW_DAY"      # Blowing snow
+    [1117]="$SNOW_DAY"      # Blizzard
+    [1135]="$FOG_DAY"       # Fog
+    [1147]="$FOG_DAY"       # Freezing fog
+    [1150]="$RAIN_DAY"      # Light drizzle
+    [1153]="$RAIN_DAY"      # Light drizzle
+    [1168]="$SNOW_DAY"      # Freezing drizzle
+    [1171]="$SNOW_DAY"      # Heavy freezing drizzle
+    [1180]="$RAIN_DAY"      # Light rain
+    [1183]="$RAIN_DAY"      # Light rain
+    [1186]="$RAIN_DAY"      # Moderate rain
+    [1189]="$RAIN_DAY"      # Moderate rain
+    [1192]="$RAIN_DAY"      # Heavy rain
+    [1195]="$RAIN_DAY"      # Heavy rain
+    [1198]="$SNOW_DAY"      # Light freezing rain
+    [1201]="$SNOW_DAY"      # Heavy freezing rain
+    [1204]="$SNOW_DAY"      # Light sleet
+    [1207]="$SNOW_DAY"      # Heavy sleet
+    [1210]="$SNOW_DAY"      # Light snow
+    [1213]="$SNOW_DAY"      # Light snow
+    [1216]="$SNOW_DAY"      # Moderate snow
+    [1219]="$SNOW_DAY"      # Moderate snow
+    [1222]="$SNOW_DAY"      # Heavy snow
+    [1225]="$SNOW_DAY"      # Heavy snow
+    [1237]="$SNOW_DAY"      # Ice pellets
+    [1240]="$RAIN_DAY"      # Light rain shower
+    [1243]="$RAIN_DAY"      # Heavy rain shower
+    [1246]="$RAIN_DAY"      # Torrential rain
+    [1249]="$SNOW_DAY"      # Light sleet showers
+    [1252]="$SNOW_DAY"      # Heavy sleet showers
+    [1255]="$SNOW_DAY"      # Light snow showers
+    [1258]="$SNOW_DAY"      # Heavy snow showers
+    [1261]="$SNOW_DAY"      # Light ice pellets
+    [1264]="$SNOW_DAY"      # Heavy ice pellets
+    [1273]="$THUNDER_DAY"   # Light rain with thunder
+    [1276]="$THUNDER_DAY"   # Heavy rain with thunder
+    [1279]="$THUNDER_DAY"   # Light snow with thunder
+    [1282]="$THUNDER_DAY"   # Heavy snow with thunder
+)
+
+weather_colors_night=(
+    [1000]="$SUNNY_NIGHT"     # Clear
+    [1003]="$CLOUDY_NIGHT"    # Partly cloudy
+    [1006]="$CLOUDY_NIGHT"    # Cloudy
+    [1009]="$CLOUDY_NIGHT"    # Overcast
+    [1030]="$FOG_NIGHT"       # Mist
+    [1063]="$RAIN_NIGHT"      # Patchy rain
+    [1066]="$SNOW_NIGHT"      # Patchy snow
+    [1069]="$SNOW_NIGHT"      # Patchy sleet
+    [1072]="$SNOW_NIGHT"      # Patchy freezing drizzle
+    [1087]="$THUNDER_NIGHT"   # Thundery outbreaks
+    [1114]="$SNOW_NIGHT"      # Blowing snow
+    [1117]="$SNOW_NIGHT"      # Blizzard
+    [1135]="$FOG_NIGHT"       # Fog
+    [1147]="$FOG_NIGHT"       # Freezing fog
+    [1150]="$RAIN_NIGHT"      # Light drizzle
+    [1153]="$RAIN_NIGHT"      # Light drizzle
+    [1168]="$SNOW_NIGHT"      # Freezing drizzle
+    [1171]="$SNOW_NIGHT"      # Heavy freezing drizzle
+    [1180]="$RAIN_NIGHT"      # Light rain
+    [1183]="$RAIN_NIGHT"      # Light rain
+    [1186]="$RAIN_NIGHT"      # Moderate rain
+    [1189]="$RAIN_NIGHT"      # Moderate rain
+    [1192]="$RAIN_NIGHT"      # Heavy rain
+    [1195]="$RAIN_NIGHT"      # Heavy rain
+    [1198]="$SNOW_NIGHT"      # Light freezing rain
+    [1201]="$SNOW_NIGHT"      # Heavy freezing rain
+    [1204]="$SNOW_NIGHT"      # Light sleet
+    [1207]="$SNOW_NIGHT"      # Heavy sleet
+    [1210]="$SNOW_NIGHT"      # Light snow
+    [1213]="$SNOW_NIGHT"      # Light snow
+    [1216]="$SNOW_NIGHT"      # Moderate snow
+    [1219]="$SNOW_NIGHT"      # Moderate snow
+    [1222]="$SNOW_NIGHT"      # Heavy snow
+    [1225]="$SNOW_NIGHT"      # Heavy snow
+    [1237]="$SNOW_NIGHT"      # Ice pellets
+    [1240]="$RAIN_NIGHT"      # Light rain shower
+    [1243]="$RAIN_NIGHT"      # Heavy rain shower
+    [1246]="$RAIN_NIGHT"      # Torrential rain
+    [1249]="$SNOW_NIGHT"      # Light sleet showers
+    [1252]="$SNOW_NIGHT"      # Heavy sleet showers
+    [1255]="$SNOW_NIGHT"      # Light snow showers
+    [1258]="$SNOW_NIGHT"      # Heavy snow showers
+    [1261]="$SNOW_NIGHT"      # Light ice pellets
+    [1264]="$SNOW_NIGHT"      # Heavy ice pellets
+    [1273]="$THUNDER_NIGHT"   # Light rain with thunder
+    [1276]="$THUNDER_NIGHT"   # Heavy rain with thunder
+    [1279]="$THUNDER_NIGHT"   # Light snow with thunder
+    [1282]="$THUNDER_NIGHT"   # Heavy snow with thunder
+)
+
 # Fetch weather data
 data=$(curl -s "http://api.weatherapi.com/v1/current.json?key=$API_KEY&q=$CITY")
 
@@ -137,5 +255,13 @@ prefix=$([ "$is_day" = "1" ] && echo "day" || echo "night")
 
 [ "$is_day" = "1" ] && icon=$weather_icons_day[$condition] || icon=$weather_icons_night[$condition]
 
-# Update SketchyBar
-sketchybar -m --set weather icon="$icon" label="${temp}°C"
+if [ "$is_day" = "1" ]; then
+    icon=$weather_icons_day[$condition]
+    icon_color=$weather_colors_day[$condition]
+else
+    icon=$weather_icons_night[$condition]
+    icon_color=$weather_colors_night[$condition]
+fi
+
+# Update SketchyBar with icon and color separately
+sketchybar -m --set weather icon="$icon" icon.color="$icon_color" label="${temp}°C"
