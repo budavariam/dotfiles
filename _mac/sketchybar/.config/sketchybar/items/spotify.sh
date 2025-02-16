@@ -15,6 +15,7 @@ sketchybar --add item spotify.name left                                     \
                  label.padding_left=0                                       \
                  script="$PLUGIN_DIR/spotify.sh"                            \
                  background.border_color=0x77ADADAD                         \
+                 label.drawing=off                                          \
                  label.max_chars=54                                         \
                  icon.color="$COLOR"                                        \
                  background.border_color="$COLOR"                           \
@@ -54,17 +55,19 @@ sketchybar --add item spotify.name left                                     \
                                         label.drawing=off                   \
                                         script="$PLUGIN_DIR/spotify.sh"     \
             --subscribe spotify.shuffle mouse.clicked                       \
-            --add      bracket b_spotify spotify.name                       \
+                                                                            \
+            --add       bracket b_spotify                                   \
+                                                spotify.name                \
                                                 spotify.back                \
                                                 spotify.play                \
                                                 spotify.next                \
                                                 spotify.shuffle             \
                                                 spotify.repeat              \
-            --set b_spotify                                                 \
-                    label.color="$COLOR"                                    \
-                    background.drawing=on                                   \
-                    background.corner_radius="$CORNER_RADIUS"               \
-                    background.padding_right=5                              \
-                    background.border_color="$WHITE"                        \
-                    background.color="$BAR_COLOR"                           \
-                    background.padding_left=5
+            --set       b_spotify                                           \
+                        label.color="$COLOR"                                \
+                        background.drawing=on                               \
+                        background.corner_radius="$CORNER_RADIUS"           \
+                        background.padding_right=5                          \
+                        background.border_color="$WHITE"                    \
+                        background.color="$BAR_COLOR"                       \
+                        background.padding_left=5

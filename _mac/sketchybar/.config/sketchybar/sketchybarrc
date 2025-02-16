@@ -67,8 +67,8 @@ sketchybar --bar height=32 \
 
 source "$ITEM_DIR/notification.sh"
 source "$ITEM_DIR/front_app.sh"
-source "$ITEM_DIR/weather.sh"
 source "$ITEM_DIR/exchange-rate.sh"
+source "$ITEM_DIR/weather.sh"
 source "$ITEM_DIR/spotify.sh"
 
 ##### Adding Right Items #####

@@ -14,6 +14,10 @@ CACHE_FILE="$CACHE_DIR/rates_$(date +%Y%m%d).json"
 # PREVIOUS_FILE="$CACHE_DIR/rates_$(date -v-1d +%Y%m%d).json"
 #API_KEY_EXCHANGE_RATE="YOUR_API_KEY_HERE"  # load from file
 WHITE=0xaaffffff
+GREEN=0xff28a745
+RED=0xffdc3545
+ERROR_COLOR=0xffdc3545
+
 
 # Create cache directory if it doesn't exist
 mkdir -p "$CACHE_DIR"
@@ -49,20 +53,21 @@ get_color() {
     local previous=$2
     
     if [ -z "$previous" ] || [ "$current" = "$previous" ]; then
-        echo "white"
+        echo "$WHITE"
     elif (( $(echo "$current > $previous" | bc -l) )); then
-        echo "0xff28a745"  # Green
+        echo "$RED"
     else
-        echo "0xffdc3545"  # Red
+        echo "$GREEN"
     fi
 }
 
 # Function to update the display
 update_display() {
-    local current_date=$(date +%Y%m%d)
-    local current_cache="$CACHE_DIR/rates_$current_date.json"
-    local previous_date=$(date -v-1d +%Y%m%d)
-    local previous_cache="$CACHE_DIR/rates_$previous_date.json"
+    local current_date, current_cache, previous_date, previous_cache
+    current_date=$(date +%Y%m%d)
+    current_cache="$CACHE_DIR/rates_$current_date.json"
+    previous_date=$(date -v-1d +%Y%m%d)
+    previous_cache="$CACHE_DIR/rates_$previous_date.json"
 
     # Fetch new rates if today's cache doesn't exist
     if [ ! -f "$current_cache" ]; then
@@ -71,13 +76,13 @@ update_display() {
     
     # Read current and previous rates
     if [ -f "$current_cache" ]; then
-        EUR_RATE=$(calculate_huf_rate $(jq -r '.conversion_rates.EUR' "$current_cache"))
-        USD_RATE=$(calculate_huf_rate $(jq -r '.conversion_rates.USD' "$current_cache"))
-        TIMESTAMP=$(date -r "$current_cache" "+%H:%M")
+        EUR_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.EUR' "$current_cache")")
+        USD_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.USD' "$current_cache")")
+        # TIMESTAMP=$(date -r "$current_cache" "+%H:%M")
         
         if [ -f "$previous_cache" ]; then
-            PREV_EUR_RATE=$(calculate_huf_rate $(jq -r '.conversion_rates.EUR' "$previous_cache"))
-            PREV_USD_RATE=$(calculate_huf_rate $(jq -r '.conversion_rates.USD' "$previous_cache"))
+            PREV_EUR_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.EUR' "$previous_cache")")
+            PREV_USD_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.USD' "$previous_cache")")
             
             EUR_COLOR=$(get_color "$EUR_RATE" "$PREV_EUR_RATE")
             USD_COLOR=$(get_color "$USD_RATE" "$PREV_USD_RATE")
@@ -86,14 +91,22 @@ update_display() {
             USD_COLOR="$WHITE"
         fi
         
-        # Format the output for sketchybar with timestamp
-        sketchybar -m --set currency_item \
-            label="€:${EUR_RATE%.*} \$:${USD_RATE%.*} (${TIMESTAMP})" \
-            label.color="$EUR_COLOR"
+        sketchybar -m \
+            --set currency_euro \
+            label="${EUR_RATE%.*}" \
+            icon.color="$EUR_COLOR" \
+            --set currency_usd \
+            label="${USD_RATE%.*}" \
+            icon.color="$USD_COLOR" \
+            --set currency_item \
+                  label.drawing=off \
+                  icon.drawing=off
     else
         sketchybar -m --set currency_item \
             label="Failed to fetch rates" \
-            label.color=0xffdc3545
+            label.color="$ERROR_COLOR" \
+            label.drawing=on \
+            icon.drawing=on
     fi
 }
 
