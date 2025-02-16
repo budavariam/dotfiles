@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ "$SENDER" == "mouse.clicked" ]]; then
+    open "https://www.mnb.hu/arfolyamok"
+    exit 0
+fi
+
 API_KEY_FILE_EXC="$CONFIG_DIR/plugins/sensitive-exchange-rate.sh"
 if [ -f "$API_KEY_FILE_EXC" ]; then
     source "$API_KEY_FILE_EXC"
@@ -18,7 +23,6 @@ GREEN=0xff28a745
 RED=0xffdc3545
 ERROR_COLOR=0xffdc3545
 
-
 # Create cache directory if it doesn't exist
 mkdir -p "$CACHE_DIR"
 
@@ -31,10 +35,10 @@ cleanup_cache() {
 fetch_rates() {
     # Using exchangerate-api.com's v6 API
     response=$(curl -s "https://v6.exchangerate-api.com/v6/${API_KEY_EXCHANGE_RATE}/latest/HUF")
-    
+
     if [ $? -eq 0 ] && [ ! -z "$response" ]; then
         # Save current rates to cache with timestamp
-        echo "$response" > "$CACHE_FILE"
+        echo "$response" >"$CACHE_FILE"
         cleanup_cache
         return 0
     fi
@@ -51,10 +55,10 @@ calculate_huf_rate() {
 get_color() {
     local current=$1
     local previous=$2
-    
+
     if [ -z "$previous" ] || [ "$current" = "$previous" ]; then
         echo "$WHITE"
-    elif (( $(echo "$current > $previous" | bc -l) )); then
+    elif (($(echo "$current > $previous" | bc -l))); then
         echo "$RED"
     else
         echo "$GREEN"
@@ -73,24 +77,24 @@ update_display() {
     if [ ! -f "$current_cache" ]; then
         fetch_rates
     fi
-    
+
     # Read current and previous rates
     if [ -f "$current_cache" ]; then
         EUR_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.EUR' "$current_cache")")
         USD_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.USD' "$current_cache")")
         # TIMESTAMP=$(date -r "$current_cache" "+%H:%M")
-        
+
         if [ -f "$previous_cache" ]; then
             PREV_EUR_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.EUR' "$previous_cache")")
             PREV_USD_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.USD' "$previous_cache")")
-            
+
             EUR_COLOR=$(get_color "$EUR_RATE" "$PREV_EUR_RATE")
             USD_COLOR=$(get_color "$USD_RATE" "$PREV_USD_RATE")
         else
             EUR_COLOR="$WHITE"
             USD_COLOR="$WHITE"
         fi
-        
+
         sketchybar -m \
             --set currency_euro \
             label="${EUR_RATE%.*}" \
@@ -99,8 +103,8 @@ update_display() {
             label="${USD_RATE%.*}" \
             icon.color="$USD_COLOR" \
             --set currency_item \
-                  label.drawing=off \
-                  icon.drawing=off
+            label.drawing=off \
+            icon.drawing=off
     else
         sketchybar -m --set currency_item \
             label="Failed to fetch rates" \
@@ -112,12 +116,12 @@ update_display() {
 
 # Handle different execution modes
 case "$1" in
-    --update)
-        update_display
-        ;;
-    *)
-        # Initial run
-        fetch_rates
-        update_display
-        ;;
+--update)
+    update_display
+    ;;
+*)
+    # Initial run
+    fetch_rates
+    update_display
+    ;;
 esac

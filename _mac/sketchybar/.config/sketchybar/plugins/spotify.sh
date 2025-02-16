@@ -2,7 +2,7 @@
 
 if [[ "$(osascript -e 'application "Spotify" is running')" != "true" ]]; then
   echo "Spotify is not running"
-  sketchybar --set spotify.name label="" label.drawing=off
+  sketchybar --set spotify.name label="" label.drawing=off popup.drawing="off"
   exit 0
 fi
 
