@@ -12,7 +12,7 @@ sketchybar --add event aerospace_workspace_change \
         script="$PLUGIN_DIR/aerospace.sh" \
         popup.align=center \
         background.drawing=on \
-        background.padding_right="$PADDINGS" \
+        background.padding_right="5" \
         background.border_color="$COLOR" \
         background.color="$BAR_COLOR" \
         label.color="$COLOR" \

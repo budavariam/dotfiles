@@ -5,7 +5,7 @@ COLOR="$WHITE"
 sketchybar --add item cpu right \
 	--subscribe cpu mouse.entered mouse.exited \
 	--set cpu \
-	background.padding_right=5 \
+	background.padding_right=2 \
 	background.padding_left=5 \
 	icon="􀫥" \
 	icon.color="$COLOR" \
