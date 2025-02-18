@@ -1,7 +1,10 @@
 #!/bin/zsh
 # FORKED FROM: https://github.com/FelixKratz/SketchyBar/discussions/12#discussioncomment-1634025
 
-CITY="Budapest"
+CITY=$(curl -s --connect-timeout 3 https://ipinfo.io/city)
+if [[ $? -ne 0 ]]; then
+    CITY="Budapest"
+fi
 CITY=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$CITY'))")
 
 # Color definitions
