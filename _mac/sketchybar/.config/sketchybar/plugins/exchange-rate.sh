@@ -22,6 +22,7 @@ WHITE=0xaaffffff
 GREEN=0xaa28a745
 RED=0xaadc3545
 ERROR_COLOR=0xaadc3545
+FADE_HOURS=3  # Number of hours before color completely fades to white
 
 # Create cache directory if it doesn't exist
 mkdir -p "$CACHE_DIR"
@@ -33,12 +34,15 @@ cleanup_cache() {
 
 # Function to fetch exchange rates
 fetch_rates() {
+    if [ -f "$CACHE_FILE" ]; then
+        return 0
+    fi
     # Using exchangerate-api.com's v6 API
     response=$(curl -s "https://v6.exchangerate-api.com/v6/${API_KEY_EXCHANGE_RATE}/latest/HUF")
-
+ 
     if [ $? -eq 0 ] && [ ! -z "$response" ]; then
-        # Save current rates to cache with timestamp
-        echo "$response" >"$CACHE_FILE"
+        # Save current rates to cache
+        echo "$response" > "$CACHE_FILE"
         cleanup_cache
         return 0
     fi
@@ -51,17 +55,51 @@ calculate_huf_rate() {
     echo "scale=2; 1 / $rate" | bc
 }
 
+# Function to interpolate color based on time elapsed
+interpolate_color() {
+    local base_color=$1
+    local elapsed_hours=$2
+    
+    if [ $elapsed_hours -ge $FADE_HOURS ]; then
+        echo "$WHITE"
+        return
+    fi
+    
+    # Extract RGB components
+    local base_r=$((0x${base_color:4:2}))
+    local base_g=$((0x${base_color:6:2}))
+    local base_b=$((0x${base_color:8:2}))
+    local white_r=$((0xff))
+    local white_g=$((0xff))
+    local white_b=$((0xff))
+    
+    # Calculate fade factor (0 to 1)
+    local fade=$(echo "scale=4; $elapsed_hours / $FADE_HOURS" | bc)
+    
+    # Interpolate each color component
+    local new_r=$(echo "scale=0; (($white_r - $base_r) * $fade + $base_r)/1" | bc)
+    local new_g=$(echo "scale=0; (($white_g - $base_g) * $fade + $base_g)/1" | bc)
+    local new_b=$(echo "scale=0; (($white_b - $base_b) * $fade + $base_b)/1" | bc)
+    
+    # Format the new color
+    printf "0xaa%02x%02x%02x" $new_r $new_g $new_b
+}
+
 # Function to determine color based on rate movement
 get_color() {
     local current=$1
     local previous=$2
-
+    local cache_file=$3
+    local fetch_timestamp=$(stat -f %m "$cache_file")
+    local current_timestamp=$(date +%s)
+    local elapsed_hours=$(( (current_timestamp - fetch_timestamp) / 3600 ))
+    # echo "$cache_file $fetch_timestamp $current_timestamp $elapsed_hours" >> /tmp/.debug_sketchbar
     if [ -z "$previous" ] || [ "$current" = "$previous" ]; then
         echo "$WHITE"
     elif (($(echo "$current > $previous" | bc -l))); then
-        echo "$RED"
+        interpolate_color "$RED" "$elapsed_hours"
     else
-        echo "$GREEN"
+        interpolate_color "$GREEN" "$elapsed_hours"
     fi
 }
 
@@ -90,9 +128,9 @@ update_display() {
             PREV_USD_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.USD' "$previous_cache")")
             PREV_GBP_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.GBP' "$previous_cache")")
 
-            EUR_COLOR=$(get_color "$EUR_RATE" "$PREV_EUR_RATE")
-            USD_COLOR=$(get_color "$USD_RATE" "$PREV_USD_RATE")
-            GBP_COLOR=$(get_color "$GBP_RATE" "$PREV_GBP_RATE")
+            EUR_COLOR=$(get_color "$EUR_RATE" "$PREV_EUR_RATE" "$current_cache")
+            USD_COLOR=$(get_color "$USD_RATE" "$PREV_USD_RATE" "$current_cache")
+            GBP_COLOR=$(get_color "$GBP_RATE" "$PREV_GBP_RATE" "$current_cache")
         else
             EUR_COLOR="$WHITE"
             USD_COLOR="$WHITE"
@@ -121,10 +159,42 @@ update_display() {
     fi
 }
 
+test_colors() {
+    TEST_UNTIL=8
+
+    hex_to_ansi() {
+        # Function to convert hex color to ANSI escape sequence
+        local hex=$1
+        local r=$((0x${hex:4:2}))
+        local g=$((0x${hex:6:2}))
+        local b=$((0x${hex:8:2}))
+        echo -e "\e[38;2;${r};${g};${b}m"
+    }
+
+    RESET='\033[0m'
+
+    test_color() {
+        echo "Testing $1 to WHITE transition:"
+        echo "Hour | Color Hex  | Sample Text"
+        echo "-----------------------------------"
+        for hour in $(seq 0 "$TEST_UNTIL"); do
+            color=$(interpolate_color "$2" "$hour")
+            ansi=$(hex_to_ansi "$color")
+            printf "%-4d | %s | %s999 Sample Text${RESET}\n" "$hour" "$color" "$ansi"
+        done
+    }
+
+    test_color "RED" "$RED" 
+    test_color "GREEN" "$GREEN" 
+}
+
 # Handle different execution modes
 case "$1" in
 --update)
     update_display
+    ;;
+--test)
+    test_colors
     ;;
 *)
     # Initial run
