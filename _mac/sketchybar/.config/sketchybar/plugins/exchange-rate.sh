@@ -19,9 +19,9 @@ CACHE_FILE="$CACHE_DIR/rates_$(date +%Y%m%d).json"
 # PREVIOUS_FILE="$CACHE_DIR/rates_$(date -v-1d +%Y%m%d).json"
 #API_KEY_EXCHANGE_RATE="YOUR_API_KEY_HERE"  # load from file
 WHITE=0xaaffffff
-GREEN=0xff28a745
-RED=0xffdc3545
-ERROR_COLOR=0xffdc3545
+GREEN=0xaa28a745
+RED=0xaadc3545
+ERROR_COLOR=0xaadc3545
 
 # Create cache directory if it doesn't exist
 mkdir -p "$CACHE_DIR"
@@ -82,29 +82,36 @@ update_display() {
     if [ -f "$current_cache" ]; then
         EUR_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.EUR' "$current_cache")")
         USD_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.USD' "$current_cache")")
+        GBP_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.GBP' "$current_cache")")
         # TIMESTAMP=$(date -r "$current_cache" "+%H:%M")
 
         if [ -f "$previous_cache" ]; then
             PREV_EUR_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.EUR' "$previous_cache")")
             PREV_USD_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.USD' "$previous_cache")")
+            PREV_GBP_RATE=$(calculate_huf_rate "$(jq -r '.conversion_rates.GBP' "$previous_cache")")
 
             EUR_COLOR=$(get_color "$EUR_RATE" "$PREV_EUR_RATE")
             USD_COLOR=$(get_color "$USD_RATE" "$PREV_USD_RATE")
+            GBP_COLOR=$(get_color "$GBP_RATE" "$PREV_GBP_RATE")
         else
             EUR_COLOR="$WHITE"
             USD_COLOR="$WHITE"
+            GBP_COLOR="$WHITE"
         fi
 
         sketchybar -m \
             --set currency_euro \
-            label="${EUR_RATE%.*}" \
-            icon.color="$EUR_COLOR" \
+                label="${EUR_RATE%.*}" \
+                icon.color="$EUR_COLOR" \
             --set currency_usd \
-            label="${USD_RATE%.*}" \
-            icon.color="$USD_COLOR" \
+                label="${USD_RATE%.*}" \
+                icon.color="$USD_COLOR" \
+            --set currency_gbp \
+                label="${GBP_RATE%.*}" \
+                icon.color="$GBP_COLOR" \
             --set currency_item \
-            label.drawing=off \
-            icon.drawing=off
+                label.drawing=off \
+                icon.drawing=off
     else
         sketchybar -m --set currency_item \
             label="Failed to fetch rates" \

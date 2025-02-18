@@ -16,5 +16,5 @@ cnf_weather=(
 )
 
 sketchybar --add item weather left \
-      --subscribe weather mouse.clicked \
+      --subscribe weather mouse.clicked system_woke \
       --set weather "${cnf_weather[@]}"
