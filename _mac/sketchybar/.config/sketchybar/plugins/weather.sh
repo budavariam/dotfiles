@@ -1,13 +1,8 @@
 #!/bin/zsh
 # FORKED FROM: https://github.com/FelixKratz/SketchyBar/discussions/12#discussioncomment-1634025
 
-CITY=$(curl -s --connect-timeout 3 https://ipinfo.io/city)
-if [[ $? -ne 0 ]]; then
-    CITY="Budapest"
-fi
-CITY=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$CITY'))")
-
 # Color definitions
+WHITE=0xaaffffff
 SUNNY_DAY="0xffFFB74D"      # Bright orange for sunny day
 SUNNY_NIGHT="0xff4A90E2"    # Deep blue for clear night
 CLOUDY_DAY="0xff78909C"     # Blue-grey for cloudy day
@@ -20,12 +15,6 @@ THUNDER_DAY="0xffFDD835"    # Bright yellow for thunder during day
 THUNDER_NIGHT="0xffF9A825"  # Amber for thunder during night
 FOG_DAY="0xffB0BEC5"       # Light blue-grey for fog during day
 FOG_NIGHT="0xff78909C"     # Darker blue-grey for fog during night
-
-# echo "$SENDER" >> /tmp/.debug_sketchbar
-if [[ "$SENDER" == "mouse.clicked" ]]; then;
-    open "https://www.idokep.hu/idojaras/$CITY"
-    exit 0
-fi
 
 API_KEY_FILE="$CONFIG_DIR/plugins/sensitive-weather.sh"
 if [ -f "$API_KEY_FILE" ]; then
@@ -245,26 +234,54 @@ weather_colors_night=(
     [1282]="$THUNDER_NIGHT"   # Heavy snow with thunder
 )
 
+
+CITY=$(curl -s --connect-timeout 3 https://ipinfo.io/city)
+if [[ $? -ne 0 ]]; then
+    CITY="Budapest"
+fi
+CITY=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$CITY'))")
+
+if [[ "$SENDER" == "mouse.clicked" ]]; then
+    open "https://www.idokep.hu/idojaras/$CITY"
+    return 0
+fi
+
 # Fetch weather data
 data=$(curl -s "http://api.weatherapi.com/v1/current.json?key=$API_KEY&q=$CITY")
+data_error=$(echo $data | jq -r '.error')
+if [[ -z "$data" || "$data" == "null" || -n $data_error ]]; then
+    CITY="Budapest"
+    data=$(curl -s "http://api.weatherapi.com/v1/current.json?key=$API_KEY&q=$CITY")
+fi
 
-# Extract weather information
-condition=$(echo $data | jq -r '.current.condition.code')
-temp=$(echo $data | jq -r '.current.temp_c')
-is_day=$(echo $data | jq -r '.current.is_day')
+label_drawing=on
+icon_color=$WHITE
+if [[ -n $data ]]; then
+    condition=$(echo $data | jq -r '.current.condition.code')
+    temp=$(echo $data | jq -r '.current.temp_c')
+    is_day=$(echo $data | jq -r '.current.is_day')
 
-# Set icon based on time of day
-prefix=$([ "$is_day" = "1" ] && echo "day" || echo "night")
+    # Set icon based on time of day
+    prefix=$([ "$is_day" = "1" ] && echo "day" || echo "night")
 
-[ "$is_day" = "1" ] && icon=$weather_icons_day[$condition] || icon=$weather_icons_night[$condition]
+    [ "$is_day" = "1" ] && icon=$weather_icons_day[$condition] || icon=$weather_icons_night[$condition]
 
-if [ "$is_day" = "1" ]; then
-    icon=$weather_icons_day[$condition]
-    icon_color=$weather_colors_day[$condition]
+    if [ "$is_day" = "1" ]; then
+        icon=$weather_icons_day[$condition]
+        icon_color=$weather_colors_day[$condition]
+    else
+        icon=$weather_icons_night[$condition]
+        icon_color=$weather_colors_night[$condition]
+    fi
+    
 else
-    icon=$weather_icons_night[$condition]
-    icon_color=$weather_colors_night[$condition]
+    icon="􁜎"
+    label_drawing="off"
 fi
 
 # Update SketchyBar with icon and color separately
-sketchybar -m --set weather icon="$icon" icon.color="$icon_color" label="${temp}°C"
+sketchybar -m --set weather \
+    icon="$icon" \
+    icon.color="$icon_color" \
+    label="${temp}°C" \
+    label.drawing="$label_drawing"
