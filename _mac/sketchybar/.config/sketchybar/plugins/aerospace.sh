@@ -64,7 +64,7 @@ update_popup_items() {
 
 mouse_clicked() {
   PREV_POPUP_STATE=$(sketchybar --query current_workspace | jq -r '.popup.drawing')
-  if [[ "$NAME" == "current_workspace" && "$PREV_POPUP_STATE" == "off" ]]; then
+  if [[ "$NAME" == "current_workspace" && ( "$PREV_POPUP_STATE" == "off" || "$PREV_POPUP_STATE" == "null" ) ]]; then
     update_popup_items
   fi
   sketchybar --set current_workspace popup.drawing=toggle
