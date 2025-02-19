@@ -52,12 +52,12 @@ update_popup_items() {
         --add item "$item_name" popup.current_workspace \
         --set "$item_name" \
           label="$label" \
+          width=$width \
+          background.color="$background_color" \
           background.padding_left=1 \
           background.padding_right=0 \
-          background.color="$background_color" \
           background.drawing=on \
           background.corner_radius="$POPUP_CORNER_RADIUS" \
-          width=$width \
           click_script="aerospace workspace $sid && sketchybar --set current_workspace label=\"$sid\" && sketchybar --set current_workspace popup.drawing=off"
   done
 }
@@ -68,9 +68,6 @@ mouse_clicked() {
     update_popup_items
   fi
   sketchybar --set current_workspace popup.drawing=toggle
-  # if [ "$PREV_POPUP_STATE" == "off" ]; then
-  #   osascript "$DIALOG_SCRIPT"
-  # fi
 }
 
 case "$SENDER" in
