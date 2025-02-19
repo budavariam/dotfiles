@@ -4,6 +4,9 @@
 # chmod +x ~/.config/sketchybar/plugins/aerospace.sh
 # DIALOG_SCRIPT="$CONFIG_DIR/plugins/aerospace_ws.scpt"
 
+FOCUSED_WORKSPACE_COLOR=0x55FF0000
+POPUP_CORNER_RADIUS=5
+
 if [[ "$(osascript -e 'application "Aerospace" is running')" != "true" ]]; then
   echo "Aerospace is not running"
   sketchybar --set current_workspace label="" label.drawing=off
@@ -31,18 +34,31 @@ update_popup_items() {
 
 
   # Reset the bgcolor for all subitems with regex, and set the color of the curent selected
-  sketchybar \
-    --set "/space\.s_.*/" background.color=0x55000000 drawing=off \
-    --set "space.s_$FOCUSED_WORKSPACE" background.color=0x55FF0000
+  sketchybar --remove "/space\.s_.*/"
 
   # Refresh items
   for i in "${!items[@]}"; do
     local label="${items[$i]}"
-    workspace_name=$(echo "$label" | cut -d' ' -f1)
-    item_name="space.s_$workspace_name"
-    # echo "item: $workspace_name" >> /tmp/.debug_sketchbar
+    sid=$(echo "$label" | cut -d' ' -f1)
+    item_name="space.s_${sid}_${i}"
+    # echo "item: $sid" >> /tmp/.debug_sketchbar
     width=$(((${#label} + 1) * 8))
-    sketchybar --set "$item_name" label="$label" drawing=on width=$width
+    background_color=0x55000000 
+    if [ "$sid" == "$FOCUSED_WORKSPACE" ]; then
+      background_color="$FOCUSED_WORKSPACE_COLOR"
+    fi
+
+    sketchybar \
+        --add item "$item_name" popup.current_workspace \
+        --set "$item_name" \
+          label="$label" \
+          background.padding_left=1 \
+          background.padding_right=0 \
+          background.color="$background_color" \
+          background.drawing=on \
+          background.corner_radius="$POPUP_CORNER_RADIUS" \
+          width=$width \
+          click_script="aerospace workspace $sid && sketchybar --set current_workspace label=\"$sid\" && sketchybar --set current_workspace popup.drawing=off"
   done
 }
 
