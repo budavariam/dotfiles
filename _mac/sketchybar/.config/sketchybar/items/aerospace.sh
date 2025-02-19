@@ -31,6 +31,6 @@ for sid in $(aerospace list-workspaces --all); do
         background.color="$POPUP_HIGHLIGHT_COLOR" \
         background.drawing=on \
         background.corner_radius="$POPUP_CORNER_RADIUS" \
-        width=35 \
+        drawing=off \
         click_script="aerospace workspace $sid && sketchybar --set current_workspace label=\"$sid\" && sketchybar --set current_workspace popup.drawing=off"
 done
