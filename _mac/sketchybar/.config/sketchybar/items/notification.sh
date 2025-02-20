@@ -18,7 +18,7 @@ cnf_notification=(
 	background.border_color="$WHITE"
 	background.color="$BAR_COLOR"
 	label.drawing=off
-	background.drawing=on
+	background.drawing=off
 	script="$PLUGIN_DIR/notification.sh"
 )
 

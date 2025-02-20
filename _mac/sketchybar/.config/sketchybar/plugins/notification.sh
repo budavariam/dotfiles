@@ -12,8 +12,8 @@ COLOR_DEFAULT="$WHITE"
 
 if [[ "$SENDER" == "mouse.clicked" ]]; then
     # Reset on click
-    sketchybar --set "$TEXT_ITEM" icon="$ICON_EMPTY" icon.color="$COLOR_DEFAULT" label="" label.drawing=off
+    sketchybar --set "$TEXT_ITEM" icon="$ICON_EMPTY" icon.color="$COLOR_DEFAULT" label="" label.drawing=off background.drawing=off
 elif [[ "$SENDER" == "notification_update" ]]; then
     # Update when event is triggered
-    sketchybar --set "$TEXT_ITEM" icon="$ICON_ALERT" icon.color="$COLOR_RED" label="$VAR" label.drawing=on
+    sketchybar --set "$TEXT_ITEM" icon="$ICON_ALERT" icon.color="$COLOR_RED" label="$VAR" label.drawing=on background.drawing=on
 fi
