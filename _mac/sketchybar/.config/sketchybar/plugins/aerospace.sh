@@ -5,7 +5,7 @@
 
 if [[ "$(osascript -e 'application "Aerospace" is running')" != "true" ]]; then
   echo "Aerospace is not running"
-  sketchybar --set current_workspace label="" label.drawing=off
+  sketchybar --set current_workspace label="" label.drawing=off popup.drawing=off
   exit 0
 fi
 
