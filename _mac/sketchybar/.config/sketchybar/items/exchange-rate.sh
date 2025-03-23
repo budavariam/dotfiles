@@ -53,5 +53,5 @@ sketchybar \
      --subscribe currency_euro mouse.clicked \
      --subscribe currency_usd mouse.clicked \
      --subscribe currency_gbp mouse.clicked \
-     --subscribe b_currency mouse.clicked \
+     --subscribe b_currency mouse.clicked mouse.entered \
      --subscribe b_currency system_woke

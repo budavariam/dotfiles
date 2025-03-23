@@ -188,17 +188,22 @@ test_colors() {
     test_color "GREEN" "$GREEN" 
 }
 
-# Handle different execution modes
-case "$1" in
---update)
-    update_display
-    ;;
---test)
-    test_colors
-    ;;
-*)
-    # Initial run
-    fetch_rates
-    update_display
-    ;;
+case "$SENDER" in
+  "mouse.entered") update_display ;;
+  *)
+    # Handle different execution modes
+    case "$1" in
+    --update)
+        update_display
+        ;;
+    --test)
+        test_colors
+        ;;
+    *)
+        # Initial run
+        fetch_rates
+        update_display
+        ;;
+    esac
+   ;;
 esac
