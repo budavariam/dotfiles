@@ -64,6 +64,8 @@
     new = log --abbrev-commit --pretty=oneline --no-merges @{1}..
     # pend - Show pending commits
     pend = log @{upstream}..
+    # redate - date format example: "2022-01-31T23:12:01Z"  
+    redate = "!f() { DATE=$1 && GIT_AUTHOR_DATE=$DATE GIT_COMMITTER_DATE=$DATE git commit --amend --no-edit --date=$DATE; }; f"
 
     # Diffs
 

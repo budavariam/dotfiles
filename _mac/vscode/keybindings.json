@@ -28,5 +28,10 @@
         "key": "alt+[Period]",
         "command": "-gitlens.key..",
         "when": "gitlens:key:."
+    },
+    {
+        "key": "cmd+b",
+        "command": "-markdown.extension.editing.toggleBold",
+        "when": "editorTextFocus && !editorReadonly && editorLangId =~ /^markdown$|^rmd$|^quarto$/"
     }
 ]
