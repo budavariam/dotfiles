@@ -161,6 +161,11 @@ alias cs="cd ~/project"
 alias howto="code ~/project/todolog"
 alias dotfiles="code ~/project/dotfiles"
 
+alias dcu="docker compose up"
+alias dcd="docker compose down"
+alias dcl="docker compose logs"
+alias dcb="docker compose build --no-cache --progress=plain"
+
 alias bsserve="f() { npx browser-sync@2.24.7 start -s -f . --no-notify --host $(ipconfig getifaddr en0) --port ${1:-9000} --ui-port ${2:-9001} }; f "
 
 # kube-ps1 config
