@@ -168,6 +168,12 @@ alias dcb="docker compose build --no-cache --progress=plain"
 
 alias bsserve="f() { npx browser-sync@2.24.7 start -s -f . --no-notify --host $(ipconfig getifaddr en0) --port ${1:-9000} --ui-port ${2:-9001} }; f "
 
+# Convert huge .mov demo files to more transportable animations
+alias demo_webp='webp_gen() { local input=${1:-$(ls -t ~/Screenshots/*.mov 2>/dev/null | head -1)}; ffmpeg -y -i "$input" -loop 1 -an -vf scale=750:-2 -r 24 ~/output.webp; }; webp_gen'
+alias demo_gif='gif_gen() { local input=${1:-$(ls -t ~/Screenshots/*.mov 2>/dev/null | head -1)}; ffmpeg -y -i "$input" -vf scale=750:-2 -r 24 ~/output.gif; }; gif_gen'
+alias demo_hqgif='hqgif_gen() { local input=${1:-$(ls -t ~/Screenshots/*.mov 2>/dev/null | head -1)}; ffmpeg -y -i "$input" -vf "fps=24,scale=750:-2,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" ~/output.gif; }; hqgif_gen'
+
+
 # kube-ps1 config
 export KUBE_PS1_PREFIX=''
 export KUBE_PS1_SUFFIX=''
