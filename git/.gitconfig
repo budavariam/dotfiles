@@ -35,6 +35,20 @@
     recent = "!f() { git reflog | egrep -io 'moving from ([^[:space:]]+)' | awk '{ print $3 }' | awk ' !x[$0]++' | head -n${1-10}; }; f"
     # brage - List all branches ordered by committerdate, show refs and relative date
     brage = "branch -v --sort=-committerdate --format='%(authordate:short) %(color:red)%(objectname:short) %(color:yellow)%(refname:short)%(color:reset) (%(color:green)%(committerdate:relative)%(color:reset)) [%(color:magenta)%(authorname)%(color:reset)]'"
+    # brage - List all branches ordered by committerdate, show refs and relative date, and use fzf to select and checkout
+    bragef = "!f() { \
+        git rev-parse HEAD > /dev/null 2>&1 || return; \
+        local branch=$(git branch $@ --color=always --sort=-committerdate \
+        --format='%(authordate:short) %(color:red)%(objectname:short) %(color:yellow)%(refname:short)%(color:reset) (%(color:green)%(committerdate:relative)%(color:reset)) [%(color:magenta)%(authorname)%(color:reset)]' | \
+        grep -v HEAD | \
+        fzf --height 70% --ansi --no-multi --no-sort \
+            --preview-window 'down,30%,border-top' \
+            --preview 'git log -n 50 --color=always --date=short --pretty=\"format:%C(auto)%cd %h%d %s\" {3}' \
+            --bind 'shift-up:preview-up,shift-down:preview-down' | \
+        awk '{print $3}'); \
+        if [[ -z \"$branch\" ]]; then echo \"No branch selected.\"; return 1; fi; \
+        git checkout \"$branch\"; \
+    }; f"
     # retag - Remove the old tag with this name and tag the latest commit with it.
     retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
     # ctags -
