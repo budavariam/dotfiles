@@ -163,6 +163,18 @@
     # ssp - stash only selected chunks
     ssp = stash --patch
 
+    sf = "!f() { \
+        git rev-parse HEAD > /dev/null 2>&1 || return; \
+        local stash=$(git stash list --pretty=\"%C(yellow)%h %>(14)%Cgreen%cr %C(blue)%gs\" | \
+        fzf --height 70% --ansi --no-multi --no-sort \
+            --preview-window 'down,90%,border-top' \
+            --preview 'git stash show -p --color=always {1}' \
+            --bind 'shift-up:preview-up,shift-down:preview-down'); \
+        if [[ -z \"$stash\" ]]; then echo \"No stash selected.\"; return 1; fi; \
+        local stash_id=$(echo $stash | awk '{print $1}'); \
+        git stash apply $stash_id; \
+    }; f"
+
     # Patches
 
     # pcst - Create a patch from the top of the stash (https://stackoverflow.com/a/22819771/9174012)
