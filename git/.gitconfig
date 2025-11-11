@@ -74,12 +74,16 @@
     amend = commit --amend -v
     # ci - commit with showing the chunks
     ci = commit -v
+    # vibe - use faff to generate a commit message from staged changes
+    faff = !faff
     # new - Show last commit without merges in one line with abbreviated commithash
     new = log --abbrev-commit --pretty=oneline --no-merges @{1}..
     # pend - Show pending commits
     pend = log @{upstream}..
     # redate - date format example: "2022-01-31T23:12:01Z"  
     redate = "!f() { DATE=$1 && GIT_AUTHOR_DATE=$DATE GIT_COMMITTER_DATE=$DATE git commit --amend --no-edit --date=$DATE; }; f"
+    # vibe - use faff to generate a commit message from ALL unstaged changes
+    vibe = !git add . && faff
 
     # Diffs
 

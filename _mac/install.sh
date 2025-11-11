@@ -57,3 +57,11 @@ git clone https://github.com/Pilaton/OhMyZsh-full-autoupdate.git ${ZSH_CUSTOM:-~
 git clone https://github.com/Aloxaf/fzf-tab ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/fzf-tab
 
 cp ./zsh/custom/plugins/bam-vi-mode ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/bam-vi-mode
+
+# add faff
+curl -sL https://raw.githubusercontent.com/budavariam/faff/refs/heads/main/faff.sh -o /tmp/faff
+cat /tmp/faff \
+    && echo "DOES IT SEEM OK? (esc to cancel)" \
+    && read -r \
+    && chmod +x /tmp/faff \
+    && sudo mv /tmp/faff /usr/local/bin/faff
