@@ -17,6 +17,7 @@ pushd "_mac" || exit 1
   stow -vt ~ git
   # stow -vt ~ iterm2 # need to set iterm2 manually
   stow -vt ~ screen
+  stow -vt ~ scripts
   stow -vt ~ shell
   stow -vt ~ sketchybar
   stow -vt ~ tmux
