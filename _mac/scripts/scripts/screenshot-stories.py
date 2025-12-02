@@ -14,6 +14,7 @@ Requirements:
 
 Example usage:
   screenshot-stories.py --tags "demo" --delay 1000 --output ./screenshots --viewport 1280x720 --use-ids --annotate
+  screenshot-stories.py --tags "demo" --delay 3000 --output ./screenshots --viewport 640x720 --use-ids  
   screenshot-stories.py --tags "demo" -- --captureTimeout 10000 --forwardConsoleLogs
 
 Note: Any arguments after -- are passed directly to storycap
@@ -294,21 +295,14 @@ def rename_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: bo
             sys.stdout.flush()
             continue
 
-        # Skip if target already exists
-        if os.path.exists(new_path):
-            print_colored(YELLOW, f"    ⚠️  Target {new_filename} already exists")
-            sys.stdout.flush()
-            skipped_count += 1
-            continue
-
         # Create target directory if needed
         target_dir = os.path.dirname(new_path)
         if target_dir and not os.path.exists(target_dir):
             os.makedirs(target_dir, exist_ok=True)
 
-        # Rename the file
+        # Rename the file (overwrite if target exists)
         try:
-            os.rename(expected_path, new_path)
+            os.replace(expected_path, new_path)
             renamed_count += 1
             print(f"    ✓ → {new_filename}")
             sys.stdout.flush()
@@ -416,9 +410,25 @@ def is_imagemagick_available() -> bool:
         return False
 
 
+def get_git_commit_hash() -> str:
+    """Get the current git commit hash (short version)."""
+    try:
+        result = subprocess.run(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+            universal_newlines=True,
+            cwd=os.getcwd()
+        )
+        return result.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return "unknown"
+
+
 def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: bool) -> None:
     """
-    Add timestamp and story name to the bottom of screenshots, extending the image.
+    Add timestamp, git hash, and story name to the bottom of screenshots, extending the image.
 
     Args:
         output_dir: Directory containing screenshots
@@ -435,6 +445,7 @@ def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: 
     sys.stdout.flush()
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    git_hash = get_git_commit_hash()
     annotated_count = 0
     failed_count = 0
 
@@ -465,25 +476,38 @@ def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: 
         # Create temporary output file
         temp_path = f"{png_path}.tmp.png"
 
-        # Annotation text
-        annotation = f"{story_name}  |  {timestamp}"
+        # Annotation text - include git hash
+        annotation = f"{story_name}  |  {timestamp}  |  {git_hash}"
 
         try:
-            # Use ImageMagick to extend canvas and add text
-            # -background white: white background for extension
-            # -gravity south: position at bottom
-            # -splice 0x40: add 40 pixels at bottom
-            # -pointsize 14: font size
-            # -fill black: text color
-            # -annotate +0+10: position text 10px from bottom
+            # Get image dimensions to draw line across full width
+            identify_result = subprocess.run(
+                ['identify', '-format', '%w %h', png_path],
+                check=True,
+                capture_output=True,
+                universal_newlines=True
+            )
+            dimensions = identify_result.stdout.strip().split()
+            img_width = int(dimensions[0])
+            img_height = int(dimensions[1])
+
+            # Use ImageMagick to extend canvas, add separator line, and add text
+            # After splice, the line should be drawn at y = original height
+            # This creates a separator between the original image and the annotation area
             subprocess.run([
                 'convert', png_path,
                 '-background', 'white',
                 '-gravity', 'south',
-                '-splice', '0x40',
+                '-splice', '0x50',
+                '-gravity', 'none',
+                '-stroke', '#cccccc',
+                '-strokewidth', '2',
+                '-draw', f'line 0,{img_height} {img_width},{img_height}',
+                '-gravity', 'south',
+                '-stroke', 'none',
                 '-pointsize', '14',
                 '-fill', 'black',
-                '-annotate', '+0+10', annotation,
+                '-annotate', '+0+15', annotation,
                 temp_path
             ], check=True, capture_output=True)
 
