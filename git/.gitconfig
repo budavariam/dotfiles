@@ -110,6 +110,8 @@
     find = log --all --pretty=format:\"%C(yellow)%h%C(reset) %C(blue)%ar%C(reset) %s %C(green)(%an)%C(reset)\n%b\" --name-status --grep
     # locate - Find file name
     locate = "!git ls-files | grep --color=auto"
+    # fst - Find string across all branches: 'git fst <search_string> [file_pattern]'. Example: git fst "need-validation" "*.stories.ts*"
+    fst = "!f() { pattern=\"${2:-*}\"; for branch in $(git for-each-ref --format='%(refname:short)' refs/heads/); do git grep -l \"$1\" \"$branch\" -- \"$pattern\" 2>/dev/null && echo \"Found in branch: $branch\"; done; }; f"
 
     # Full histories
 

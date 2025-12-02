@@ -7,7 +7,16 @@ Storycap: https://storybook.js.org/addons/storycap
 This script captures screenshots of Storybook stories without installing dependencies.
 It uses npx to run storycap on-demand.
 
-Example usage: screenshot-stories.py --tags "demo" --delay 1000 --output ./screenshots --viewport 1280x720 --use-ids
+Requirements:
+  - Python: 3.6+ (uses only standard library - no pip packages needed)
+  - Node.js/npm: Required for npx and storycap (npm install not needed, uses npx)
+  - ImageMagick: Optional, only needed for --annotate flag (brew install imagemagick)
+
+Example usage:
+  screenshot-stories.py --tags "demo" --delay 1000 --output ./screenshots --viewport 1280x720 --use-ids --annotate
+  screenshot-stories.py --tags "demo" -- --captureTimeout 10000 --forwardConsoleLogs
+
+Note: Any arguments after -- are passed directly to storycap
 
 How it works:
 1. Fetches story metadata from Storybook's index.json
@@ -16,6 +25,8 @@ How it works:
 4. Storycap creates files at: screenshots/Components/Button/Primary.png
 5. If --use-ids is set, renames to: screenshots/story-id.png
    Otherwise, renames to: screenshots/Components-Button-Primary.png
+6. If --annotate is set, adds timestamp and story name at the bottom of each image
+   (requires ImageMagick: brew install imagemagick)
 """
 
 import sys
@@ -26,6 +37,7 @@ import subprocess
 import urllib.request
 import urllib.error
 import os
+from datetime import datetime
 from typing import Optional, List, Dict, Tuple
 
 # ANSI color codes
@@ -56,6 +68,15 @@ Examples:
 
   # High performance capture
   %(prog)s --parallel 8 --viewport 2560x1440
+
+  # Add timestamp and story name to screenshots
+  %(prog)s --annotate
+
+  # Pass additional arguments to storycap (use -- separator)
+  %(prog)s --tags demo -- --captureTimeout 10000 --disableCssAnimation
+
+  # Complete example with all features
+  %(prog)s --tags demo --annotate --viewport 1920x1080 --output ./screenshots -- --forwardConsoleLogs
         """
     )
 
@@ -126,7 +147,17 @@ Examples:
         help='Use story IDs (with dashes) for output filenames instead of names (with slashes)'
     )
 
-    return parser.parse_args()
+    parser.add_argument(
+        '--annotate',
+        action='store_true',
+        help='Add timestamp and story name at bottom of screenshots (requires ImageMagick)'
+    )
+
+    # Parse known args and capture remaining args for storycap
+    args, extra_args = parser.parse_known_args()
+    args.extra_storycap_args = extra_args
+
+    return args
 
 
 def print_colored(color: str, message: str) -> None:
@@ -319,6 +350,11 @@ def run_storycap(args, story_names: Optional[List[str]] = None) -> None:
     if args.flat:
         cmd.append('--flat')
 
+    # Add any extra arguments passed after --
+    if args.extra_storycap_args:
+        cmd.extend(args.extra_storycap_args)
+        print(f"Extra storycap args: {' '.join(args.extra_storycap_args)}")
+
     print("Running storycap...")
     if args.delay > 0:
         print(f"  (with {args.delay}ms delay before each capture)")
@@ -364,6 +400,118 @@ def cleanup(storybook_process: Optional[subprocess.Popen]) -> None:
             storybook_process.wait()
             print("Storybook killed")
             sys.stdout.flush()
+
+
+def is_imagemagick_available() -> bool:
+    """Check if ImageMagick's convert command is available."""
+    try:
+        subprocess.run(
+            ['convert', '-version'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: bool) -> None:
+    """
+    Add timestamp and story name to the bottom of screenshots, extending the image.
+
+    Args:
+        output_dir: Directory containing screenshots
+        id_name_map: Mapping of story IDs to readable names
+        use_ids: If True, filenames use IDs; if False, filenames use names
+    """
+    # Check if ImageMagick is available
+    if not is_imagemagick_available():
+        print_colored(YELLOW, "⚠️  ImageMagick not found. Skipping annotation.")
+        print("   Install with: brew install imagemagick")
+        return
+
+    print("Adding annotations to screenshots...")
+    sys.stdout.flush()
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    annotated_count = 0
+    failed_count = 0
+
+    # Collect all PNG files in output directory
+    png_files = []
+    for root, _, files in os.walk(output_dir):
+        for file in files:
+            if file.endswith('.png'):
+                png_files.append(os.path.join(root, file))
+
+    for i, png_path in enumerate(png_files, 1):
+        # Determine story name from filename
+        filename = os.path.basename(png_path)
+        story_name = filename[:-4]  # Remove .png extension
+
+        # If we have id_name_map, try to get readable name
+        if id_name_map:
+            if use_ids:
+                # Filename is story ID, get readable name
+                story_name = id_name_map.get(story_name, story_name)
+            else:
+                # Filename has dashes, keep it but make it more readable
+                story_name = story_name.replace('-', ' / ')
+
+        print(f"[{i}/{len(png_files)}] Annotating: {filename}")
+        sys.stdout.flush()
+
+        # Create temporary output file
+        temp_path = f"{png_path}.tmp.png"
+
+        # Annotation text
+        annotation = f"{story_name}  |  {timestamp}"
+
+        try:
+            # Use ImageMagick to extend canvas and add text
+            # -background white: white background for extension
+            # -gravity south: position at bottom
+            # -splice 0x40: add 40 pixels at bottom
+            # -pointsize 14: font size
+            # -fill black: text color
+            # -annotate +0+10: position text 10px from bottom
+            subprocess.run([
+                'convert', png_path,
+                '-background', 'white',
+                '-gravity', 'south',
+                '-splice', '0x40',
+                '-pointsize', '14',
+                '-fill', 'black',
+                '-annotate', '+0+10', annotation,
+                temp_path
+            ], check=True, capture_output=True)
+
+            # Replace original with annotated version
+            os.replace(temp_path, png_path)
+            annotated_count += 1
+            print(f"    ✓ Added: {annotation}")
+            sys.stdout.flush()
+
+        except subprocess.CalledProcessError as e:
+            print_colored(YELLOW, f"    ⚠️  Failed to annotate: {e}")
+            sys.stdout.flush()
+            failed_count += 1
+            # Clean up temp file if it exists
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except Exception as e:
+            print_colored(YELLOW, f"    ⚠️  Error: {e}")
+            sys.stdout.flush()
+            failed_count += 1
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    print(f"\n📊 Annotation Summary:")
+    print(f"  Annotated: {annotated_count}")
+    print(f"  Failed: {failed_count}")
+    sys.stdout.flush()
+
 
 
 def main():
@@ -452,6 +600,13 @@ def main():
             sys.stdout.flush()
             rename_screenshots(args.output, id_name_map, args.use_ids)
 
+        # Annotate screenshots if requested
+        if args.annotate:
+            print()
+            print("=" * 60)
+            sys.stdout.flush()
+            annotate_screenshots(args.output, id_name_map, args.use_ids)
+
         print()
         print_colored(GREEN, f"✨ Done! Screenshots saved to: {args.output}")
 
@@ -530,6 +685,18 @@ if __name__ == '__main__':
 #
 #   # High performance capture
 #   python3 scripts/screenshot-stories.py --parallel 8 --viewport 2560x1440
+#
+#   # Add timestamp and story name at bottom of screenshots
+#   python3 scripts/screenshot-stories.py --tags demo --annotate
+#   # → Extends each image with a white bar at bottom showing "Story Name | 2025-11-21 14:30:00"
+#   # → Requires: brew install imagemagick
+#
+#   # Complete example with all features
+#   python3 scripts/screenshot-stories.py --tags pr-screenshots --annotate --viewport 1920x1080 --output ./screenshots
+#
+#   # Pass extra arguments to storycap (after -- separator)
+#   python3 scripts/screenshot-stories.py --tags demo -- --captureTimeout 10000 --disableCssAnimation
+#   python3 scripts/screenshot-stories.py -- --forwardConsoleLogs --verbose
 #
 #   # Run storycap directly with patterns
 #   npx storycap http://localhost:6006 --outDir ./screenshots --include "**/Button/**"
