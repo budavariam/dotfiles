@@ -172,6 +172,12 @@ alias bsserve="f() { npx browser-sync@2.24.7 start -s -f . --no-notify --host $(
 alias demo_webp='webp_gen() { local input=${1:-$(ls -t ~/Screenshots/*.mov 2>/dev/null | head -1)}; ffmpeg -y -i "$input" -loop 1 -an -vf scale=750:-2 -r 24 ~/output.webp; }; webp_gen'
 alias demo_gif='gif_gen() { local input=${1:-$(ls -t ~/Screenshots/*.mov 2>/dev/null | head -1)}; ffmpeg -y -i "$input" -vf scale=750:-2 -r 24 ~/output.gif; }; gif_gen'
 alias demo_hqgif='hqgif_gen() { local input=${1:-$(ls -t ~/Screenshots/*.mov 2>/dev/null | head -1)}; ffmpeg -y -i "$input" -vf "fps=24,scale=750:-2,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" ~/output.gif; }; hqgif_gen'
+alias notify='alias-custom-notification'
+
+function alias-custom-notification() {
+    osascript -e "display notification \"${2//\"/\\\"}\" with title \"${1//\"/\\\"}\"";
+}
+
 
 export FAFF_MODEL="qwen2.5-coder:3b"
 # export FAFF_MODEL="qwen3:8b"
