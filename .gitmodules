@@ -1,0 +1,9 @@
+[submodule "_mac/zsh/.oh-my-zsh/custom/plugins/fzf-tab"]
+	path = _mac/zsh/.oh-my-zsh/custom/plugins/fzf-tab
+	url = https://github.com/Aloxaf/fzf-tab
+[submodule "_mac/zsh/.oh-my-zsh/custom/plugins/zsh-autosuggestions"]
+	path = _mac/zsh/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+	url = https://github.com/zsh-users/zsh-autosuggestions
+[submodule "_mac/zsh/.oh-my-zsh/custom/themes/fzf-tab"]
+	path = _mac/zsh/.oh-my-zsh/custom/themes/fzf-tab
+	url = https://github.com/Aloxaf/fzf-tab
