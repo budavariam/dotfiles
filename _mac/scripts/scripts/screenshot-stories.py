@@ -476,8 +476,11 @@ def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: 
         # Create temporary output file
         temp_path = f"{png_path}.tmp.png"
 
-        # Annotation text - include git hash
-        annotation = f"{story_name}  |  {timestamp}  |  {git_hash}"
+        # Annotation text - split into two lines
+        # Line 1: Story name (centered)
+        # Line 2: Date and git hash (centered)
+        line1 = story_name
+        line2 = f"{timestamp}  |  {git_hash}"
 
         try:
             # Get image dimensions to draw line across full width
@@ -498,7 +501,7 @@ def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: 
                 'convert', png_path,
                 '-background', 'white',
                 '-gravity', 'south',
-                '-splice', '0x50',
+                '-splice', '0x60',  # Increased height for two lines
                 '-gravity', 'none',
                 '-stroke', '#cccccc',
                 '-strokewidth', '2',
@@ -507,14 +510,18 @@ def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: 
                 '-stroke', 'none',
                 '-pointsize', '14',
                 '-fill', 'black',
-                '-annotate', '+0+15', annotation,
+                # First line (name) - higher position
+                '-annotate', '+0+32', line1,
+                # Second line (date and hash) - lower position
+                '-annotate', '+0+12', line2,
                 temp_path
             ], check=True, capture_output=True)
 
             # Replace original with annotated version
             os.replace(temp_path, png_path)
             annotated_count += 1
-            print(f"    ✓ Added: {annotation}")
+            print(f"    ✓ Added: {line1}")
+            print(f"           {line2}")
             sys.stdout.flush()
 
         except subprocess.CalledProcessError as e:
