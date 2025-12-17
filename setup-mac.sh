@@ -20,6 +20,7 @@ pushd "_mac" || exit 1
   stow -vt ~ scripts
   stow -vt ~ shell
   stow -vt ~ sketchybar
+  stow -vt ~ talon
   stow -vt ~ tmux
   stow -vt ~ zsh
   stow -vt "${FOLDER_VSCODE}" vscode

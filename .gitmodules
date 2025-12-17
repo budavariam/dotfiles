@@ -7,3 +7,13 @@
 [submodule "_mac/zsh/.oh-my-zsh/custom/themes/fzf-tab"]
 	path = _mac/zsh/.oh-my-zsh/custom/themes/fzf-tab
 	url = https://github.com/Aloxaf/fzf-tab
+[submodule "_mac/zsh/.oh-my-zsh/custom/plugins/ohmyzsh-full-autoupdate"]
+	path = _mac/zsh/.oh-my-zsh/custom/plugins/ohmyzsh-full-autoupdate
+	url = https://github.com/Pilaton/OhMyZsh-full-autoupdate.git
+[submodule "_mac/talon/.talon/user/community"]
+	path = _mac/talon/.talon/user/community
+	url = https://github.com/budavariam/talon_community
+	branch = budavariam
+[submodule "_mac/talon/.talon/user/talon_hud"]
+	path = _mac/talon/.talon/user/talon_hud
+	url = git@github.com:chaosparrot/talon_hud.git
