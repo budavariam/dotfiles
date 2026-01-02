@@ -1,3 +1,4 @@
+# call it in talon REPL with: actions.user.cheatsheet()
 from talon import Module, actions, registry
 import sys, os
 import re
