@@ -1,0 +1,5 @@
+settings.json
+stats-cache.json
+history.jsonl
+**/
+!commands/
