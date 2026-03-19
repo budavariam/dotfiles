@@ -163,6 +163,7 @@ alias dotfiles="code ~/project/dotfiles"
 
 alias dcu="docker compose up"
 alias dcd="docker compose down"
+alias dcs="docker compose stop"
 alias dcl="docker compose logs"
 alias dcb="docker compose build --no-cache --progress=plain"
 
@@ -260,3 +261,5 @@ export NVM_DIR="$HOME/.nvm"
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 # zprof # add this for profiling startup time
+# Added by Antigravity
+export PATH="/Users/budavariam/.antigravity/antigravity/bin:$PATH"
