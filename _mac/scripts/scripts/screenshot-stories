@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Wrapper for screenshot-stories.py
+# Uses a dedicated uv virtualenv with Pillow, isolated from the caller's environment.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$SCRIPT_DIR/.venv-screenshot-stories"
+PYTHON_VERSION="3.13.1"
+
+# Resolve python via pyenv
+PYTHON_BIN="$(pyenv root)/versions/$PYTHON_VERSION/bin/python"
+if [[ ! -x "$PYTHON_BIN" ]]; then
+    echo "Python $PYTHON_VERSION not found in pyenv. Run: pyenv install $PYTHON_VERSION" >&2
+    exit 1
+fi
+
+# Create venv if it doesn't exist or Pillow is missing
+if [[ ! -x "$VENV_DIR/bin/python" ]] || ! "$VENV_DIR/bin/python" -c "import PIL" 2>/dev/null; then
+    echo "Setting up virtualenv with Pillow..." >&2
+    uv venv --python "$PYTHON_BIN" "$VENV_DIR" >&2
+    uv pip install --python "$VENV_DIR/bin/python" Pillow >&2
+fi
+
+exec "$VENV_DIR/bin/python" "$SCRIPT_DIR/screenshot-stories.py" "$@"

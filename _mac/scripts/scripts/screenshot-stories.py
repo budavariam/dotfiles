@@ -8,9 +8,9 @@ This script captures screenshots of Storybook stories without installing depende
 It uses npx to run storycap on-demand.
 
 Requirements:
-  - Python: 3.6+ (uses only standard library - no pip packages needed)
+  - Python: 3.6+
   - Node.js/npm: Required for npx and storycap (npm install not needed, uses npx)
-  - ImageMagick: Optional, only needed for --annotate flag (brew install imagemagick)
+  - Pillow: Optional, only needed for --annotate flag (pip install Pillow)
 
 Example usage:
   screenshot-stories.py --tags "demo" --delay 1000 --output ./screenshots --viewport 1280x720 --use-ids --annotate
@@ -151,7 +151,7 @@ Examples:
     parser.add_argument(
         '--annotate',
         action='store_true',
-        help='Add timestamp and story name at bottom of screenshots (requires ImageMagick)'
+        help='Add timestamp and story name at bottom of screenshots (requires Pillow: pip install Pillow)'
     )
 
     # Parse known args and capture remaining args for storycap
@@ -321,7 +321,7 @@ def rename_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: bo
 def run_storycap(args, story_names: Optional[List[str]] = None) -> None:
     """Run storycap to capture screenshots."""
     cmd = [
-        'npx', 'storycap',
+        'npx', 'storycap@5.0.1',
         args.url,
         '--outDir', args.output,
         '--viewport', args.viewport,
@@ -333,8 +333,10 @@ def run_storycap(args, story_names: Optional[List[str]] = None) -> None:
         cmd.extend(['--delay', str(args.delay)])
 
     # Add story filter if specified
+    # v5: --include is an array type; pass one flag per story name
     if story_names:
-        cmd.extend(['--include', '|'.join(story_names)])
+        for story_name in story_names:
+            cmd.extend(['--include', story_name])
 
     # Add output options
     if args.silent:
@@ -396,20 +398,6 @@ def cleanup(storybook_process: Optional[subprocess.Popen]) -> None:
             sys.stdout.flush()
 
 
-def is_imagemagick_available() -> bool:
-    """Check if ImageMagick's convert command is available."""
-    try:
-        subprocess.run(
-            ['convert', '-version'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=True
-        )
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
-
-
 def get_git_commit_hash() -> str:
     """Get the current git commit hash (short version)."""
     try:
@@ -423,7 +411,7 @@ def get_git_commit_hash() -> str:
         )
         return result.stdout.strip()
     except (subprocess.CalledProcessError, FileNotFoundError):
-        return "unknown"
+        return "unknown hash"
 
 
 def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: bool) -> None:
@@ -435,11 +423,29 @@ def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: 
         id_name_map: Mapping of story IDs to readable names
         use_ids: If True, filenames use IDs; if False, filenames use names
     """
-    # Check if ImageMagick is available
-    if not is_imagemagick_available():
-        print_colored(YELLOW, "⚠️  ImageMagick not found. Skipping annotation.")
-        print("   Install with: brew install imagemagick")
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+    except ImportError:
+        print_colored(YELLOW, "⚠️  Pillow not found. Skipping annotation.")
+        print("   Install with: pip install Pillow")
         return
+
+    # Try common macOS system fonts; fall back to Pillow's built-in bitmap font
+    font = None
+    for font_path in [
+        '/System/Library/Fonts/Helvetica.ttc',
+        '/System/Library/Fonts/SFNSText.ttf',
+        '/System/Library/Fonts/Supplemental/Arial.ttf',
+        '/Library/Fonts/Arial.ttf',
+    ]:
+        if os.path.exists(font_path):
+            try:
+                font = ImageFont.truetype(font_path, 14)
+                break
+            except Exception:
+                continue
+    if font is None:
+        font = ImageFont.load_default()
 
     print("Adding annotations to screenshots...")
     sys.stdout.flush()
@@ -449,7 +455,6 @@ def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: 
     annotated_count = 0
     failed_count = 0
 
-    # Collect all PNG files in output directory
     png_files = []
     for root, _, files in os.walk(output_dir):
         for file in files:
@@ -457,86 +462,46 @@ def annotate_screenshots(output_dir: str, id_name_map: Dict[str, str], use_ids: 
                 png_files.append(os.path.join(root, file))
 
     for i, png_path in enumerate(png_files, 1):
-        # Determine story name from filename
         filename = os.path.basename(png_path)
         story_name = filename[:-4]  # Remove .png extension
 
-        # If we have id_name_map, try to get readable name
         if id_name_map:
             if use_ids:
-                # Filename is story ID, get readable name
                 story_name = id_name_map.get(story_name, story_name)
             else:
-                # Filename has dashes, keep it but make it more readable
                 story_name = story_name.replace('-', ' / ')
 
         print(f"[{i}/{len(png_files)}] Annotating: {filename}")
         sys.stdout.flush()
 
-        # Create temporary output file
-        temp_path = f"{png_path}.tmp.png"
-
-        # Annotation text - split into two lines
-        # Line 1: Story name (centered)
-        # Line 2: Date and git hash (centered)
         line1 = story_name
         line2 = f"{timestamp}  |  {git_hash}"
 
         try:
-            # Get image dimensions to draw line across full width
-            identify_result = subprocess.run(
-                ['identify', '-format', '%w %h', png_path],
-                check=True,
-                capture_output=True,
-                universal_newlines=True
-            )
-            dimensions = identify_result.stdout.strip().split()
-            img_width = int(dimensions[0])
-            img_height = int(dimensions[1])
+            img = Image.open(png_path).convert('RGB')
+            bar_height = 60
+            new_img = Image.new('RGB', (img.width, img.height + bar_height), 'white')
+            new_img.paste(img, (0, 0))
+            draw = ImageDraw.Draw(new_img)
 
-            # Use ImageMagick to extend canvas, add separator line, and add text
-            # After splice, the line should be drawn at y = original height
-            # This creates a separator between the original image and the annotation area
-            subprocess.run([
-                'convert', png_path,
-                '-background', 'white',
-                '-gravity', 'south',
-                '-splice', '0x60',  # Increased height for two lines
-                '-gravity', 'none',
-                '-stroke', '#cccccc',
-                '-strokewidth', '2',
-                '-draw', f'line 0,{img_height} {img_width},{img_height}',
-                '-gravity', 'south',
-                '-stroke', 'none',
-                '-pointsize', '14',
-                '-fill', 'black',
-                # First line (name) - higher position
-                '-annotate', '+0+32', line1,
-                # Second line (date and hash) - lower position
-                '-annotate', '+0+12', line2,
-                temp_path
-            ], check=True, capture_output=True)
+            # Separator line
+            draw.line([(0, img.height), (img.width, img.height)], fill='#cccccc', width=2)
 
-            # Replace original with annotated version
-            os.replace(temp_path, png_path)
+            # Centered text (anchor='mt' = middle-top, requires Pillow 8+)
+            cx = img.width // 2
+            draw.text((cx, img.height + 10), line1, fill='black', font=font, anchor='mt')
+            draw.text((cx, img.height + 36), line2, fill='black', font=font, anchor='mt')
+
+            new_img.save(png_path)
             annotated_count += 1
             print(f"    ✓ Added: {line1}")
             print(f"           {line2}")
             sys.stdout.flush()
 
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             print_colored(YELLOW, f"    ⚠️  Failed to annotate: {e}")
             sys.stdout.flush()
             failed_count += 1
-            # Clean up temp file if it exists
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-        except Exception as e:
-            print_colored(YELLOW, f"    ⚠️  Error: {e}")
-            sys.stdout.flush()
-            failed_count += 1
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
 
     print(f"\n📊 Annotation Summary:")
     print(f"  Annotated: {annotated_count}")
@@ -659,35 +624,48 @@ if __name__ == '__main__':
 
 
 # ============================================================================
-# STORYCAP OPTIONS REFERENCE
+# STORYCAP v5.0.1 OPTIONS REFERENCE
 # ============================================================================
 #
-# Usage: storycap [options] <storybook_url>
+# Usage: storycap [options] storybook_url
 #
-# Basic Options:
-#   <storybook_url>             Storybook URL (positional argument)
-#   --outDir <dir>              Output directory (default: __screenshots__)
-#   --viewport <widthxheight>   Viewport size (default: 800x600) - use 'x' not comma!
+# Core Options:
+#   -o, --outDir <dir>              Output directory (default: __screenshots__)
+#   -p, --parallel <n>              Number of browsers (default: 4)
+#   -f, --flat                      Flatten output filename
+#   -V, --viewport <WxH>            Viewport, repeatable (default: ["800x600"])
+#       --delay <ms>                Delay before each capture (default: 0)
 #
 # Story Selection:
-#   --include <pattern>         Include stories matching glob pattern (pipe-separated)
-#   --exclude <pattern>         Exclude stories matching glob pattern (pipe-separated)
+#   -i, --include <pattern>         Include rule, repeatable (array)
+#   -e, --exclude <pattern>         Exclude rule, repeatable (array)
+#       --shard <n/total>           Shard this run across multiple machines (default: 1/1)
 #
-# Screenshot Options:
-#   --flat                      Flatten output filename
-#   --delay <ms>                Delay before capturing (default: 0)
-#   --parallel <n>              Number of parallel browsers (default: 4)
-#   --captureTimeout <ms>       Timeout for each screenshot (default: 5000)
+# Capture Tuning:
+#       --captureTimeout <ms>       Timeout per story (default: 5000)
+#       --captureMaxRetryCount <n>  Retries on failure (default: 3)
+#       --metricsWatchRetryCount <n>Retries until browser metrics stable (default: 1000)
+#       --viewportDelay <ms>        Delay after viewport change (default: 300)
+#       --stateChangeDelay <ms>     Delay after element state change (default: 0)
+#       --reloadAfterChangeViewport Reload after viewport change (default: false)
+#       --disableCssAnimation       Disable CSS animation/transition (default: true)
+#       --disableWaitAssets         Skip waiting for asset loads (default: false)
 #
-# Browser Options:
-#   --forwardConsoleLogs        Forward console logs from stories
-#   --chromiumChannel <ch>      Channel to search local Chromium (default: "*")
+# Server:
+#       --serverCmd <cmd>           Command to launch Storybook
+#       --serverTimeout <ms>        Timeout for server start (default: 60000)
 #
-# Advanced Options:
-#   --disableCssAnimation       Disable CSS animations (default: true)
-#   --disableWaitAssets         Don't wait for assets to load (default: false)
-#   --silent                    Suppress console output
-#   --verbose                   Show detailed logs
+# Browser:
+#   -C, --chromiumChannel <ch>      "puppeteer"|"canary"|"stable"|"*" (default: "*")
+#       --chromiumPath <path>       Explicit Chromium executable path
+#       --puppeteerLaunchConfig <j> JSON launch config for Puppeteer
+#       --forwardConsoleLogs        Forward in-page console logs
+#       --trace                     Emit Chromium trace files
+#
+# Output:
+#       --silent                    Suppress output
+#       --verbose                   Show detailed logs
+#       --listDevices               List available device descriptors
 #
 # Examples:
 #
@@ -696,9 +674,6 @@ if __name__ == '__main__':
 #
 #   # Custom viewport and output
 #   python3 scripts/screenshot-stories.py --viewport 1920x1080 --output ./pr-images
-#
-#   # Filter by tags (no jq needed!)
-#   python3 scripts/screenshot-stories.py --tags pr-screenshots
 #
 #   # Filter by tags - output files will use readable names
 #   python3 scripts/screenshot-stories.py --tags pr-screenshots
@@ -717,10 +692,8 @@ if __name__ == '__main__':
 #   # High performance capture
 #   python3 scripts/screenshot-stories.py --parallel 8 --viewport 2560x1440
 #
-#   # Add timestamp and story name at bottom of screenshots
+#   # Add timestamp and story name at bottom of screenshots (requires Pillow: pip install Pillow)
 #   python3 scripts/screenshot-stories.py --tags demo --annotate
-#   # → Extends each image with a white bar at bottom showing "Story Name | 2025-11-21 14:30:00"
-#   # → Requires: brew install imagemagick
 #
 #   # Complete example with all features
 #   python3 scripts/screenshot-stories.py --tags pr-screenshots --annotate --viewport 1920x1080 --output ./screenshots
@@ -729,21 +702,11 @@ if __name__ == '__main__':
 #   python3 scripts/screenshot-stories.py --tags demo -- --captureTimeout 10000 --disableCssAnimation
 #   python3 scripts/screenshot-stories.py -- --forwardConsoleLogs --verbose
 #
-#   # Run storycap directly with patterns
-#   npx storycap http://localhost:6006 --outDir ./screenshots --include "**/Button/**"
-#
-#   # Exclude certain stories
-#   npx storycap http://localhost:6006 --outDir ./screenshots --exclude "**/Internal/**"
-#
-#   # High DPI screenshots
-#   npx storycap http://localhost:6006 --viewport 2560x1440
-#
-#   # Capture with delay (for animations)
-#   npx storycap http://localhost:6006 --delay 1000
-#
-#   # Multiple browsers in parallel
-#   npx storycap http://localhost:6006 --parallel 8
+#   # Run storycap directly
+#   npx storycap@5.0.1 http://localhost:6006 --outDir ./screenshots -i "Button/Primary"
+#   npx storycap@5.0.1 http://localhost:6006 --outDir ./screenshots -e "**/Internal/**"
+#   npx storycap@5.0.1 http://localhost:6006 -V 2560x1440 --delay 1000 --parallel 8
 #
 # For more information:
-#   npx storycap --help
+#   npx storycap@5.0.1 --help
 #   https://github.com/reg-viz/storycap
