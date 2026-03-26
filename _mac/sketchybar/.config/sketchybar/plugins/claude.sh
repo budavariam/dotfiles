@@ -12,11 +12,13 @@ if [[ "$SENDER" == "mouse.clicked" ]]; then
   echo 0 > "$STATE_FILE"
 fi
 
-# Count active Claude Code sessions by unique process group ID.
-# pgrep -f matches every worker subprocess; one PGID == one session.
-session_count=$(pgrep -f "claude-code" 2>/dev/null \
-  | xargs ps -o pgid= -p 2>/dev/null \
-  | tr -d ' ' | sort -u | grep -c '[0-9]' 2>/dev/null; true)
+# Count active Claude Code sessions via ~/.claude/sessions/ (one JSON file per session).
+session_count=0
+for f in ~/.claude/sessions/*.json; do
+  [ -f "$f" ] || continue
+  pid=$(python3 -c "import json; print(json.load(open('$f'))['pid'])" 2>/dev/null)
+  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && session_count=$((session_count + 1))
+done
 
 needs_action=0
 [ "$(cat "$STATE_FILE" 2>/dev/null)" = "1" ] && needs_action=1
