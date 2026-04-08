@@ -1,3 +1,4 @@
+#!/usr/bin/env zsh
 # ── Wrike task browser (fzf) — run with --help for details ───────────────────
 function wrike-browse() {
   local C_BOLD=$'\e[1m'
