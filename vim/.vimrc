@@ -117,7 +117,7 @@ set mouse=
 set cmdheight=2
 
 " Display line numbers on the left
-set number
+set relativenumber
 
 " Quickly time out on keycodes, but never time out on mappings
 set notimeout ttimeout ttimeoutlen=200
@@ -182,3 +182,15 @@ au BufWinEnter ?* silent loadview
 " git clone https://github.com/tomasiser/vim-code-dark.git
 " cp -r vim-code-dark/* ~/.vim/
 colorscheme codedark
+
+" Install plugin manager:
+" curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+"  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+" rustup update && rustup component add rust-analyzer
+" # add plugin code
+call plug#begin('~/.vim/plugged')
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+call plug#end()
+
+" :PlugInstall
+" :CocInstall coc-rust-analyzer
