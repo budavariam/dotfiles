@@ -18,6 +18,7 @@ cnf_aerospace=(
 )
 
 sketchybar --add event aerospace_workspace_change \
+    --add event toggle_aerospace_popup \
     --add item current_workspace right \
-    --subscribe current_workspace aerospace_workspace_change mouse.clicked \
+    --subscribe current_workspace aerospace_workspace_change mouse.clicked toggle_aerospace_popup \
     --set current_workspace "${cnf_aerospace[@]}"

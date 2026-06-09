@@ -58,10 +58,15 @@ update_popup_items() {
     
     # Process the actual workspace item
     item_name="space.s_${sid}_${i}"
-    label="${label:0:30}"       # Truncate to 30 chars
+    # Raw line format: "WORKSPACE | APP_NAME (WINDOW_TITLE)      |WINDOW_ID"
+    # %|*  removes the shortest suffix starting at the last '|', leaving everything before |WINDOW_ID
+    label="${label%|*}"
+    # ${label##*[! ]} matches the longest prefix ending at the last non-space character,
+    # which equals the trailing whitespace. Removing that suffix trims trailing spaces.
+    label="${label%"${label##*[! ]}"}"
     # echo "${items[$i]} ------ $wid" >> /tmp/.debug_sketchbar
     # echo "item: $sid" >> /tmp/.debug_sketchbar
-    width=$((${#label} * 8 + 8))
+    width=$((${#label} * 8 + 16))
     if [ "$width" -gt "$maxwidth" ]; then
       maxwidth=$width
     fi
@@ -108,6 +113,6 @@ mouse_clicked() {
 }
 
 case "$SENDER" in
-  "mouse.clicked") mouse_clicked ;;
+  "mouse.clicked" | "toggle_aerospace_popup") mouse_clicked ;;
   *) update_label ;;
 esac
