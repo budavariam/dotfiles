@@ -1,9 +1,8 @@
 # Install brew commands
 
 ```bash
-open brew.sh
 # create bundle file
-brew bundle dump --file=$(pwd)/Brewfile 
+./dump.sh
 # install brew
-brew bundle install --file=$(pwd)/Brewfile
+./install.sh
 ```
