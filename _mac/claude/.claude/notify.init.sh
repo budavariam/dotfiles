@@ -58,3 +58,8 @@ UPDATED=$(jq --arg clear "$CLEAR_ON_STOP_CMD" --arg refresh "$REFRESH_CMD" '
 echo "$UPDATED" > "$SETTINGS"
 
 echo "Notification hooks configured in $SETTINGS"
+echo ""
+echo "NOTE: If running inside tmux, terminal-notifier requires reattach-to-user-namespace to reach"
+echo "the macOS Notification Center. Ensure your tmux config contains:"
+echo "  set-option -g default-command \"which reattach-to-user-namespace > /dev/null && reattach-to-user-namespace -l \$SHELL || \$SHELL\""
+echo "Install it with: brew install reattach-to-user-namespace"
