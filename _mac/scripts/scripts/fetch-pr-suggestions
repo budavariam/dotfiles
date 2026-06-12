@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+# Fetches unresolved, unanswered review suggestions from a specific reviewer on a PR.
+# Usage: ./fetch_pr_suggestions.sh <pr_url>
+# Env:
+#   GH_HOST    — GitHub hostname (default: github.com)
+#   REVIEWER   — reviewer login to filter by (default: devx-ai)
+#   SINCE      — only include suggestions newer than this duration (default: 30m)
+#                format: <number><unit>  units: m=minutes, h=hours, d=days
+#                e.g. 30m, 2h, 1d, 0m (0m = all time)
+#   OUTPUT_DIR — directory to write output files into (default: ./git-pr-comments)
+
+set -euo pipefail
+IFS=$'\n\t'
+
+# --- help ---
+_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <pr_url>
+
+Fetches unresolved, unanswered review suggestions from a specific reviewer on a PR.
+Writes results to a text file in OUTPUT_DIR, one file per call.
+
+Arguments:
+  pr_url      Full URL of the pull request, e.g. https://github.com/owner/repo/pull/42
+
+Environment variables:
+  GH_HOST     GitHub hostname            (default: github.com)
+  REVIEWER    Reviewer login to filter   (default: devx-ai)
+  SINCE       Only include suggestions newer than this duration (default: 30m)
+              Format: <number><unit> — m=minutes, h=hours, d=days
+              Examples: 30m, 2h, 1d, 0m (0m = all time)
+  OUTPUT_DIR  Directory for output files (default: ./git-pr-comments)
+
+Examples:
+  $(basename "$0") https://github.com/org/repo/pull/42
+  SINCE=2h $(basename "$0") https://github.com/org/repo/pull/42
+  GH_HOST=github.example.com SINCE=0m $(basename "$0") https://github.example.com/org/repo/pull/42
+EOF
+}
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  _usage
+  exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+  _usage >&2
+  exit 1
+fi
+
+# --- cleanup trap: remove partial output file on error or interrupt ---
+_output_file=""
+_cleanup() {
+  local exit_code=$?
+  if [[ -n "$_output_file" && -f "$_output_file" && $exit_code -ne 0 ]]; then
+    rm -f "$_output_file"
+    echo "Removed partial output: $_output_file" >&2
+  fi
+  exit "$exit_code"
+}
+trap '_cleanup' EXIT INT TERM
+
+# --- config ---
+PR_URL="${1}"
+REVIEWER="${REVIEWER:-budavariam}"
+GH_HOST="${GH_HOST:-github.com}"
+SINCE="${SINCE:-30m}"
+OUTPUT_DIR="${OUTPUT_DIR:-./git-pr-comments}"
+
+# --- validate and parse SINCE ---
+if [[ "$SINCE" =~ ^([0-9]+)([mhd])$ ]]; then
+  _amount="${BASH_REMATCH[1]}"
+  _unit="${BASH_REMATCH[2]}"
+else
+  echo "ERROR: Invalid SINCE format '$SINCE' — use e.g. 30m, 2h, 1d, 0m" >&2
+  exit 1
+fi
+
+if date -v -1S +%s &>/dev/null 2>&1; then
+  # macOS
+  case "$_unit" in
+    m) SINCE_EPOCH=$(date -v "-${_amount}M" +%s) ;;
+    h) SINCE_EPOCH=$(date -v "-${_amount}H" +%s) ;;
+    d) SINCE_EPOCH=$(date -v "-${_amount}d" +%s) ;;
+  esac
+else
+  # GNU/Linux
+  case "$_unit" in
+    m) SINCE_EPOCH=$(date -d "${_amount} minutes ago" +%s) ;;
+    h) SINCE_EPOCH=$(date -d "${_amount} hours ago" +%s) ;;
+    d) SINCE_EPOCH=$(date -d "${_amount} days ago" +%s) ;;
+  esac
+fi
+
+# --- auth check ---
+if ! gh auth status --hostname "$GH_HOST" &>/dev/null; then
+  echo "Not authenticated against $GH_HOST. Logging in..."
+  gh auth login --hostname "$GH_HOST"
+fi
+
+# --- parse PR URL: https://<host>/<owner>/<repo>/pull/<number> ---
+if [[ "$PR_URL" =~ https://([^/]+)/([^/]+)/([^/]+)/pull/([0-9]+) ]]; then
+  OWNER="${BASH_REMATCH[2]}"
+  REPO="${BASH_REMATCH[3]}"
+  PR_NUMBER="${BASH_REMATCH[4]}"
+else
+  echo "ERROR: Cannot parse PR URL: $PR_URL" >&2
+  exit 1
+fi
+
+# --- prepare output directory and file ---
+mkdir -p "$OUTPUT_DIR"
+_output_file="${OUTPUT_DIR}/${REPO}_pr${PR_NUMBER}_suggestions.txt"
+
+# --- fetch and filter ---
+QUERY='query($owner: String!, $repo: String!, $pr: Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pr) {
+      reviewThreads(first: 100) {
+        nodes {
+          isResolved
+          isOutdated
+          comments(first: 20) {
+            nodes {
+              author { login }
+              body
+              path
+              line
+              originalLine
+              createdAt
+            }
+          }
+        }
+      }
+    }
+  }
+}'
+
+GH_HOST="$GH_HOST" gh api graphql \
+  -F owner="$OWNER" \
+  -F repo="$REPO" \
+  -F pr="$PR_NUMBER" \
+  -f query="$QUERY" \
+| jq -r --arg reviewer "$REVIEWER" --arg pr_url "$PR_URL" --argjson since "$SINCE_EPOCH" '
+  .data.repository.pullRequest.reviewThreads.nodes
+  | map(
+      select(.isResolved == false)
+      | select(.isOutdated == false)
+      | select(.comments.nodes[0].author.login == $reviewer)
+      | select(.comments.nodes[0].createdAt | fromdateiso8601 >= $since)
+      | select(
+          (.comments.nodes | map(select(.author.login != $reviewer)) | length) == 0
+        )
+    )
+  | if length == 0 then
+      "# No unaddressed \($reviewer) suggestions\nPR: \($pr_url)\n"
+    else
+      "# Unaddressed \($reviewer) suggestions\nPR: \($pr_url)\nCount: \(length)\n" +
+      (
+        to_entries[]
+        | "\n## [\(.key + 1 | tostring)] \(.value.comments.nodes[0].path)"
+        + " (line \(.value.comments.nodes[0].line // .value.comments.nodes[0].originalLine // "?"))\n"
+        + .value.comments.nodes[0].body + "\n"
+      )
+    end
+' > "$_output_file"
+
+echo "→ $_output_file (since: $SINCE)"
