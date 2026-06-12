@@ -26,6 +26,7 @@ pushd "_mac" || exit 1
   stow -vt "${FOLDER_VSCODE}" vscode
   stow -vt ~ wezterm
   stow -vt ~ claude
+  stow -vt ~ nvim
 popd || exit 1
 stow -vt ~ claude
 stow -vt ~ git

@@ -1,0 +1,5 @@
+{
+  "coc.nvim": { "branch": "release", "commit": "30a7e0e49125a3f5527ce6adf00b556181ca5e8a" },
+  "lazy.nvim": { "branch": "main", "commit": "306a05526ada86a7b30af95c5cc81ffba93fef97" },
+  "vim-code-dark": { "branch": "master", "commit": "4624dc223bf574aa9a731c2383c579847303c380" }
+}
