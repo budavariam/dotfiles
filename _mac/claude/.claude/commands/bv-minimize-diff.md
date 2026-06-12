@@ -1,14 +1,19 @@
 ---
-description: Minimize git diff by comparing changes to original code
+description: Minimize git diff by reverting unnecessary changes
 ---
 
-Review the current changes in the working directory and suggest ways to minimize the diff:
+Run `git diff` and `git diff --staged` to see all current changes, then actually revert the unnecessary ones.
 
-1. Check if any formatting changes can be reverted
-2. Identify unnecessary whitespace changes
-3. Look for refactoring that could be simplified
-4. Suggest splitting large changes into focused commits
-5. Check if comments can match existing style
-6. Identify any accidental changes that should be reverted
+For each changed file, categorize changes as:
+- **Intentional** — logic changes, new features, bug fixes: keep
+- **Incidental** — formatting, whitespace, comment style that drifted from the original: revert
+- **Accidental** — changes to files unrelated to the current task: revert
 
-Use `git diff` to see the current changes and provide specific recommendations.
+Specifically revert:
+1. Whitespace-only line changes (trailing spaces, blank line counts) unless the project enforces them via a linter
+2. Quote style changes (single ↔ double) if not enforced by the linter config
+3. Import reordering that isn't driven by a formatter rule
+4. Comment reformatting that changes meaning or style without adding value
+5. Changes in files that should not be modified for this task
+
+After reverting, report what was kept and why. If there are large changes that mix multiple concerns, suggest how to split them into separate commits — but don't split them without confirmation.
