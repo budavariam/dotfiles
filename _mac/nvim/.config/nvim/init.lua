@@ -389,6 +389,7 @@ require('lazy').setup({
         { '<leader>l',  group = 'LSP actions' },
         { '<leader>d',  group = 'Diagnostics' },
         { '<leader>c',  group = 'Code' },
+        { '<leader>v',  group = 'Vim learn' },
       })
       vim.keymap.set('n', '<leader>?', '<cmd>WhichKey<CR>', { desc = 'Show all keymaps' })
     end,
@@ -596,6 +597,26 @@ require('lazy').setup({
         }),
       })
     end,
+  },
+
+  -- ----------------------------------------------------------
+  -- Vim cheatsheet + quiz overlay
+  -- Source of truth: ui-cheatsheet/src/data.json (same as the web app)
+  -- Plugin code lives in the nvim-plugin/ subdirectory of the repo
+  -- ----------------------------------------------------------
+  {
+    'budavariam/learn-vim',
+    config = function()
+      local root = vim.fn.stdpath('data') .. '/lazy/learn-vim/nvim-plugin'
+      vim.opt.rtp:prepend(root)
+      require('vim-learn').setup({
+        data_path = vim.fn.stdpath('data') .. '/lazy/learn-vim/ui-cheatsheet/src/data.json',
+      })
+    end,
+    keys = {
+      { '<leader>vl', '<cmd>VimLearnCheatsheet<CR>', desc = 'Vim cheatsheet' },
+      { '<leader>vq', '<cmd>VimLearnQuiz<CR>',       desc = 'Vim quiz' },
+    },
   },
 
 })
