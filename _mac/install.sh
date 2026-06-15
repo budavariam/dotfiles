@@ -58,6 +58,9 @@ git clone https://github.com/Aloxaf/fzf-tab ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/p
 
 cp ./zsh/custom/plugins/bam-vi-mode ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/bam-vi-mode
 
+# neovim
+bash "$(dirname "$0")/nvim/install.sh"
+
 # add faff
 curl -sL https://raw.githubusercontent.com/budavariam/faff/refs/heads/main/faff.sh -o /tmp/faff
 cat /tmp/faff \

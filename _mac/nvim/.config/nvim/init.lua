@@ -35,6 +35,34 @@ vim.opt.splitright = true               -- new vertical splits open right
 vim.opt.signcolumn = 'yes'             -- always show sign column (no layout shifts)
 vim.opt.updatetime = 250               -- faster sign/diagnostic updates
 vim.opt.termguicolors = true           -- true color support
+vim.opt.cursorline    = true           -- highlight current line so cursor is always visible
+
+-- insert cursor: keep default thin bar and white color
+vim.opt.guicursor = 'n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50'
+
+-- show whitespace like vscode does (dots for spaces, arrow for tabs)
+vim.opt.list = true
+vim.opt.listchars = { space = '·', tab = '→ ', trail = '·' }
+
+-- strip leading colon when pasting vim commands copied from docs (e.g. :w → w)
+vim.api.nvim_create_autocmd('CmdlineChanged', {
+  callback = function()
+    local line = vim.fn.getcmdline()
+    if line:match('^%s*:') then
+      vim.fn.setcmdline((line:gsub('^%s*:', '')))
+    end
+  end,
+})
+
+-- trim trailing whitespace on save, keep cursor position
+vim.api.nvim_create_autocmd('BufWritePre', {
+  pattern = '*',
+  callback = function()
+    local pos = vim.api.nvim_win_get_cursor(0)
+    vim.cmd('%s/\\s\\+$//e')
+    vim.api.nvim_win_set_cursor(0, pos)
+  end,
+})
 
 -- Line number colors: grey for both absolute (current line) and relative numbers
 -- Applied in an autocmd so they survive colorscheme changes
@@ -130,6 +158,16 @@ vim.diagnostic.config({
   update_in_insert = false,
   severity_sort   = true,
 })
+
+local diagnostics_visible = true
+vim.keymap.set('n', '<leader>dt', function()
+  diagnostics_visible = not diagnostics_visible
+  vim.diagnostic.config({
+    virtual_text = diagnostics_visible,
+    signs        = diagnostics_visible,
+    underline    = diagnostics_visible,
+  })
+end, { desc = 'Toggle diagnostics' })
 
 -- ============================================================
 -- Folds: save and restore view on buffer leave/enter
@@ -261,12 +299,15 @@ require('lazy').setup({
   -- ----------------------------------------------------------
   -- Syntax highlighting + text objects (treesitter)
   -- ----------------------------------------------------------
+  -- ----------------------------------------------------------
+  -- Syntax highlighting + text objects (treesitter)
+  -- Requires: cargo install tree-sitter-cli  (for :TSInstall)
+  -- ----------------------------------------------------------
   {
     'nvim-treesitter/nvim-treesitter',
-    build        = ':TSUpdate',
-    dependencies = { 'nvim-treesitter/nvim-treesitter-textobjects' },
-    main   = 'nvim-treesitter',
-    opts = {
+    build = ':TSUpdate',
+    main  = 'nvim-treesitter',
+    opts  = {
       ensure_installed = {
         'lua', 'vim', 'vimdoc',
         'rust', 'go', 'python',
@@ -277,27 +318,50 @@ require('lazy').setup({
       auto_install = true,
       highlight    = { enable = true },
       indent       = { enable = true },
-      textobjects  = {
-        select = {
-          enable    = true,
-          lookahead = true,
-          keymaps   = {
-            ['af'] = '@function.outer', -- around function
-            ['if'] = '@function.inner', -- inside function
-            ['ac'] = '@class.outer',    -- around class
-            ['ic'] = '@class.inner',    -- inside class
-            ['aa'] = '@parameter.outer',-- around argument
-            ['ia'] = '@parameter.inner',-- inside argument
-          },
-        },
-        move = {
-          enable              = true,
-          set_jumps           = true,
-          goto_next_start     = { [']f'] = '@function.outer', [']c'] = '@class.outer' },
-          goto_previous_start = { ['[f'] = '@function.outer', ['[c'] = '@class.outer' },
-        },
-      },
     },
+  },
+
+  -- ----------------------------------------------------------
+  -- Treesitter text objects  (af/if = function, ac/ic = class, etc.)
+  -- nvim-treesitter 0.9+ removed nvim-treesitter.configs entirely;
+  -- keymaps must be registered manually via the module functions.
+  -- ----------------------------------------------------------
+  {
+    'nvim-treesitter/nvim-treesitter-textobjects',
+    dependencies = { 'nvim-treesitter/nvim-treesitter' },
+    config = function()
+      local select = require('nvim-treesitter-textobjects.select')
+      local move   = require('nvim-treesitter-textobjects.move')
+
+      require('nvim-treesitter-textobjects').setup({ select = { lookahead = true } })
+
+      local sel_maps = {
+        ['af'] = '@function.outer',
+        ['if'] = '@function.inner',
+        ['ac'] = '@class.outer',
+        ['ic'] = '@class.inner',
+        ['aa'] = '@parameter.outer',
+        ['ia'] = '@parameter.inner',
+        ['aC'] = '@comment.outer',
+      }
+      for key, query in pairs(sel_maps) do
+        vim.keymap.set({ 'x', 'o' }, key, function()
+          select.select_textobject(query, 'textobjects')
+        end, { desc = query })
+      end
+
+      local move_maps = {
+        [']f'] = { fn = move.goto_next_start,     query = '@function.outer' },
+        [']c'] = { fn = move.goto_next_start,     query = '@class.outer' },
+        ['[f'] = { fn = move.goto_previous_start, query = '@function.outer' },
+        ['[c'] = { fn = move.goto_previous_start, query = '@class.outer' },
+      }
+      for key, m in pairs(move_maps) do
+        vim.keymap.set('n', key, function()
+          m.fn(m.query, 'textobjects')
+        end, { desc = m.query })
+      end
+    end,
   },
 
   -- ----------------------------------------------------------
