@@ -204,6 +204,15 @@ PROMPT='$(kube_ps1) '$PROMPT
 PROMPT="\$(vi_mode_prompt_info) $PROMPT"
 RPROMPT="$RPROMPT \$(vi_mode_prompt_info)"
 
+function _set_tmux_pane_title() {
+  if [[ -n "$TMUX" ]]; then
+    local branch=$(git branch --show-current 2>/dev/null)
+    local title="${PWD##*/}${branch:+ ($branch)}"
+    printf '\033]2;%s\033\\' "$title"
+  fi
+}
+precmd_functions+=(_set_tmux_pane_title)
+
 HISTSIZE=10000000
 SAVEHIST=10000000
 
