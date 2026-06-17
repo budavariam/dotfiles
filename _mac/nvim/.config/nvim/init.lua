@@ -144,6 +144,17 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', ']d',        vim.diagnostic.goto_next,   o('Next diagnostic'))
     vim.keymap.set('n', '<leader>de', vim.diagnostic.open_float,  o('Show diagnostic'))
     vim.keymap.set('n', '<leader>dl', vim.diagnostic.setloclist,  o('Diagnostic list'))
+
+    -- Inlay hints (type annotations, parameter names)
+    if vim.lsp.inlay_hint then
+      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      vim.keymap.set('n', '<leader>dh', function()
+        vim.lsp.inlay_hint.enable(
+          not vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr }),
+          { bufnr = bufnr }
+        )
+      end, o('Toggle inlay hints'))
+    end
   end,
 })
 
