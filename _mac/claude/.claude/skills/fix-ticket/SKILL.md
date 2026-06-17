@@ -114,3 +114,52 @@ If the current working directory is not inside a git repository, ask the user wh
 | `updated constants.ts to use Temporal.Now` | `fix UTC date in fiscal constants` |
 
 Short, imperative, lowercase, no trailing period.
+
+---
+
+## Example walkthrough
+
+**User message:**
+> Fix this ticket please: https://www.wrike.com/open.htm?id=9999999999
+
+**Step 1 — Fetch the ticket:**
+```bash
+wrike tasks get --permalink "https://www.wrike.com/open.htm?id=9999999999" --json
+```
+Output (excerpt):
+```json
+{
+  "title": "Modal closes immediately after opening on mobile",
+  "description": "<b>Summary</b><br/>The settings modal dismisses itself on first tap on iOS...",
+  "customFields": { "Priority": "P2" }
+}
+```
+
+**Step 2 — Create the worktree:**
+
+`EnterWorktree` called with `name: "fix/modal-closes-on-mobile"`. The tool creates `.claude/worktrees/fix+modal-closes-on-mobile` branched from `origin/main` and the setup hook runs automatically.
+
+**Step 3 — Explore:**
+```bash
+grep -r "onOpenChange\|useModal\|ModalRoot" src/ --include="*.tsx" -l
+# → src/components/Modal/Modal.tsx, src/hooks/useModal.ts
+```
+Read both files. Find that `useModal` calls `onClose` on every `touchstart` event — including the initial tap that opens the modal.
+
+**Step 4 — Fix:**
+
+In `src/hooks/useModal.ts`, add a guard so the `touchstart` listener is only attached after the open animation completes (i.e. after a `transitionend` event or a short delay).
+
+**Step 5 — Test:**
+```bash
+npm test -- --run
+# 142 tests passed
+```
+
+**Step 6 — Commit:**
+```bash
+git add src/hooks/useModal.ts
+git commit -m "fix modal dismissing on the same tap that opens it"
+```
+
+Done. Report to user: worktree `fix/modal-closes-on-mobile` is ready with one commit. No push.
