@@ -3,3 +3,5 @@ stats-cache.json
 history.jsonl
 **/
 !commands/
+!skills/
+!skills/*/
