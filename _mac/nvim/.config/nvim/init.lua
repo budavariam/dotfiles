@@ -129,7 +129,9 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', 'gr', vim.lsp.buf.references,      o('References'))
     vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, o('Type definition'))
     vim.keymap.set('n', 'gi', vim.lsp.buf.implementation,  o('Implementation'))
-    vim.keymap.set('n', 'K',  vim.lsp.buf.hover,           o('Hover docs'))
+    vim.keymap.set('n', 'K',          vim.lsp.buf.hover,           o('Hover docs'))
+    vim.keymap.set('n', '<leader>lk', vim.lsp.buf.hover,           o('Hover docs'))
+    vim.keymap.set({ 'n', 'i' }, '<C-k>', vim.lsp.buf.signature_help, o('Signature help'))
 
     -- LSP actions  (<leader>l*)
     vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action,      o('Code action'))
@@ -138,6 +140,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', '<leader>lf', function()                    -- NOTE: <leader>f* is for telescope
       vim.lsp.buf.format({ async = true })
     end, o('Format buffer'))
+    vim.keymap.set('n', '<leader>ls', vim.lsp.buf.signature_help,   o('Signature help'))
 
     -- Diagnostics  (<leader>d*)
     vim.keymap.set('n', '[d',        vim.diagnostic.goto_prev,   o('Prev diagnostic'))
@@ -462,7 +465,7 @@ require('lazy').setup({
         { '<leader>b',  group = 'Buffer' },
         { '<leader>g',  group = 'Git' },
         { '<leader>l',  group = 'LSP actions' },
-        { '<leader>d',  group = 'Diagnostics' },
+        { '<leader>d',  group = 'Diagnostics / Hints' },
         { '<leader>c',  group = 'Code' },
         { '<leader>v',  group = 'Vim learn' },
       })
