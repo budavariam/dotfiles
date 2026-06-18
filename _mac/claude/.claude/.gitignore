@@ -5,3 +5,5 @@ history.jsonl
 !commands/
 !skills/
 !skills/*/
+skills/sensitive-*/
+.last-cleanup
