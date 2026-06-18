@@ -49,6 +49,43 @@
         if [[ -z \"$branch\" ]]; then echo \"No branch selected.\"; return 1; fi; \
         git checkout \"$branch\"; \
     }; f"
+    # wtf - fzf-select a Claude worktree for the current repo and print its path (used by the cdw shell alias)
+    wtf = "!f() { \
+        git rev-parse HEAD > /dev/null 2>&1 || return; \
+        git worktree list | grep -F '.claude/worktrees' | \
+        awk '{ branch=$3; gsub(\"[][]\", \"\", branch); printf \"%s %s %s\\n\", $1, $2, branch }' | \
+        fzf --height 70% --ansi --no-multi --no-sort \
+            --with-nth=2.. \
+            --preview-window 'down,30%,border-top' \
+            --preview 'git -C {1} log -n 50 --color=always --date=short --pretty=\"format:%C(auto)%cd %h%d %s\"' \
+            --bind 'shift-up:preview-up,shift-down:preview-down' | \
+        awk '{print $1}'; \
+    }; f"
+    # wt - create a worktree in .claude/worktrees/<branch>, run setup-worktree.sh or npm install as fallback
+    #      -b flag creates a new branch. Prints dest path to stdout so you can: cd $(git wt fix/foo)
+    #      Usage: git wt <branch>  |  git wt -b <new-branch>
+    wt = "!f() { \
+        if [ \"$1\" = \"-b\" ]; then branch=\"$2\"; new=1; shift 2; \
+        else branch=\"$1\"; new=0; fi; \
+        [ -z \"$branch\" ] && { echo 'Usage: git wt [-b] <branch>' >&2; return 1; }; \
+        root=$(git rev-parse --show-toplevel); \
+        sanitized=$(echo \"$branch\" | tr '/' '_'); \
+        dest=\"$root/.claude/worktrees/$sanitized\"; \
+        mkdir -p \"$root/.claude/worktrees\" >&2; \
+        if [ \"$new\" = \"1\" ]; then \
+            git worktree add -b \"$branch\" \"$dest\" >&2 || return 1; \
+        else \
+            git worktree add \"$dest\" \"$branch\" >&2 || return 1; \
+        fi; \
+        if [ -f \"$root/scripts/setup-worktree.sh\" ]; then \
+            echo 'Running setup-worktree.sh...' >&2; \
+            bash \"$root/scripts/setup-worktree.sh\" \"$dest\" >&2; \
+        elif [ -f \"$dest/package.json\" ]; then \
+            echo 'No setup-worktree.sh found, running npm install...' >&2; \
+            (cd \"$dest\" && npm install >&2); \
+        fi; \
+        echo \"$dest\"; \
+    }; f"
     # retag - Remove the old tag with this name and tag the latest commit with it.
     retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
     # ctags -

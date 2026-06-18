@@ -161,6 +161,15 @@ alias cs="cd ~/project"
 alias howto="code ~/project/todolog"
 alias dotfiles="code ~/project/dotfiles"
 
+# cdw - fzf-select a Claude worktree for the current repo and cd into it
+# Uses `git wtf` for the interactive selection (mirrors bragef style)
+function cdw() {
+  local wt_path
+  wt_path=$(git wtf) || return 1
+  [[ -z "$wt_path" ]] && return 1
+  cd "$wt_path"
+}
+
 alias dcu="docker compose up"
 alias dcd="docker compose down"
 alias dcs="docker compose stop"
