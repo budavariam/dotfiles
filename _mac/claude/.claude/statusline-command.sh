@@ -10,12 +10,28 @@ cwd=$(echo "$input" | jq -r '.workspace.current_dir // "."')
 # Current folder basename from working directory
 folder=$(basename "$cwd")
 
-# Git branch (skip optional locks to avoid blocking)
+# Colors matching oxide.zsh-theme (256-color ANSI)
+C_TURQUOISE=$'\033[38;5;73m'   # branch name
+C_ORANGE=$'\033[38;5;179m'     # ● unstaged
+C_LIMEGREEN=$'\033[38;5;107m'  # ✚ staged
+C_RED=$'\033[38;5;167m'        # ● untracked
+C_RESET=$'\033[0m'
+
+# Git branch + status indicators (skip optional locks to avoid blocking)
 git_branch=$(git -C "$cwd" --no-optional-locks branch --show-current 2>/dev/null)
 if [ -z "$git_branch" ]; then
   git_section="git:?"
 else
-  git_section="git:${git_branch}"
+  git_indicators=""
+  porcelain=$(git -C "$cwd" --no-optional-locks status --porcelain 2>/dev/null)
+  echo "$porcelain" | grep -qm1 '^.[MADRCU]' 2>/dev/null && git_indicators="${git_indicators} ${C_ORANGE}●${C_RESET}"
+  echo "$porcelain" | grep -qm1 '^[MADRCU]'  2>/dev/null && git_indicators="${git_indicators} ${C_LIMEGREEN}✚${C_RESET}"
+  echo "$porcelain" | grep -qm1 '^??'        2>/dev/null && git_indicators="${git_indicators} ${C_RED}●${C_RESET}"
+  ahead=$(git -C "$cwd" --no-optional-locks rev-list @{upstream}..HEAD --count 2>/dev/null)
+  behind=$(git -C "$cwd" --no-optional-locks rev-list HEAD..@{upstream} --count 2>/dev/null)
+  [ -n "$behind" ] && [ "$behind" -gt 0 ] && git_indicators="${git_indicators} ${C_ORANGE}↓${behind}${C_RESET}"
+  [ -n "$ahead"  ] && [ "$ahead"  -gt 0 ] && git_indicators="${git_indicators} ${C_LIMEGREEN}↑${ahead}${C_RESET}"
+  git_section="git:${C_TURQUOISE}${git_branch}${C_RESET}${git_indicators}"
 fi
 
 # Context progress bar (10 chars wide)
