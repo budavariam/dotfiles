@@ -49,7 +49,7 @@ oxide_reset_color="%f"
 FMT_UNSTAGED="%{$oxide_reset_color%} %{$oxide_orange%}●"
 FMT_STAGED="%{$oxide_reset_color%} %{$oxide_limegreen%}✚"
 FMT_ACTION="(%{$oxide_limegreen%}%a%{$oxide_reset_color%})"
-FMT_VCS_STATUS="on %{$oxide_turquoise%}%b%u%c%{$oxide_reset_color%}"
+FMT_VCS_STATUS="on %{$oxide_turquoise%}%b%u%c%m%{$oxide_reset_color%}"
 
 zstyle ':vcs_info:*' enable git svn
 zstyle ':vcs_info:*' check-for-changes true
@@ -58,7 +58,7 @@ zstyle ':vcs_info:*' stagedstr      "${FMT_STAGED}"
 zstyle ':vcs_info:*' actionformats  "${FMT_VCS_STATUS} ${FMT_ACTION}"
 zstyle ':vcs_info:*' formats        "${FMT_VCS_STATUS}"
 zstyle ':vcs_info:*' nvcsformats    ""
-zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
+zstyle ':vcs_info:git*+set-message:*' hooks git-untracked git-remote-status
 
 # Check for untracked files.
 +vi-git-untracked() {
@@ -66,6 +66,15 @@ zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
             git status --porcelain | grep --max-count=1 '^??' &> /dev/null; then
         hook_com[staged]+="%{$oxide_reset_color%} %{$oxide_red%}●"
     fi
+}
+
+# Check for remote-ahead commits (↓) and unpushed commits (↑).
++vi-git-remote-status() {
+    local ahead behind
+    ahead=$(git rev-list @{upstream}..HEAD --count 2>/dev/null)
+    behind=$(git rev-list HEAD..@{upstream} --count 2>/dev/null)
+    [[ -n "$behind" && "$behind" -gt 0 ]] && hook_com[misc]+=" %{$oxide_orange%}↓${behind}%{$oxide_reset_color%}"
+    [[ -n "$ahead"  && "$ahead"  -gt 0 ]] && hook_com[misc]+=" %{$oxide_limegreen%}↑${ahead}%{$oxide_reset_color%}"
 }
 
 # Executed before each prompt.
