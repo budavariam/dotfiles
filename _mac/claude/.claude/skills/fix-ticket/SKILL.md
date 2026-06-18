@@ -12,8 +12,25 @@ Use this skill when the user provides one or more Wrike ticket URLs and asks you
 |-----------|---------|----------------------|
 | **Ticket URL(s)** | — (required) | The Wrike permalink URL(s) in the message |
 | **Base branch** | repo's default branch (origin/HEAD) | "from `main`", "branch off `feat/xyz`" |
-| **Worktree name** | derived from ticket title | "call it `fix/my-name`", "name it `my-fix`" |
+| **Worktree name** | derived from ticket title (see naming convention below) | "call it `fix_1234567890_my-name`", "name it `my-fix`" |
 | **Isolation mode** | worktree | "no worktree", "in the current folder", "skip the worktree" → work in the current git checkout instead |
+
+### Branch naming convention
+
+Always use `<type>_<id>_<kebab-case-slug>` when a ticket ID is available, or `<type>_<kebab-case-slug>` when there is no ID:
+
+```
+fix_1771681161_date-boundary-fix
+fix_4433394950_multi-tenant-architecture
+feat_1775473907_collection-notify
+chore_update-dependencies
+```
+
+**Rules:**
+- Use `_` as the separator — this produces the correct folder name (`.claude/worktrees/fix_1771681161_date-boundary-fix`).
+- The type comes from the nature of the work: `fix` for bugs, `feat` for features, `chore` for maintenance.
+- The ID is the numeric task ID from the Wrike permalink URL (`https://www.wrike.com/open.htm?id=1771681161` → `1771681161`). Include it whenever a ticket was fetched — omit it only when working without a ticket.
+- The slug is lowercase, words separated by `-`, a short description derived from the ticket title (3–5 words max).
 
 If the user says **"no worktree"** or **"in the current folder"**: skip `EnterWorktree` and work directly in the current git checkout. Create and switch to a new branch with `git checkout -b <branch-name>`.
 
@@ -23,7 +40,6 @@ If the user says **"no worktree"** or **"in the current folder"**: skip `EnterWo
 
 - **Never modify the ticket** — no status changes, no comments, no field updates.
 - **Never push** to the remote repository.
-- **No LLM attribution** in commits — no `Co-Authored-By` lines.
 - If the user gives multiple tickets, **fan out agents in parallel** — one per ticket.
 
 ---
@@ -42,19 +58,25 @@ Read the full JSON output: title, description, acceptance criteria, technical no
 
 **Worktree mode (default):**
 
-Use the `EnterWorktree` tool. The name defaults to a short kebab-case slug from the ticket title (e.g. `fix/datepicker-timezone`). The base branch defaults to `origin/<default-branch>` unless overridden. `EnterWorktree` runs any `PostToolUse` setup hooks automatically.
+Use the `EnterWorktree` tool. The name uses `_` separators (e.g. `fix_1771681161_date-boundary-fix`). The base branch defaults to `origin/<default-branch>` unless overridden. `EnterWorktree` runs any `PostToolUse` setup hooks automatically.
+
+After the worktree is created, unset the upstream tracking so `gpsup` pushes to a new remote branch rather than the base branch:
+
+```bash
+git branch --unset-upstream
+```
 
 **Current-folder mode (`--no-worktree`):**
 
 ```bash
-git checkout -b fix/<slug>   # or the user's specified branch name
+git checkout -b fix_<id>_<slug>   # or the user's specified branch name
 ```
 
 Install deps manually if needed (`npm install`, etc.).
 
 > **Worktrees are preferred** — they keep the main checkout clean. Only skip them when the user explicitly asks.
 
-> **If the repo has a setup script** (e.g. `scripts/setup-worktree.sh`), the hook runs it automatically. If not, install deps manually (`npm install` or equivalent) before proceeding.
+> If the repo has a setup script, the `EnterWorktree` hook runs it automatically. If not, install deps manually (`npm install` or equivalent) before proceeding.
 
 ### Step 3 — Explore the codebase
 
@@ -82,7 +104,7 @@ git commit -m "short, imperative description of the fix"
 ```
 
 - Keep the message short and direct (e.g. `fix datepicker using local timezone`, `show collection modal in expanded card view`).
-- No body, no `Co-Authored-By`, no ticket references required.
+- No body, no ticket references required.
 - **Do not push.**
 
 ---
@@ -137,7 +159,7 @@ Output (excerpt):
 
 **Step 2 — Create the worktree:**
 
-`EnterWorktree` called with `name: "fix/modal-closes-on-mobile"`. The tool creates `.claude/worktrees/fix+modal-closes-on-mobile` branched from `origin/main` and the setup hook runs automatically.
+`EnterWorktree` called with `name: "fix_9999999999_modal-closes-on-mobile"`. The tool creates `.claude/worktrees/fix_9999999999_modal-closes-on-mobile` branched from `origin/main` and the setup hook runs automatically.
 
 **Step 3 — Explore:**
 ```bash
@@ -162,4 +184,4 @@ git add src/hooks/useModal.ts
 git commit -m "fix modal dismissing on the same tap that opens it"
 ```
 
-Done. Report to user: worktree `fix/modal-closes-on-mobile` is ready with one commit. No push.
+Done. Report to user: worktree `fix_9999999999_modal-closes-on-mobile` is ready with one commit. No push.
