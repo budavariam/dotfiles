@@ -166,6 +166,28 @@
     ll = log --pretty=format:"%C(yellow)%h%C(auto)%d\\ %C(reset)%s\\ %C(green)[%cn]%C(reset)" --decorate --numstat
     # logfile - Show git log with chunk info
     logfile = log -u
+    # lf - fzf commit browser: left=log, right=full diff; enter=checkout commit
+    #      git lf                         current branch only
+    #      git lf --all                   all branches
+    #      git lf --all --author=foo      filter by author
+    #      git lf -- src/components/      scope to a path
+    #      git lf --graph --all           graph in list (preview breaks, checkout works)
+    #      git lf --since=1.week          recent only
+    lf = "!f() { \
+        git rev-parse HEAD > /dev/null 2>&1 || return; \
+        local selected=$(git log --color=always \
+            --format=\"%H%x09%C(yellow)%h%C(reset) %C(blue)%ad%C(reset) %C(auto)%d %s %C(green)(%an)%C(reset)\" \
+            --date=short \"$@\" | \
+        fzf --height 100% --ansi --no-multi --no-sort \
+            --delimiter=$'\\t' --with-nth=2.. \
+            --preview-window 'right:60%,border-left' \
+            --preview 'git show --stat --color=always {1}' \
+            --bind 'shift-up:preview-up,shift-down:preview-down'); \
+        if [[ -z \"$selected\" ]]; then echo \"No commit selected.\"; return 1; fi; \
+        local commit=$(echo \"$selected\" | cut -f1 | tr -cd '[:xdigit:]' | cut -c1-40); \
+        [[ -z \"$commit\" ]] && { echo \"No valid commit in selection.\"; return 1; }; \
+        git checkout \"$commit\"; \
+    }; f"
     # logf - log with separate commit/author data (different when patches applied)
     logf = log --pretty=fuller
     # fhistory - log the commits and amount of changes of a file. e.g.: `git fhistory README.md`
