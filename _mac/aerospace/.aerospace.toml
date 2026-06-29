@@ -70,12 +70,12 @@ inner.horizontal = 0
 inner.vertical =   0
 outer.left =       0
 outer.bottom =     0
-outer.top =        0
+outer.top =        [{ monitor.'sidecar' = 32 }, 0]
 outer.right =      0
 
 [workspace-to-monitor-force-assignment]
-9 = ['secondary', 'main']
-0 = ['secondary', 'main']
+9 = ['sidecar', 'secondary', 'main']
+0 = ['sidecar', 'secondary', 'main']
 
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
