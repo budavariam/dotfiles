@@ -86,6 +86,7 @@ source "$ITEM_DIR/spotify.sh"
 source "$ITEM_DIR/clock.sh"
 source "$ITEM_DIR/os.sh"
 source "$ITEM_DIR/aerospace.sh"
+source "$ITEM_DIR/sidecar_toggle.sh"
 source "$ITEM_DIR/cpu.sh"
 source "$ITEM_DIR/network.sh"
 

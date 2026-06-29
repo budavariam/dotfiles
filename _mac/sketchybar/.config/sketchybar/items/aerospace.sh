@@ -18,7 +18,14 @@ cnf_aerospace=(
 )
 
 sketchybar --add event aerospace_workspace_change \
-    --add event toggle_aerospace_popup \
-    --add item current_workspace right \
-    --subscribe current_workspace aerospace_workspace_change mouse.clicked toggle_aerospace_popup \
-    --set current_workspace "${cnf_aerospace[@]}"
+    --add event toggle_aerospace_popup
+
+# One item per physical display; sketchybar display 1 = main, 2..N = others
+N_MONITORS=$(aerospace list-monitors 2>/dev/null | grep -c '.')
+[ "${N_MONITORS:-0}" -eq 0 ] && N_MONITORS=1
+
+for i in $(seq 1 "$N_MONITORS"); do
+    sketchybar --add item "current_workspace_$i" right \
+        --set "current_workspace_$i" associated_display=$i "${cnf_aerospace[@]}" \
+        --subscribe "current_workspace_$i" aerospace_workspace_change mouse.clicked toggle_aerospace_popup
+done

@@ -5,74 +5,116 @@
 
 if [[ "$(osascript -e 'application "Aerospace" is running')" != "true" ]]; then
   echo "Aerospace is not running"
-  sketchybar --set current_workspace label="" label.drawing=off popup.drawing=off
+  sketchybar --set "$NAME" label="" label.drawing=off popup.drawing=off
   exit 0
 fi
 
-# Color variables
 COLOR_NORMAL_FOCUSED=0x55FF0000
 COLOR_NUMBER_FOCUSED=0x99FF4444
 COLOR_NORMAL=0x55000000
 COLOR_NUMBER=0x55444444
 
 POPUP_CORNER_RADIUS=5
-FOCUSED_WORKSPACE=$(aerospace list-workspaces --focused)
+GLOBAL_FOCUSED=$(aerospace list-workspaces --focused)
 
-update_label() {
-  # Update the label of the main workspace indicator
-  if [ -z "$FOCUSED_WORKSPACE" ]; then
-    # NOTE: on first start it can be empty, get it from aerospace
-    sketchybar --set current_workspace label.drawing=on label="$FOCUSED_WORKSPACE"
-  else
-    sketchybar --set current_workspace label.drawing=on label="$FOCUSED_WORKSPACE"
-  fi
+# Update every display's label.
+# Cache files track the last-seen workspace per display so labels remain
+# correct even when --visible is not supported by this AeroSpace version.
+# Display 1 = main (built-in). Display 2 = secondary (Sidecar).
+update_all_labels() {
+    local CACHE="/tmp/aerospace_sketchybar"
+    mkdir -p "$CACHE"
+
+    local focused monitors main_mid focused_mid mid ws
+
+    focused="${FOCUSED_WORKSPACE:-$(aerospace list-workspaces --focused 2>/dev/null | head -1)}"
+    [ -z "$focused" ] && return
+
+    monitors=$(aerospace list-monitors 2>/dev/null)
+    [ -z "$monitors" ] && return
+
+    # Identify main monitor by name — Built-in is always the MacBook screen
+    main_mid=$(printf '%s\n' "$monitors" | grep -i "built-in" | awk '{print $1}' | head -1)
+    # Fallback: anything that is not Sidecar/AirPlay
+    [ -z "$main_mid" ] && \
+        main_mid=$(printf '%s\n' "$monitors" | grep -iv "sidecar\|airplay" | awk '{print $1}' | head -1)
+
+    # Find which aerospace monitor currently holds the focused workspace
+    focused_mid=""
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        mid="${line%% *}"
+        [ -z "$mid" ] && continue
+        if aerospace list-workspaces --monitor "$mid" 2>/dev/null | grep -qFx "$focused"; then
+            focused_mid="$mid"
+            break
+        fi
+    done <<< "$monitors"
+
+    # Write the focused workspace into the correct display cache
+    if [ -n "$focused_mid" ]; then
+        if [ "$focused_mid" = "$main_mid" ]; then
+            echo "$focused" > "$CACHE/disp1"
+        else
+            echo "$focused" > "$CACHE/disp2"
+        fi
+    fi
+
+    # Seed missing cache files on first run
+    if [ ! -s "$CACHE/disp1" ] && [ -n "$main_mid" ]; then
+        ws=$(aerospace list-workspaces --monitor "$main_mid" 2>/dev/null | head -1)
+        [ -n "$ws" ] && echo "$ws" > "$CACHE/disp1"
+    fi
+    if [ ! -s "$CACHE/disp2" ]; then
+        while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            mid="${line%% *}"
+            [ -z "$mid" ] && continue
+            [ "$mid" = "$main_mid" ] && continue
+            ws=$(aerospace list-workspaces --monitor "$mid" 2>/dev/null | head -1)
+            [ -n "$ws" ] && echo "$ws" > "$CACHE/disp2"
+            break
+        done <<< "$monitors"
+    fi
+
+    ws=$(cat "$CACHE/disp1" 2>/dev/null)
+    [ -n "$ws" ] && sketchybar --set "current_workspace_1" label.drawing=on label="$ws" 2>/dev/null
+
+    ws=$(cat "$CACHE/disp2" 2>/dev/null)
+    [ -n "$ws" ] && sketchybar --set "current_workspace_2" label.drawing=on label="$ws" 2>/dev/null
 }
-
 
 update_popup_items() {
   items=()
 
-  # Get the list of windows from aerospace
   while IFS= read -r line; do
     items+=("$line")
   done < <(aerospace list-windows --all --format "%{workspace} | %{app-name} (%{window-title})                              |%{window-id}" | sort)
-  # echo "${items[*]}" >> /tmp/.debug_sketchbar
 
-
-  # Reset the bgcolor for all subitems with regex, and set the color of the current selected
   sketchybar --remove "/space\.s_.*/"
   declare -i maxwidth=0
   declare -i width=0
-  # Refresh items
+
   for i in "${!items[@]}"; do
     local label
     label="${items[$i]}"
-    sid="${label%% *}"          # Get first word (before first space)
-    wid="${label##*|}"          # Get text after last pipe
-    
-    # Check if workspace name is a single number
+    sid="${label%% *}"
+    wid="${label##*|}"
+
     is_single_number=false
     if [[ "$sid" =~ ^[0-9]$ ]]; then
       is_single_number=true
     fi
-    
-    # Process the actual workspace item
+
     item_name="space.s_${sid}_${i}"
-    # Raw line format: "WORKSPACE | APP_NAME (WINDOW_TITLE)      |WINDOW_ID"
-    # %|*  removes the shortest suffix starting at the last '|', leaving everything before |WINDOW_ID
     label="${label%|*}"
-    # ${label##*[! ]} matches the longest prefix ending at the last non-space character,
-    # which equals the trailing whitespace. Removing that suffix trims trailing spaces.
     label="${label%"${label##*[! ]}"}"
-    # echo "${items[$i]} ------ $wid" >> /tmp/.debug_sketchbar
-    # echo "item: $sid" >> /tmp/.debug_sketchbar
     width=$((${#label} * 8 + 16))
     if [ "$width" -gt "$maxwidth" ]; then
       maxwidth=$width
     fi
-    
-    # Set background color based on focus state and whether it's a single number
-    if [ "$sid" == "$FOCUSED_WORKSPACE" ]; then
+
+    if [ "$sid" == "$GLOBAL_FOCUSED" ]; then
       if [ "$is_single_number" = true ]; then
         background_color="$COLOR_NUMBER_FOCUSED"
       else
@@ -85,9 +127,9 @@ update_popup_items() {
         background_color="$COLOR_NORMAL"
       fi
     fi
-    
+
     sketchybar \
-        --add item "$item_name" popup.current_workspace \
+        --add item "$item_name" "popup.$NAME" \
         --set "$item_name" \
           label="$label" \
           background.color="$background_color" \
@@ -98,21 +140,21 @@ update_popup_items() {
           click_script="\
             aerospace workspace \"$sid\"; \
             aerospace focus --window-id \"$wid\"; \
-            sketchybar --set current_workspace label=\"$sid\" popup.drawing=off \
+            sketchybar --set $NAME label=\"$sid\" popup.drawing=off \
           "
   done
-  sketchybar --set "/space\.s_.*/" width="$maxwidth"
+  [ "${#items[@]}" -gt 0 ] && sketchybar --set "/space\.s_.*/" width="$maxwidth"
 }
 
 mouse_clicked() {
-  PREV_POPUP_STATE=$(sketchybar --query current_workspace | jq -r '.popup.drawing')
-  if [[ "$NAME" == "current_workspace" && ( "$PREV_POPUP_STATE" == "off" || "$PREV_POPUP_STATE" == "null" ) ]]; then
+  PREV_POPUP_STATE=$(sketchybar --query "$NAME" | jq -r '.popup.drawing')
+  if [[ "$NAME" =~ current_workspace && ( "$PREV_POPUP_STATE" == "off" || "$PREV_POPUP_STATE" == "null" ) ]]; then
     update_popup_items
   fi
-  sketchybar --set current_workspace popup.drawing=toggle
+  sketchybar --set "$NAME" popup.drawing=toggle
 }
 
 case "$SENDER" in
   "mouse.clicked" | "toggle_aerospace_popup") mouse_clicked ;;
-  *) update_label ;;
+  *) update_all_labels ;;
 esac
