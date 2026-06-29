@@ -91,5 +91,4 @@ sketchybar  \
                                         spotify.play                        \
                                         spotify.next                        \
                                         spotify.shuffle                     \
-                                        spotify.repeat                      \
             --set       b_spotify  "${cnf_spotify_bracket[@]}"              \

@@ -105,7 +105,7 @@ get_color() {
 
 # Function to update the display
 update_display() {
-    local current_date, current_cache, previous_date, previous_cache
+    local current_date current_cache previous_date previous_cache
     current_date=$(date +%Y%m%d)
     current_cache="$CACHE_DIR/rates_$current_date.json"
     previous_date=$(date -v-1d +%Y%m%d)

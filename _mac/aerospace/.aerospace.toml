@@ -73,6 +73,10 @@ outer.bottom =     0
 outer.top =        0
 outer.right =      0
 
+[workspace-to-monitor-force-assignment]
+9 = ['secondary', 'main']
+0 = ['secondary', 'main']
+
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
 # 'main' binding mode must be always presented
@@ -136,6 +140,7 @@ alt-6 = 'workspace 6'
 alt-7 = 'workspace 7'
 alt-8 = 'workspace 8'
 alt-9 = 'workspace 9'
+alt-0 = 'workspace 0'
 alt-a = 'workspace A' # In your config, you can drop workspace bindings that you don't need
 alt-b = 'workspace B'
 alt-c = 'workspace C'

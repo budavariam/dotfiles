@@ -2,7 +2,7 @@
 
 COLOR="$WHITE"
 cnf_aerospace=(
-    display=active
+    updates=on
     icon="􀢹"
     popup.height=20
     script="$PLUGIN_DIR/aerospace.sh"
