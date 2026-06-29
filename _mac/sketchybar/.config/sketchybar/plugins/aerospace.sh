@@ -147,6 +147,13 @@ update_popup_items() {
 }
 
 mouse_clicked() {
+  if [ "$SENDER" = "toggle_aerospace_popup" ] && [ "$NAME" != "current_workspace_1" ]; then
+    # Close this item's popup in case it was left open from a previous click,
+    # then let item 1 handle the rebuild and toggle.
+    sketchybar --set "$NAME" popup.drawing=off
+    return
+  fi
+
   PREV_POPUP_STATE=$(sketchybar --query "$NAME" | jq -r '.popup.drawing')
   if [[ "$NAME" =~ current_workspace && ( "$PREV_POPUP_STATE" == "off" || "$PREV_POPUP_STATE" == "null" ) ]]; then
     update_popup_items
