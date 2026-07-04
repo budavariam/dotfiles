@@ -15,3 +15,6 @@ Thumbs.db
 sensitive-*
 
 __pycache__
+
+# asciinema recordings
+*.cast
