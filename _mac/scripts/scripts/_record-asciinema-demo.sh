@@ -59,6 +59,20 @@ pause 1
 
 clear_screen
 
+# ── _REC_COLS / _REC_ROWS: terminal dimensions available in screenplays ───────
+run "echo \"terminal size: ${_REC_COLS:-120} x ${_REC_ROWS:-30}\""
+pause 1
+
+# Overflow check: repeating 0-9, 11 chars wider than the terminal.
+_digits="0123456789"
+_overflow=""
+_target=$(( ${_REC_COLS:-120} + 11 ))
+while [[ ${#_overflow} -lt $_target ]]; do _overflow="${_overflow}${_digits}"; done
+run "echo '${_overflow:0:$_target}'"
+pause 2
+
+clear_screen
+
 # ── variables and loops: plain bash works inside screenplays ─────────────────
 #
 # Set up three folders in /tmp and echo the sequence number for each.
