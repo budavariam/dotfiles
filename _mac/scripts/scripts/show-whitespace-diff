@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+# Usage: ./show-whitespace-diff.sh <repo-path> [base-branch] [compare-branch]
+# Shows diff chunks that are whitespace/newline-only changes (no content diff).
+# Default: compares development...HEAD in the given repo.
+#
+# Example:
+#   ./show-whitespace-diff.sh api
+#   ./show-whitespace-diff.sh ui main feat/new-info
+
+set -euo pipefail
+
+REPO="${1:-.}"
+BASE="${2:-development}"
+COMPARE="${3:-HEAD}"
+
+cd "$REPO"
+
+# Get the list of changed files
+files=$(git diff "${BASE}...${COMPARE}" --name-only 2>/dev/null)
+
+if [ -z "$files" ]; then
+  echo "No changed files between $BASE and $COMPARE in $REPO"
+  exit 0
+fi
+
+found=0
+
+while IFS= read -r file; do
+  # Skip new files (no base version)
+  git show "${BASE}:${file}" &>/dev/null 2>&1 || continue
+
+  # Get the full diff and the whitespace-ignoring diff for this file
+  full_diff=$(git diff "${BASE}...${COMPARE}" -- "$file" 2>/dev/null)
+  ws_diff=$(git diff "${BASE}...${COMPARE}" -w -b --ignore-blank-lines -- "$file" 2>/dev/null)
+
+  # If full diff is non-empty but ws diff is empty → entire file is whitespace-only
+  if [ -n "$full_diff" ] && [ -z "$ws_diff" ]; then
+    echo "=== ENTIRELY WHITESPACE: $file ==="
+    git diff "${BASE}...${COMPARE}" --stat -- "$file"
+    echo ""
+    found=$((found + 1))
+    continue
+  fi
+
+  # Find hunks that are whitespace-only by parsing the diff
+  # A hunk is whitespace-only if every +/- line (ignoring blank lines) is whitespace-equivalent
+  python3 - "$file" "$BASE" "$COMPARE" <<'PYEOF'
+import sys, subprocess, re
+
+filepath = sys.argv[1]
+base = sys.argv[2]
+compare = sys.argv[3]
+
+def get_diff(extra_flags=""):
+    cmd = ["git", "diff", f"{base}...{compare}"] + (extra_flags.split() if extra_flags else []) + ["--", filepath]
+    return subprocess.check_output(cmd, stderr=subprocess.DEVNULL).decode()
+
+full = get_diff()
+if not full:
+    sys.exit(0)
+
+# Split into hunks
+hunk_header = re.compile(r'^@@[^@]+@@')
+hunks = []
+current = []
+for line in full.splitlines(keepends=True):
+    if hunk_header.match(line):
+        if current:
+            hunks.append(current)
+        current = [line]
+    elif current:
+        current.append(line)
+if current:
+    hunks.append(current)
+
+def normalize(text):
+    """Strip whitespace and optional semicolons for token-level comparison."""
+    return re.sub(r'[;\s]+', '', text)
+
+ws_only_hunks = []
+for hunk in hunks:
+    changed = [l for l in hunk[1:] if l.startswith('+') or l.startswith('-')]
+    if not changed:
+        continue
+    # A hunk is whitespace-only if all +/- lines have identical non-whitespace content
+    # Compare the non-ws content of removed vs added lines
+    removed = [re.sub(r'\s+', '', l[1:]) for l in changed if l.startswith('-')]
+    added   = [re.sub(r'\s+', '', l[1:]) for l in changed if l.startswith('+')]
+    # Also detect reformatting (multi-line to single-line) with optional TS semicolons:
+    # join all removed/added content, strip whitespace + semicolons, compare as one token string
+    removed_tokens = normalize(''.join(l[1:] for l in changed if l.startswith('-')))
+    added_tokens   = normalize(''.join(l[1:] for l in changed if l.startswith('+')))
+    if sorted(removed) == sorted(added) or removed_tokens == added_tokens:
+        ws_only_hunks.append(hunk)
+
+if ws_only_hunks:
+    print(f"\n=== WHITESPACE-ONLY HUNKS in {filepath} ({len(ws_only_hunks)} hunk(s)) ===")
+    for hunk in ws_only_hunks:
+        print(''.join(hunk), end='')
+PYEOF
+
+done <<< "$files"
+
+if [ "$found" -eq 0 ] && ! git diff "${BASE}...${COMPARE}" --name-only | while read -r f; do
+  git show "${BASE}:${f}" &>/dev/null 2>&1 || continue
+  python3 -c "import sys; sys.exit(0)" 2>/dev/null
+done; then
+  :
+fi
