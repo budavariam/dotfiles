@@ -62,6 +62,7 @@ unset _dep
 
 SESSION=""
 RCFILE=""
+ZDOTDIR_TMP=""
 HELPER_SCRIPT=""
 PROGRESS_FILE=""
 PAUSE_FILE=""
@@ -72,6 +73,7 @@ _cleanup() {
     local code=$?
     [[ -n "$SESSION"       ]] && tmux kill-session -t "$SESSION" 2>/dev/null || true
     [[ -n "$RCFILE"        ]] && rm -f "$RCFILE"
+    [[ -n "$ZDOTDIR_TMP"   ]] && rm -rf "$ZDOTDIR_TMP"
     [[ -n "$HELPER_SCRIPT" ]] && rm -f "$HELPER_SCRIPT"
     [[ -n "$PROGRESS_FILE" ]] && rm -f "$PROGRESS_FILE"
     [[ -n "$PAUSE_FILE"    ]] && rm -f "$PAUSE_FILE"
@@ -110,6 +112,7 @@ CONTEXT=4
 CUSTOM_PS1=""
 START_DIR=""
 TRANSCRIPT=""
+SHELL_CMD="bash"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -119,12 +122,17 @@ while [[ $# -gt 0 ]]; do
         --no-jitter)  JITTER=0;        shift   ;;
         --context)    CONTEXT="$2";    shift 2 ;;
         --ps1)        CUSTOM_PS1="$2"; shift 2 ;;
-        --dir)        START_DIR="$2";    shift 2 ;;
-        --transcript) TRANSCRIPT="$2";  shift 2 ;;
+        --dir)        START_DIR="$2";  shift 2 ;;
+        --transcript) TRANSCRIPT="$2"; shift 2 ;;
+        --shell)      SHELL_CMD="$2";  shift 2 ;;
         --help|-h)    awk '/^set -/{exit} NR>1{sub(/^# ?/,""); print}' "$0"; trap - ERR EXIT; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
+
+[[ "$SHELL_CMD" == "bash" || "$SHELL_CMD" == "zsh" ]] || {
+    echo "record-asciinema: --shell must be 'bash' or 'zsh'" >&2; exit 1
+}
 
 # ── Validate screenplay exists ────────────────────────────────────────────────
 
@@ -166,6 +174,9 @@ if [[ -z "$START_DIR" ]]; then
     [[ -n "$_declared" ]] && START_DIR="$_declared"
     unset _declared
 fi
+
+# Ensure START_DIR exists before the recording shell tries to cd into it.
+[[ -n "$START_DIR" ]] && mkdir -p "$START_DIR"
 
 # ── Screenplay functions ──────────────────────────────────────────────────────
 
@@ -242,6 +253,22 @@ printf '. "%s"\n' "$HELPER_SCRIPT" > "$PROCESSED"
 
 while IFS= read -r _line || [[ -n "$_line" ]]; do
     _lineno=$((_lineno + 1))
+
+    # Track heredoc boundaries so _prog_line is never injected inside heredoc bodies.
+    if [[ -n "${_heredoc_delim:-}" ]]; then
+        # Inside a heredoc — check for the closing delimiter (exact match, no leading whitespace).
+        if [[ "$_line" == "$_heredoc_delim" ]]; then
+            _heredoc_delim=""
+        fi
+        printf '%s\n' "$_line"
+        continue
+    fi
+
+    # Detect a heredoc opener: << or <<- followed by an optional quoted delimiter.
+    if [[ "$_line" =~ \<\<-?[[:space:]]*\'?([A-Za-z_][A-Za-z0-9_]*)\'? ]]; then
+        _heredoc_delim="${BASH_REMATCH[1]}"
+    fi
+
     _stripped="${_line#"${_line%%[![:space:]]*}"}"   # left-trim whitespace
     if [[ -n "$_stripped" && "${_stripped:0:1}" != '#' ]]; then
         TOTAL_ACTIONS=$((TOTAL_ACTIONS + 1))
@@ -252,29 +279,45 @@ done < "$SCREENPLAY_ABS" >> "$PROCESSED"
 
 # ── Recording shell RC ────────────────────────────────────────────────────────
 
-RCFILE=$(mktemp /tmp/asciinema-rc-XXXXXX.sh)
+ZDOTDIR_TMP=""
 
-# Build the PS1 to use in the recording shell.
-# --ps1 overrides the default; single-quotes are preserved as-is.
-if [[ -n "$CUSTOM_PS1" ]]; then
-    _PS1_EXPR="export PS1='${CUSTOM_PS1}'"
-else
-    _PS1_EXPR="export PS1='\[\e[0;32m\]\W\[\e[0;33m\]\$(_git_branch)\[\e[0m\]\$ '"
-fi
-
-cat > "$RCFILE" << RCEOF
-export HISTFILE=/dev/null HISTSIZE=0
-_git_branch() { git -C . rev-parse --abbrev-ref HEAD 2>/dev/null | sed 's/.*/ (&)/'; }
-${_PS1_EXPR}
-[ -f /etc/profile ] && source /etc/profile 2>/dev/null || true
-[ -f ~/.profile   ] && source ~/.profile   2>/dev/null || true
-[ -f ~/.bashrc    ] && source ~/.bashrc    2>/dev/null || true
-${_PS1_EXPR}
-# Override PROMPT_COMMAND last so the pane title stays 'recording'
-# regardless of what the user's bashrc set it to.
-PROMPT_COMMAND='echo -ne "\033]2;recording\007"'
-${START_DIR:+cd '${START_DIR}'}
+if [[ "$SHELL_CMD" == "zsh" ]]; then
+    ZDOTDIR_TMP=$(mktemp -d /tmp/asciinema-zsh-XXXXXX)
+    RCFILE="$ZDOTDIR_TMP/.zshrc"
+    if [[ -n "$CUSTOM_PS1" ]]; then
+        _PROMPT_EXPR="PROMPT='${CUSTOM_PS1}'"
+    else
+        _PROMPT_EXPR="PROMPT='%1~\$(_git_branch)%# '"
+    fi
+    cat > "$RCFILE" << RCEOF
+unset HISTFILE; HISTSIZE=0; SAVEHIST=0
+export CARGO_TERM_PROGRESS_WHEN=never
+_git_branch() { git -C . rev-parse --abbrev-ref HEAD 2>/dev/null | grep -v '^HEAD\$' | sed 's/.*/ (&)/'; }
+setopt PROMPT_SUBST
+${_PROMPT_EXPR}
+precmd() { print -Pn "\e]2;recording\a" }
+${START_DIR:+cd '$START_DIR'}
 RCEOF
+else
+    ZDOTDIR_TMP=$(mktemp -d /tmp/asciinema-bash-XXXXXX)
+    RCFILE="$ZDOTDIR_TMP/.bashrc"
+    if [[ -n "$CUSTOM_PS1" ]]; then
+        _PS1_EXPR="export PS1='${CUSTOM_PS1}'"
+    else
+        _PS1_EXPR="export PS1='\[\033[0;32m\]\$(_parent_dir)/\W\[\033[0;33m\]\$(_git_branch)\[\033[0m\]\$ '"
+    fi
+    cat > "$RCFILE" << RCEOF
+export HISTFILE=/dev/null HISTSIZE=0
+export CARGO_TERM_PROGRESS_WHEN=never
+_git_branch() { git -C . rev-parse --abbrev-ref HEAD 2>/dev/null | grep -v '^HEAD\$' | sed 's/.*/ (&)/'; }
+_parent_dir() { basename "\$(dirname "\$PWD")"; }
+[ -f /etc/profile ] && source /etc/profile 2>/dev/null || true
+${_PS1_EXPR}
+PROMPT_COMMAND='printf "\033]2;recording\007"'
+bind 'set enable-bracketed-paste off' 2>/dev/null || true
+${START_DIR:+cd '$START_DIR'}
+RCEOF
+fi
 
 # ── Viewer script (runs in the bottom tmux pane) ──────────────────────────────
 # Variables are expanded now (heredoc without quotes) so the viewer gets
@@ -417,8 +460,13 @@ sleep 0.1
 
 # Start asciinema in the top pane.
 # `exec` replaces the pane shell so the invocation line never appears in the recording.
+if [[ "$SHELL_CMD" == "zsh" ]]; then
+    _SHELL_CMD_STR="ZDOTDIR=$ZDOTDIR_TMP zsh -i"
+else
+    _SHELL_CMD_STR="bash --rcfile $RCFILE"
+fi
 tmux send-keys -t "$SESSION:0.0" \
-    "exec asciinema rec --window-size ${COLS}x${ROWS} -q '$OUTPUT' --command 'bash --rcfile $RCFILE'" \
+    "exec asciinema rec --window-size ${COLS}x${ROWS} -q '$OUTPUT' --command '$_SHELL_CMD_STR'" \
     Enter
 
 # Start the viewer in the bottom pane; clear first so the launch command doesn't linger.
