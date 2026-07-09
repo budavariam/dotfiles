@@ -18,7 +18,9 @@ go to line: key(cmd-g)
 go to symbol: key(cmd-shift-o)
 go to definition: key(f12)
 go back: key(ctrl--)
+history back: key(ctrl--)
 go forward: key(ctrl-shift--)
+history forward: key(ctrl-shift--)
 
 # Editor management
 split right: key(cmd-\)
@@ -61,6 +63,10 @@ select all occurrences: key(cmd-shift-l)
 show problems: key(cmd-shift-m)
 show output: key(cmd-shift-u)
 show debug console: key(cmd-shift-y)
+
+# Scrolling
+scroll to top: key(cmd-home)
+scroll to bottom: key(cmd-end)
 
 # Command palette
 command palette: key(cmd-shift-p)

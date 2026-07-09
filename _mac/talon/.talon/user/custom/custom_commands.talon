@@ -1,3 +1,5 @@
+focus term: app.focus("iTerm2")
+
 open todo:
     user.open_iterm_cli_tool("cd ~/project/todolog; npm run todo")
 

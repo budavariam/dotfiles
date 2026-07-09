@@ -26,7 +26,9 @@ fullscreen: key(cmd-ctrl-f)
 
 # Navigation
 go back: key(cmd-[)
+history back: key(cmd-[)
 go forward: key(cmd-])
+history forward: key(cmd-])
 reload: key(cmd-r)
 hard reload: key(cmd-shift-r)
 stop loading: key(cmd-.)
@@ -47,6 +49,8 @@ toggle device: key(cmd-shift-m)
 network tab:
     key(cmd-alt-i)
     sleep(100ms)
+    key(cmd-])
+    key(cmd-])
     key(cmd-])
 sources tab:
     key(cmd-alt-i)
@@ -79,7 +83,9 @@ view source: key(cmd-alt-u)
 page down: key(space)
 page up: key(shift-space)
 top of page: key(cmd-up)
+scroll to top: key(cmd-up)
 bottom of page: key(cmd-down)
+scroll to bottom: key(cmd-down)
 
 # DevTools shortcuts (when DevTools is focused)
 clear console: key(cmd-k)
