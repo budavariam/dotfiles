@@ -222,6 +222,26 @@ function _set_tmux_pane_title() {
 }
 precmd_functions+=(_set_tmux_pane_title)
 
+# tmuxaf — fzf-select a tmux session and attach (or switch-client if already inside tmux)
+function tmuxaf() {
+  local session
+  session=$(tmux list-sessions \
+    -F '#{session_name}  #{session_windows}w  created #{session_created_string}  active #{session_activity_string}  #{?session_attached,(attached),(detached)}' \
+    2>/dev/null \
+    | fzf --height 70% --ansi --no-multi --no-sort \
+        --header 'tmux sessions — enter to attach (shift-↑↓ scroll preview)' \
+        --preview-window 'down,30%,border-top' \
+        --preview 'tmux list-windows -t {1} -F "  #{window_index}: #{window_name}#{?window_active, ●,} | #{pane_current_command} @ #{pane_current_path}"' \
+        --bind 'shift-up:preview-up,shift-down:preview-down' \
+    | awk '{print $1}')
+  [[ -z "$session" ]] && return 1
+  if [[ -n "$TMUX" ]]; then
+    tmux switch-client -t "$session"
+  else
+    tmux attach-session -t "$session"
+  fi
+}
+
 HISTSIZE=10000000
 SAVEHIST=10000000
 

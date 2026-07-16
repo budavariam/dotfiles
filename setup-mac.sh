@@ -11,7 +11,7 @@ if ! command -v stow &>/dev/null; then
   popd || exit 1
 fi
 
-# Use stow to create symlinks
+# Use stow to create symlinks (re-run this script when adding/removing files — stow does not auto-track new or deleted files)
 pushd "_mac" || exit 1
   stow -vt ~ aerospace
   stow -vt ~ git
@@ -25,10 +25,10 @@ pushd "_mac" || exit 1
   stow -vt ~ zsh
   stow -vt "${FOLDER_VSCODE}" vscode
   stow -vt ~ wezterm
-  stow -vt ~ claude
+  # ~/.claude has too many internal files for stow to manage individually — symlink the whole dir directly
+  ln -sfn "$(pwd)/claude/.claude" ~/.claude
   stow -vt ~ nvim
 popd || exit 1
-stow -vt ~ claude
 stow -vt ~ git
 stow -vt ~ npm
 stow -vt ~ vim
