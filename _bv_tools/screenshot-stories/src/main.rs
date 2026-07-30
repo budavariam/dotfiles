@@ -103,13 +103,39 @@ fn main() -> anyhow::Result<()> {
             println!("  Format: Story Names (slashes)");
         }
     }
+    if let Some(ref stories) = args.stories {
+        println!("  Stories: {}", stories);
+    }
     println!();
 
     let output_path = std::path::Path::new(&args.output);
     fs::create_dir_all(output_path).context("failed to create output directory")?;
 
-    let mut story_names: Option<Vec<String>> = None;
+    // Use IndexMap-style ordering: insertion order, last write wins for dupes.
+    let mut merged: Vec<String> = Vec::new();
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
     let mut id_name_map: HashMap<String, String> = HashMap::new();
+
+    if let Some(ref stories_str) = args.stories {
+        let names: Vec<String> = stories_str
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+        if names.is_empty() {
+            println!(
+                "{}Warning: --stories value is empty, ignoring{}",
+                YELLOW, RESET
+            );
+        } else {
+            println!("Direct stories: {}", names.len());
+            for name in &names {
+                if seen.insert(name.clone()) {
+                    merged.push(name.clone());
+                }
+            }
+        }
+    }
 
     if let Some(ref tags_str) = args.tags {
         let tags: Vec<&str> = tags_str.split(',').map(|t| t.trim()).collect();
@@ -123,35 +149,39 @@ fn main() -> anyhow::Result<()> {
                 "{}Warning: No stories found with tags: {}{}",
                 YELLOW, tags_str, RESET
             );
-            println!("Running without tag filter...");
         } else {
-            println!("Found {} stories:", list.len());
-            for name in list.iter().take(10) {
-                println!("  - {}", name);
-            }
-            if list.len() > 10 {
-                println!("  ... and {} more", list.len() - 10);
-            }
-
-            if args.verbose {
-                println!("\nStory filter pattern for storycap:");
-                if let Some(first) = list.first() {
-                    println!("   {}", first);
-                }
-                if list.len() > 1 {
-                    println!("   ... (total: {})", list.len());
+            println!("Stories from tags: {}", list.len());
+            for name in &list {
+                if seen.insert(name.clone()) {
+                    merged.push(name.clone());
                 }
             }
-
-            story_names = Some(list);
             id_name_map = map;
         }
-        println!();
     }
+
+    let story_names: Option<Vec<String>> = if args.stories.is_some() || args.tags.is_some() {
+        if merged.is_empty() {
+            println!("{}Warning: No stories matched any filter, running without filter{}", YELLOW, RESET);
+            None
+        } else {
+            println!("Total unique stories to capture: {}", merged.len());
+            for name in merged.iter().take(10) {
+                println!("  - {}", name);
+            }
+            if merged.len() > 10 {
+                println!("  ... and {} more", merged.len() - 10);
+            }
+            println!();
+            Some(merged)
+        }
+    } else {
+        None
+    };
 
     storycap::run_storycap(&args, story_names.as_deref())?;
 
-    if args.tags.is_some() && !id_name_map.is_empty() {
+    if !id_name_map.is_empty() {
         println!();
         println!("{}", "=".repeat(60));
         rename::rename_screenshots(output_path, &id_name_map, args.use_ids)?;

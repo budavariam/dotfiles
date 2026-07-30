@@ -14,6 +14,9 @@ use clap::Parser;
   # Filter by tags
   screenshot-stories --tags pr-screenshots,visual-test
 
+  # Capture specific stories by name
+  screenshot-stories --stories "Button/Primary,Button/Secondary"
+
   # With delay for animations
   screenshot-stories --delay 1000
 
@@ -55,6 +58,12 @@ pub struct Args {
 
     #[arg(short, long, help = "Comma-separated Storybook tags to filter stories")]
     pub tags: Option<String>,
+
+    #[arg(
+        long,
+        help = "Comma-separated story names or IDs to capture (e.g. 'Button/Primary,Button/Secondary')"
+    )]
+    pub stories: Option<String>,
 
     #[arg(
         short,
