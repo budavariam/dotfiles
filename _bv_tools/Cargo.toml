@@ -1,0 +1,3 @@
+[workspace]
+members = ["screenshot-stories", "record-asciinema", "show-whitespace-diff"]
+resolver = "2"

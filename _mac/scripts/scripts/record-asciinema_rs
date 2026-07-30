@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -e
+"${HOME}/project/dotfiles/_bv_tools/build.sh" record-asciinema
+exec "${HOME}/project/dotfiles/_bv_tools/target/release/record-asciinema" "$@"
