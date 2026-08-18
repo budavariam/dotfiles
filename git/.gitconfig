@@ -50,16 +50,100 @@
         git checkout \"$branch\"; \
     }; f"
     # wtf - fzf-select a Claude worktree for the current repo and print its path (used by the cdw shell alias)
+    #       main list shows: MM-DD HH:MM  hash  branch  (sorted most-recent first)
     wtf = "!f() { \
         git rev-parse HEAD > /dev/null 2>&1 || return; \
         git worktree list | grep -F '.claude/worktrees' | \
-        awk '{ branch=$3; gsub(\"[][]\", \"\", branch); printf \"%s %s %s\\n\", $1, $2, branch }' | \
+        while IFS= read -r line; do \
+            path=$(echo \"$line\" | awk '{print $1}'); \
+            hash=$(echo \"$line\" | awk '{print $2}'); \
+            branch=$(echo \"$line\" | awk '{b=$3; gsub(\"[][]\",\"\",b); print b}'); \
+            ts=$(git -C \"$path\" log -1 --format='%cd' --date=format:'%m-%d %H:%M' HEAD 2>/dev/null); \
+            [ -z \"$ts\" ] && ts=\"00-00 00:00\"; \
+            printf '%s %s %s %s\n' \"$path\" \"$ts\" \"$hash\" \"$branch\"; \
+        done | \
+        sort -k2,3 -r | \
         fzf --height 70% --ansi --no-multi --no-sort \
             --with-nth=2.. \
             --preview-window 'down,30%,border-top' \
             --preview 'git -C {1} log -n 50 --color=always --date=short --pretty=\"format:%C(auto)%cd %h%d %s\"' \
             --bind 'shift-up:preview-up,shift-down:preview-down' | \
         awk '{print $1}'; \
+    }; f"
+    # wtrm - fzf-select worktrees (excluding main) and remove them; lists any that fail
+    wtrm = "!f() { \
+        git rev-parse HEAD > /dev/null 2>&1 || return; \
+        main=$(git rev-parse --show-toplevel); \
+        selected=$(git worktree list | grep -v \"^$main \" | \
+        while IFS= read -r line; do \
+            path=$(echo \"$line\" | awk '{print $1}'); \
+            hash=$(echo \"$line\" | awk '{print $2}'); \
+            branch=$(echo \"$line\" | awk '{b=$3; gsub(\"[][]\",\"\",b); print b}'); \
+            ts=$(git -C \"$path\" log -1 --format='%cd' --date=format:'%m-%d %H:%M' HEAD 2>/dev/null); \
+            [ -z \"$ts\" ] && ts=\"00-00 00:00\"; \
+            size=$(du -sh \"$path\" 2>/dev/null | cut -f1); \
+            printf '%s %s %s %s %s\n' \"$path\" \"$ts\" \"$size\" \"$hash\" \"$branch\"; \
+        done | \
+        sort -k2,3 -r | \
+        fzf --height 70% --ansi --multi --no-sort \
+            --header 'Tab: multi-select' \
+            --with-nth=2.. \
+            --preview-window 'down,30%,border-top' \
+            --preview 'git -C {1} log -n 50 --color=always --date=short --pretty=\"format:%C(auto)%cd %h%d %s\"' \
+            --bind 'shift-up:preview-up,shift-down:preview-down' | \
+        awk '{print $1}'); \
+        if [[ -z \"$selected\" ]]; then echo \"No worktree selected.\"; return 1; fi; \
+        removed=(); failed=(); reclaimed=0; \
+        while IFS= read -r p; do \
+            kb=$(du -sk \"$p\" 2>/dev/null | cut -f1); \
+            if git worktree remove \"$p\" 2>/dev/null; then \
+                removed+=(\"$p\"); reclaimed=$((reclaimed + ${kb:-0})); \
+            else \
+                failed+=(\"$p\"); \
+            fi; \
+        done <<< \"$selected\"; \
+        echo; \
+        [ ${#removed[@]} -gt 0 ] && { echo \"Removed (${#removed[@]}):\"; printf '  %s\n' \"${removed[@]}\"; }; \
+        [ ${#failed[@]} -gt 0 ] && { echo \"Failed (${#failed[@]}):\"; printf '  %s\n' \"${failed[@]}\"; }; \
+        [ \"$reclaimed\" -gt 0 ] && { human=$(echo $reclaimed | awk '{if($1>1048576) printf \"%.1fG\",$1/1048576; else if($1>1024) printf \"%.1fM\",$1/1024; else printf \"%dK\",$1}'); echo \"Space reclaimed: $human\"; }; \
+    }; f"
+    # wtrmf - same as wtrm but passes --force (removes worktrees with uncommitted changes); silently continues on failure
+    wtrmf = "!f() { \
+        git rev-parse HEAD > /dev/null 2>&1 || return; \
+        main=$(git rev-parse --show-toplevel); \
+        selected=$(git worktree list | grep -v \"^$main \" | \
+        while IFS= read -r line; do \
+            path=$(echo \"$line\" | awk '{print $1}'); \
+            hash=$(echo \"$line\" | awk '{print $2}'); \
+            branch=$(echo \"$line\" | awk '{b=$3; gsub(\"[][]\",\"\",b); print b}'); \
+            ts=$(git -C \"$path\" log -1 --format='%cd' --date=format:'%m-%d %H:%M' HEAD 2>/dev/null); \
+            [ -z \"$ts\" ] && ts=\"00-00 00:00\"; \
+            size=$(du -sh \"$path\" 2>/dev/null | cut -f1); \
+            printf '%s %s %s %s %s\n' \"$path\" \"$ts\" \"$size\" \"$hash\" \"$branch\"; \
+        done | \
+        sort -k2,3 -r | \
+        fzf --height 70% --ansi --multi --no-sort \
+            --header 'Tab: multi-select' \
+            --with-nth=2.. \
+            --preview-window 'down,30%,border-top' \
+            --preview 'git -C {1} log -n 50 --color=always --date=short --pretty=\"format:%C(auto)%cd %h%d %s\"' \
+            --bind 'shift-up:preview-up,shift-down:preview-down' | \
+        awk '{print $1}'); \
+        if [[ -z \"$selected\" ]]; then echo \"No worktree selected.\"; return 1; fi; \
+        removed=(); failed=(); reclaimed=0; \
+        while IFS= read -r p; do \
+            kb=$(du -sk \"$p\" 2>/dev/null | cut -f1); \
+            if git worktree remove --force \"$p\" 2>/dev/null; then \
+                removed+=(\"$p\"); reclaimed=$((reclaimed + ${kb:-0})); \
+            else \
+                failed+=(\"$p\"); \
+            fi; \
+        done <<< \"$selected\"; \
+        echo; \
+        [ ${#removed[@]} -gt 0 ] && { echo \"Removed (${#removed[@]}):\"; printf '  %s\n' \"${removed[@]}\"; }; \
+        [ ${#failed[@]} -gt 0 ] && { echo \"Failed (${#failed[@]}):\"; printf '  %s\n' \"${failed[@]}\"; }; \
+        [ \"$reclaimed\" -gt 0 ] && { human=$(echo $reclaimed | awk '{if($1>1048576) printf \"%.1fG\",$1/1048576; else if($1>1024) printf \"%.1fM\",$1/1024; else printf \"%dK\",$1}'); echo \"Space reclaimed: $human\"; }; \
+        true; \
     }; f"
     # wt - create a worktree in .claude/worktrees/<branch>, run setup-worktree.sh or npm install as fallback
     #      -b flag creates a new branch. Prints dest path to stdout so you can: cd $(git wt fix/foo)
@@ -85,6 +169,15 @@
             (cd \"$dest\" && npm install >&2); \
         fi; \
         echo \"$dest\"; \
+    }; f"
+    # wtdu - list all worktrees with disk usage, sorted by last modified date
+    wtdu = "!f() { \
+        git worktree list --porcelain | grep '^worktree ' | awk '{print $2}' | \
+        while IFS= read -r p; do \
+            size=$(du -sh \"$p\" 2>/dev/null | cut -f1); \
+            ts=$(stat -f '%Sm' -t '%Y-%m-%d %H:%M' \"$p\" 2>/dev/null); \
+            printf '%s  %-6s  %s\\n' \"$ts\" \"$size\" \"$p\"; \
+        done | sort; \
     }; f"
     # retag - Remove the old tag with this name and tag the latest commit with it.
     retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
