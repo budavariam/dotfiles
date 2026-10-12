@@ -28,9 +28,9 @@
     # undelete - undelete a file to the last known state, you must use the full path, useful with grepped allfiles
     undelete = !sh -c 'git checkout $(git rev-list -n 1 HEAD --all -- "$1")^ -- "$1"' -
     # delmerged - Remove branches that have already been merged with master a.k.a. 'delete merged'
-    delmerged = "!git branch --merged | grep -v '\\*' | xargs -n 1 git branch -d"
+    delmerged = "!git branch --merged | grep -v '[*+]' | xargs -n 1 git branch -d"
     # lstmerged - List branches that have already been merged into master a.k.a. 'list merged'
-    lstmerged = "!git branch --merged | grep -v '\\*'"
+    lstmerged = "!git branch --merged | grep -v '[*+]'"
     # recent - List recently visited branches
     recent = "!f() { git reflog | egrep -io 'moving from ([^[:space:]]+)' | awk '{ print $3 }' | awk ' !x[$0]++' | head -n${1-10}; }; f"
     # brage - List all branches ordered by committerdate, show refs and relative date
@@ -179,6 +179,12 @@
             printf '%s  %-6s  %s\\n' \"$ts\" \"$size\" \"$p\"; \
         done | sort; \
     }; f"
+    # wtl - list worktrees, including prunable ones
+    wtl = worktree list -v
+    # wtp - prune stale worktree metadata (directories deleted by hand)
+    wtp = worktree prune -v
+    # wtmv - move a worktree: git wtmv <worktree> <new-path>
+    wtmv = worktree move
     # retag - Remove the old tag with this name and tag the latest commit with it.
     retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
     # ctags -
@@ -472,3 +478,5 @@
     hunk-header-line-number-style = "#067a00"
     hunk-header-style = file line-number syntax
 # end of git-delta
+[worktree]
+	guessRemote = true
