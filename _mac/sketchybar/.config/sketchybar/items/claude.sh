@@ -20,6 +20,11 @@ cnf_claude=(
   label.drawing=off
   drawing=off
   update_freq=10
+  updates=on
+  popup.align=left
+  popup.background.color="$BAR_COLOR"
+  popup.background.corner_radius="$CORNER_RADIUS"
+  popup.y_offset=4
   script="$PLUGIN_DIR/claude.sh"
 )
 
