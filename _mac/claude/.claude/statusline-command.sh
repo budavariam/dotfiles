@@ -59,5 +59,12 @@ else
   agent_section=""
 fi
 
+# Snapshot for the sketchybar claude dropdown (tiny write, one file per session)
+session_id=$(echo "$input" | jq -r '.session_id // empty')
+if [ -n "$session_id" ]; then
+  mkdir -p /tmp/claude-sl
+  printf '{"model":"%s","used_pct":"%s"}\n' "$model" "$used_pct" > "/tmp/claude-sl/${session_id}.json"
+fi
+
 # Build the final output
 printf "%s | %s | %s | %s%s" "$folder" "$git_section" "$model" "$context_section" "$agent_section"

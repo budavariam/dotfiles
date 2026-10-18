@@ -40,3 +40,10 @@ CORNER_RADIUS=15
 BORDER_WIDTH=1
 
 SHADOW=on
+
+# Claude sessions dropdown (plugins/claude_sessions.py) - row order.
+# CLAUDE_SORT_BY: app | session | branch | model | ctx | age | idle | pid
+#   (numeric columns sort by value, text columns naturally - never plain lexicographic)
+# CLAUDE_SORT_DIR: asc | desc
+CLAUDE_SORT_BY="idle"
+CLAUDE_SORT_DIR="asc"
