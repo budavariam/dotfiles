@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Collect live Claude Code sessions for the sketchybar dropdown.
+"""Collect live AI tool sessions (Claude Code, Gemini, Codex, Ollama, desktop apps...) for the sketchybar dropdown.
 
 Only run while the popup is open. Emits tab-separated lines, never with empty
 fields (the bash reader collapses empty tab fields):
   H<TAB>header label
   R<TAB>pid<TAB>sessionId<TAB>status<TAB>needs(0|1)<TAB>cwd<TAB>row label
   F<TAB>footer label
-Needs-action flags come from FLAG_DIR (written by ~/.claude/sketchybar-claude-update.sh);
+Claude Code sessions come from ~/.claude/sessions; every other tool is found by matching
+AI_TOOLS ("Label=regex" lines, from variables.sh) against process command lines, so those
+rows only know pid, cwd, age and (for ollama) the model.
+Claude needs-action flags come from FLAG_DIR (written by ~/.claude/sketchybar-claude-update.sh);
 model/context from /tmp/claude-sl/<sessionId>.json (written by the statusline script),
 falling back to the tail of the session transcript.
 """
@@ -16,6 +19,8 @@ import os
 import re
 import subprocess
 import time
+
+CLAUDE = "Claude"
 
 HOME = os.path.expanduser("~")
 FLAG_DIR = "/tmp/claude-needs-action.d"
@@ -27,11 +32,13 @@ HOSTS = [  # (substring of executable path, display name)
     ("Alacritty", "Alacritty"), ("kitty", "kitty"), ("Terminal.app", "Terminal"),
     ("/tmux", "tmux"),
 ]
+DESKTOP = "Desktop"  # host label for tools that are macOS apps themselves
 ICON_TERMINAL = "\uf120"  # fa-terminal
 ICON_VSCODE = "\U000f0a1e"  # md-microsoft_visual_studio_code
 ICON_TMUX = "\uebc8"  # cod-terminal_tmux
 ICON_UNKNOWN = "\uf128"  # fa-question
-HOST_ICONS = {"VS Code": ICON_VSCODE, "Cursor": ICON_VSCODE, "tmux": ICON_TMUX, "unknown": ICON_UNKNOWN}
+ICON_DESKTOP = "\uf108"  # fa-desktop
+HOST_ICONS = {"VS Code": ICON_VSCODE, "Cursor": ICON_VSCODE, "tmux": ICON_TMUX, DESKTOP: ICON_DESKTOP, "unknown": ICON_UNKNOWN}
 
 
 def clean(s):
@@ -53,6 +60,41 @@ def process_table():
     except Exception:
         pass
     return procs
+
+
+def parse_tools(text):
+    """AI_TOOLS "Label=regex" lines -> [(label, compiled regex)]; malformed lines are skipped."""
+    tools = []
+    for line in text.splitlines():
+        label, sep, pattern = line.partition("=")
+        if not sep or not label.strip():
+            continue
+        try:
+            tools.append((label.strip(), re.compile(pattern)))
+        except re.error:
+            continue
+    return tools
+
+
+def parse_etime(text):
+    """ps etime ([[dd-]hh:]mm:ss) -> seconds."""
+    days, _, rest = text.rpartition("-")
+    secs = 0
+    for part in rest.split(":"):
+        secs = secs * 60 + int(part)
+    return secs + (int(days) * 86400 if days else 0)
+
+
+def process_cwd(pid):
+    try:
+        out = subprocess.run(["/usr/sbin/lsof", "-a", "-d", "cwd", "-p", str(pid), "-Fn"],
+                             capture_output=True, text=True, timeout=3).stdout
+    except Exception:
+        return ""
+    for line in out.splitlines():
+        if line.startswith("n"):
+            return line[1:]
+    return ""
 
 
 def host_of(procs, pid):
@@ -146,6 +188,7 @@ def natural(text):
 
 # Numeric columns compare as numbers (seconds / percent / pid), text columns naturally; pid breaks ties.
 SORT_KEYS = {
+    "tool": lambda r: (natural(r["tool"]), r["pid"]),
     "app": lambda r: (natural(r["host"]), r["pid"]),
     "session": lambda r: (natural(r["name"]), r["pid"]),
     "branch": lambda r: (natural(r["branch"]), r["pid"]),
@@ -155,6 +198,45 @@ SORT_KEYS = {
     "idle": lambda r: (r["idle_s"], r["pid"]),
     "pid": lambda r: (r["pid"],),
 }
+
+
+def process_rows(tools, procs, now):
+    """Rows for tools detected by process command line (no session files); a child of a matching process is skipped."""
+    try:
+        out = subprocess.run(["/bin/ps", "-axo", "pid=,ppid=,etime=,args="], capture_output=True, text=True).stdout
+    except Exception:
+        return []
+    found = {}  # pid -> (ppid, tool, etime seconds, args)
+    for line in out.splitlines():
+        parts = line.split(None, 3)
+        if len(parts) < 4:
+            continue
+        for label, rx in tools:
+            if rx.search(parts[3]):
+                try:
+                    found[int(parts[0])] = (int(parts[1]), label, parse_etime(parts[2]), parts[3])
+                except ValueError:
+                    pass
+                break
+    rows = []
+    for pid, (ppid, label, age_s, args) in found.items():
+        if ppid in found and found[ppid][1] == label:
+            continue
+        is_app = ".app/Contents/MacOS/" in procs.get(pid, (0, ""))[1]
+        cwd = "-" if is_app else clean(process_cwd(pid))
+        model = "-"
+        if label == "Ollama":
+            m = re.search(r"ollama run +(\S+)", args)
+            model = m.group(1) if m else "-"
+        rows.append({
+            "tool": label, "host": DESKTOP if is_app else host_of(procs, pid),
+            "name": label if is_app else trunc(os.path.basename(cwd) or cwd, 30),
+            "pid": pid, "sid": "p%d" % pid, "cwd": cwd, "status": "running", "needs": False,
+            "branch": trunc(git_branch(cwd) if os.path.isdir(cwd) else "-", 24),
+            "model": model, "ctx": "-", "ctx_num": -1.0,
+            "age_s": age_s, "age": fmt_age(age_s), "idle_s": age_s, "idle": "-",
+        })
+    return rows
 
 
 def main():
@@ -178,7 +260,7 @@ def main():
         name = trunc(clean(d.get("name") or os.path.basename(cwd)), 30)
         model, ctx, ctx_num = model_and_ctx(sid)
         rows.append({
-            "host": host_of(procs, pid), "name": name, "pid": pid, "sid": sid, "cwd": cwd,
+            "tool": CLAUDE, "host": host_of(procs, pid), "name": name, "pid": pid, "sid": sid, "cwd": cwd,
             "status": clean(d.get("status", "?")),
             "needs": os.path.exists(os.path.join(FLAG_DIR, sid)),
             "branch": trunc(git_branch(cwd) if os.path.isdir(cwd) else "-", 24),
@@ -188,19 +270,21 @@ def main():
         })
         rows[-1]["age"] = fmt_age(rows[-1]["age_s"])
         rows[-1]["idle"] = fmt_age(rows[-1]["idle_s"])
-    # Order from CLAUDE_SORT_BY / CLAUDE_SORT_DIR (variables.sh); invalid values fall back to idle asc
-    sort_by = os.environ.get("CLAUDE_SORT_BY", "idle").lower()
+    rows += process_rows(parse_tools(os.environ.get("AI_TOOLS", "")), procs, now)
+    # Order from AI_SORT_BY / AI_SORT_DIR (variables.sh); invalid values fall back to idle asc
+    sort_by = os.environ.get("AI_SORT_BY", "idle").lower()
     rows.sort(key=SORT_KEYS.get(sort_by, SORT_KEYS["idle"]),
-              reverse=os.environ.get("CLAUDE_SORT_DIR", "asc").lower() == "desc")
+              reverse=os.environ.get("AI_SORT_DIR", "asc").lower() == "desc")
 
     w = lambda key, title: max([len(title)] + [len(r[key]) for r in rows])
-    hw, nw, bw, mw = w("host", "APP"), w("name", "SESSION"), w("branch", "BRANCH"), w("model", "MODEL")
-    fmt = "%s  %-*s  %-*s  %-*s  %-*s  %5s  %6s  %6s  %6s"
-    header = fmt % ("·", hw, "APP", nw, "SESSION", bw, "BRANCH", mw, "MODEL", "CTX", "AGE", "IDLE", "PID")  # visible first char: sketchybar measures a label with leading whitespace too narrow, clipping its end
+    tw, hw, nw, bw, mw = (w("tool", "TOOL"), w("host", "APP"), w("name", "SESSION"),
+                          w("branch", "BRANCH"), w("model", "MODEL"))
+    fmt = "%s  %-*s  %-*s  %-*s  %-*s  %-*s  %5s  %6s  %6s  %6s"
+    header = fmt % ("·", tw, "TOOL", hw, "APP", nw, "SESSION", bw, "BRANCH", mw, "MODEL", "CTX", "AGE", "IDLE", "PID")  # visible first char: sketchybar measures a label with leading whitespace too narrow, clipping its end
     print("H\t" + header)
     for r in rows:
         icon = ICON_TERMINAL if r["host"] not in HOST_ICONS and r["host"] != "unknown" else HOST_ICONS.get(r["host"], ICON_UNKNOWN)
-        label = fmt % (icon, hw, r["host"], nw, r["name"], bw, r["branch"], mw, r["model"],
+        label = fmt % (icon, tw, r["tool"], hw, r["host"], nw, r["name"], bw, r["branch"], mw, r["model"],
                        r["ctx"], r["age"], r["idle"], r["pid"])
         print("\t".join(["R", str(r["pid"]), r["sid"], r["status"], "1" if r["needs"] else "0",
                          r["cwd"], label]))

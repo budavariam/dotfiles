@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Usage: claude_focus.sh <claude-pid> [cwd]
-# Focuses the terminal/editor hosting a Claude Code session: iTerm2 (window+tab),
-# tmux (pane, then the attached client's iTerm tab) or VS Code (window by folder).
-# Set CLAUDE_FOCUS_DEBUG=1 to log decisions to /tmp/claude-focus.log.
+# Usage: ai_focus.sh <pid> [cwd]
+# Focuses the terminal/editor hosting an AI tool session: iTerm2 (window+tab),
+# tmux (pane, then the attached client's iTerm tab), VS Code (window by folder),
+# or any other macOS app (the tool's own app, or the app hosting it) by process id.
+# Set AI_FOCUS_DEBUG=1 to log decisions to /tmp/ai-focus.log.
 
 PID="$1"
 CWD="$2"
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
-log() { [ -n "$CLAUDE_FOCUS_DEBUG" ] && echo "$(date +%T) $*" >> /tmp/claude-focus.log; }
+log() { [ -n "$AI_FOCUS_DEBUG" ] && echo "$(date +%T) $*" >> /tmp/ai-focus.log; }
 
 [ -n "$PID" ] || exit 1
 
@@ -39,6 +40,7 @@ OSA
 }
 
 TTY=$(tty_of "$PID")
+[ "$TTY" = "??" ] && TTY=""  # GUI apps have no tty
 log "pid=$PID tty=$TTY cwd=$CWD"
 
 # 1. tmux: the pane owning this tty -> select it, then focus the client showing it
@@ -65,6 +67,7 @@ for _ in $(seq 1 15); do
   case "$comm" in
     *iTerm*) host=iterm; break ;;
     *"Visual Studio Code"*|*"Code Helper"*|*Electron*) host=vscode; break ;;
+    *.app/Contents/MacOS/*) host=app; app_pid="$q"; break ;;
   esac
   q=$(ps -o ppid= -p "$q" 2>/dev/null | tr -d ' ')
   [ -z "$q" ] || [ "$q" = 0 ] || [ "$q" = 1 ] && break
@@ -79,6 +82,9 @@ case "$host" in
     else
       open -a "Visual Studio Code"
     fi
+    ;;
+  app)
+    /usr/bin/osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $app_pid) to true" >/dev/null
     ;;
   *) log "unknown host; nothing to focus" ;;
 esac

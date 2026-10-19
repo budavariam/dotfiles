@@ -41,9 +41,24 @@ BORDER_WIDTH=1
 
 SHADOW=on
 
-# Claude sessions dropdown (plugins/claude_sessions.py) - row order.
-# CLAUDE_SORT_BY: app | session | branch | model | ctx | age | idle | pid
+# AI sessions dropdown (plugins/ai_sessions.py) - row order.
+# AI_SORT_BY: tool | app | session | branch | model | ctx | age | idle | pid
 #   (numeric columns sort by value, text columns naturally - never plain lexicographic)
-# CLAUDE_SORT_DIR: asc | desc
-CLAUDE_SORT_BY="idle"
-CLAUDE_SORT_DIR="asc"
+# AI_SORT_DIR: asc | desc
+AI_SORT_BY="idle"
+AI_SORT_DIR="asc"
+
+# AI tools detected by process, one per line: Label=extended regex matched against
+# the process's full command line (ps args). Claude Code is not listed here: it is
+# read from ~/.claude/sessions (hooks give it status, needs-action, model, context).
+# Use only regex syntax shared by awk and python: no \s \d, use [^ ] and " +".
+# Add your own tool by appending a line. A process whose parent matches the same
+# tool is ignored (node launcher -> native binary counts once).
+AI_TOOLS='Gemini=^(([^ ]*/)?(node|python[0-9.]*) +)?([^ ]*/)?gemini( |$)
+Codex=^(([^ ]*/)?(node|python[0-9.]*) +)?([^ ]*/)?codex( |$)
+Ollama=^([^ ]*/)?ollama run( |$)
+Aider=^(([^ ]*/)?(node|python[0-9.]*) +)?([^ ]*/)?aider( |$)
+OpenCode=^(([^ ]*/)?(node|python[0-9.]*) +)?([^ ]*/)?opencode( |$)
+Antigravity=/Antigravity\.app/Contents/MacOS/
+Claude Desktop=/Claude\.app/Contents/MacOS/'
+export AI_TOOLS
