@@ -243,6 +243,7 @@ run = 'move-node-to-workspace 2'
 
 [[on-window-detected]]
 if.app-id = 'com.google.Chrome'
+# run = ['move-node-to-workspace 3', 'layout floating']  # optional: float to avoid min-width tiling issues on small screens
 run = 'move-node-to-workspace 3'
 
 [[on-window-detected]]
@@ -282,7 +283,13 @@ if.app-id = 'com.docker.docker'
 run = 'move-node-to-workspace V'
 
 [[on-window-detected]]
+if.app-id = 'com.apple.Preview'
+# run = 'layout floating'  # optional: float to avoid document-resize fighting tiling
+run = []
+
+[[on-window-detected]]
 if.app-id = 'com.apple.finder'
+# run = ['move-node-to-workspace A', 'layout floating']  # optional: float to avoid min-width tiling issues
 run = 'move-node-to-workspace A'
 
 [[on-window-detected]]

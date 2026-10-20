@@ -100,6 +100,9 @@ plugins=(
 
 source $ZSH/oh-my-zsh.sh
 
+# hide kube-ps1 (shows N/A:N/A without a kube context), `kubeon` to re-enable
+kubeoff
+
 # User configuration
 source $ZSH/custom/plugins/timer.zsh
 source $ZSH/custom/plugins/sensitive-zshrc
@@ -303,3 +306,6 @@ source "${HOME}/project/dotfiles/_mac/zsh/wrike.zsh"
 # zprof # add this for profiling startup time
 # Added by Antigravity
 export PATH="/Users/budavariam/.antigravity/antigravity/bin:$PATH"
+
+export NODE_EXTRA_CA_CERTS="$HOME/Downloads/apple_corporate_root_ca.pem"
+export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
