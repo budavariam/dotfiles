@@ -33,6 +33,8 @@ Environment variables:
   OUTPUT_DIR  Directory for output files (default: ./git-pr-comments)
   ALL_REVIEWERS  Set to "true" to fetch all unresolved threads from any reviewer
 
+See also: resolve-pr-suggestions — mark fetched threads as resolved
+
 Examples:
   $(basename "$0") https://github.com/org/repo/pull/42
   SINCE=2h $(basename "$0") https://github.com/org/repo/pull/42

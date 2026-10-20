@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Usage: ai_focus.sh <pid> [cwd]
 # Focuses the terminal/editor hosting an AI tool session: iTerm2 (window+tab),
 # tmux (pane, then the attached client's iTerm tab), VS Code (window by folder),
@@ -48,7 +48,9 @@ if [ -n "$TTY" ] && command -v tmux >/dev/null && tmux list-sessions >/dev/null 
   pane=$(tmux list-panes -a -F '#{pane_tty} #{session_name} #{window_index} #{pane_id}' \
     | awk -v t="/dev/$TTY" '$1 == t { print $2, $3, $4 }')
   if [ -n "$pane" ]; then
-    read -r sess win pane_id <<< "$pane"
+    read -r sess win pane_id <<EOF
+$pane
+EOF
     log "tmux $sess:$win $pane_id"
     tmux select-window -t "$sess:$win"
     tmux select-pane -t "$pane_id"

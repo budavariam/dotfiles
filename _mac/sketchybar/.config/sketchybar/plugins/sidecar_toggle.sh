@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 # Toggles the 32px AeroSpace outer.top gap on the Sidecar display.
 # State is read directly from the config — no temp file needed.
@@ -9,11 +9,9 @@
 
 # sed -i '' does not follow symlinks on macOS; write through symlink via temp file
 sed_inplace() {
-    local pattern=$1 file=$2
-    local tmp
-    tmp=$(mktemp)
-    sed "$pattern" "$file" > "$tmp" && cat "$tmp" > "$file"
-    rm -f "$tmp"
+    _tmp=$(mktemp)
+    sed "$1" "$2" > "$_tmp" && cat "$_tmp" > "$2"
+    rm -f "$_tmp"
 }
 
 if grep -q "monitor.'sidecar' = 32" "$AEROSPACE_CONFIG"; then

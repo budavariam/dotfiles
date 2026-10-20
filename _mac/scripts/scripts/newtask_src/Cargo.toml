@@ -1,0 +1,24 @@
+[package]
+name = "newtask"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+axum = "0.8"
+chrono = "0.4"
+clap = { version = "4", features = ["derive"] }
+futures-util = "0.3"
+minijinja = { version = "2", features = ["loader"] }
+notify = { version = "8.2.0", features = ["macos_fsevent"] }
+open = "5"
+rusqlite = "0.31"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yml = "0.0.13"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tower-http = { version = "0.6", features = ["trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+zip = "2"

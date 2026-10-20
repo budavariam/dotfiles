@@ -1,13 +1,16 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 ITEM="ai.status"
 SB=/opt/homebrew/bin/sketchybar
 PLUGIN_DIR="${PLUGIN_DIR:-$HOME/.config/sketchybar/plugins}"
-source "$HOME/.config/sketchybar/variables.sh"  # AI_SORT_BY / AI_SORT_DIR / AI_TOOLS
+. "$HOME/.config/sketchybar/variables.sh"  # AI_SORT_BY / AI_SORT_DIR / AI_TOOLS
 export AI_SORT_BY AI_SORT_DIR
 FLAG_DIR="/tmp/claude-needs-action.d"  # Claude Code per-session flags, see ~/.claude/sketchybar-claude-update.sh
 POPUP_FLAG="/tmp/ai-popup-open"    # exists while the dropdown is open
 SIG_FILE="/tmp/ai-sessions-sig"
+PY=/opt/homebrew/bin/python3  # pyenv/xcode shims take 150ms-1.5s to start, Homebrew's ~30ms
+[ -x "$PY" ] || PY=python3
+TAB=$(printf '\t')
 
 ORANGE=0xffff9e64
 RED=0xfff7768e
@@ -18,53 +21,54 @@ HIDDEN=0x00000000  # transparent: keeps the icon column the same width as the ro
 WHITE=0xaaffffff
 
 # Nerd Font glyphs (JetBrainsMono NFM) - fixed width so the popup columns line up
-ICON_BUSY=$'\xef\x84\x90'  # fa-spinner
-ICON_IDLE=$'\xef\x84\x91'  # fa-circle
-ICON_WAIT=$'\xef\x81\xb1'  # fa-warning
+ICON_BUSY=$(printf '\357\204\220')  # fa-spinner
+ICON_IDLE=$(printf '\357\204\221')  # fa-circle
+ICON_WAIT=$(printf '\357\201\261')  # fa-warning
 FONT_NF="JetBrainsMono Nerd Font Mono"
 FONT_SIZE=11.0
 
+# Single-quote a string for the shell that runs click_script
+sq() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
+
 # Rebuild the dropdown rows. Only called while the popup is open (or opening).
 build_popup() {
-  local out
-  out=$(/usr/bin/env python3 -I "$PLUGIN_DIR/ai_sessions.py") || return
+  force=$1
+  out=$("$PY" -I "$PLUGIN_DIR/ai_sessions.py") || return
   # Skip the rebuild when nothing changed, to avoid flicker
-  local sig
   sig=$(printf '%s' "$out" | cksum)
-  [ "$1" != "force" ] && [ "$sig" = "$(cat "$SIG_FILE" 2>/dev/null)" ] && return
+  [ "$force" != "force" ] && [ "$sig" = "$(cat "$SIG_FILE" 2>/dev/null)" ] && return
 
-  local args=(--remove '/ai\.session\..*/')
-  local kind pid sid status needs cwd label icon icon_color label_color sep
-  while IFS=$'\t' read -r kind pid sid status needs cwd label; do
+  set -- --remove '/ai\.session\..*/'  # "$@" collects the sketchybar arguments
+  while IFS=$TAB read -r kind pid sid status needs cwd label; do
     case "$kind" in
       H)
         # H/F lines carry a single label field, which read puts in $pid
         sep=$(printf '─%.0s' $(seq 1 ${#pid}))
-        args+=(--add item ai.session.header popup.$ITEM
-          --set ai.session.header
-          icon="$ICON_IDLE" icon.color=$HIDDEN icon.font="$FONT_NF:Regular:$FONT_SIZE"
-          icon.padding_left=8 icon.padding_right=6
-          label="$pid" label.color=$DIM label.font="$FONT_NF:Regular:$FONT_SIZE"
-          label.padding_right=8 background.drawing=off
-          --add item ai.session.sep1 popup.$ITEM
-          --set ai.session.sep1
-          icon="$ICON_IDLE" icon.color=$HIDDEN icon.font="$FONT_NF:Regular:$FONT_SIZE"
-          icon.padding_left=8 icon.padding_right=6
-          label="$sep" label.color=$DIM label.font="$FONT_NF:Regular:$FONT_SIZE"
-          label.padding_right=8 background.drawing=off) ;;
+        set -- "$@" --add item ai.session.header popup.$ITEM \
+          --set ai.session.header \
+          icon="$ICON_IDLE" icon.color=$HIDDEN icon.font="$FONT_NF:Regular:$FONT_SIZE" \
+          icon.padding_left=8 icon.padding_right=6 \
+          label="$pid" label.color=$DIM label.font="$FONT_NF:Regular:$FONT_SIZE" \
+          label.padding_right=8 background.drawing=off \
+          --add item ai.session.sep1 popup.$ITEM \
+          --set ai.session.sep1 \
+          icon="$ICON_IDLE" icon.color=$HIDDEN icon.font="$FONT_NF:Regular:$FONT_SIZE" \
+          icon.padding_left=8 icon.padding_right=6 \
+          label="$sep" label.color=$DIM label.font="$FONT_NF:Regular:$FONT_SIZE" \
+          label.padding_right=8 background.drawing=off ;;
       F)
-        args+=(--add item ai.session.sep2 popup.$ITEM
-          --set ai.session.sep2
-          icon="$ICON_IDLE" icon.color=$HIDDEN icon.font="$FONT_NF:Regular:$FONT_SIZE"
-          icon.padding_left=8 icon.padding_right=6
-          label="$sep" label.color=$DIM label.font="$FONT_NF:Regular:$FONT_SIZE"
-          label.padding_right=8 background.drawing=off
-          --add item ai.session.footer popup.$ITEM
-          --set ai.session.footer
-          icon="$ICON_IDLE" icon.color=$HIDDEN icon.font="$FONT_NF:Regular:$FONT_SIZE"
-          icon.padding_left=8 icon.padding_right=6
-          label="$pid" label.color=$DIM label.font="$FONT_NF:Regular:$FONT_SIZE"
-          label.padding_right=8 background.drawing=off) ;;
+        set -- "$@" --add item ai.session.sep2 popup.$ITEM \
+          --set ai.session.sep2 \
+          icon="$ICON_IDLE" icon.color=$HIDDEN icon.font="$FONT_NF:Regular:$FONT_SIZE" \
+          icon.padding_left=8 icon.padding_right=6 \
+          label="$sep" label.color=$DIM label.font="$FONT_NF:Regular:$FONT_SIZE" \
+          label.padding_right=8 background.drawing=off \
+          --add item ai.session.footer popup.$ITEM \
+          --set ai.session.footer \
+          icon="$ICON_IDLE" icon.color=$HIDDEN icon.font="$FONT_NF:Regular:$FONT_SIZE" \
+          icon.padding_left=8 icon.padding_right=6 \
+          label="$pid" label.color=$DIM label.font="$FONT_NF:Regular:$FONT_SIZE" \
+          label.padding_right=8 background.drawing=off ;;
       R)
         if [ "$needs" = "1" ]; then
           icon=$ICON_WAIT; icon_color=$RED; label_color=$RED
@@ -73,20 +77,22 @@ build_popup() {
         else
           icon=$ICON_IDLE; icon_color=$GREEN; label_color=$WHITE
         fi
-        args+=(--add item "ai.session.$pid" popup.$ITEM
-          --set "ai.session.$pid"
-          icon="$icon" icon.color=$icon_color icon.font="$FONT_NF:Regular:$FONT_SIZE"
-          icon.padding_left=8 icon.padding_right=6
-          label="$label" label.color=$label_color label.font="$FONT_NF:Regular:$FONT_SIZE"
-          label.padding_right=8 background.drawing=off
-          click_script="$PLUGIN_DIR/ai_focus.sh $pid $(printf '%q' "$cwd"); rm -f '$FLAG_DIR/$sid' $POPUP_FLAG; $SB --set $ITEM popup.drawing=off --trigger ai_update") ;;
+        set -- "$@" --add item "ai.session.$pid" popup.$ITEM \
+          --set "ai.session.$pid" \
+          icon="$icon" icon.color=$icon_color icon.font="$FONT_NF:Regular:$FONT_SIZE" \
+          icon.padding_left=8 icon.padding_right=6 \
+          label="$label" label.color=$label_color label.font="$FONT_NF:Regular:$FONT_SIZE" \
+          label.padding_right=8 background.drawing=off \
+          click_script="$PLUGIN_DIR/ai_focus.sh $pid $(sq "$cwd"); rm -f '$FLAG_DIR/$sid' $POPUP_FLAG; $SB --set $ITEM popup.drawing=off --trigger ai_update" ;;
     esac
-  done <<< "$out"
-  $SB "${args[@]}" && echo "$sig" > "$SIG_FILE"
+  done <<EOF
+$out
+EOF
+  $SB "$@" && echo "$sig" > "$SIG_FILE"
 }
 
 # Click toggles the dropdown; rows are built only when it opens
-if [[ "$SENDER" == "mouse.clicked" ]]; then
+if [ "$SENDER" = "mouse.clicked" ]; then
   if [ -e "$POPUP_FLAG" ]; then
     rm -f "$POPUP_FLAG"
     $SB --set "$ITEM" popup.drawing=off
@@ -125,7 +131,7 @@ if [ "$session_count" = "0" ]; then
 fi
 
 # Keep an open dropdown fresh (hook events, polling)
-[ -e "$POPUP_FLAG" ] && [[ "$SENDER" != "mouse.clicked" ]] && build_popup
+[ -e "$POPUP_FLAG" ] && [ "$SENDER" != "mouse.clicked" ] && build_popup
 
 if [ "$needs_action" = "1" ]; then
   LABEL="${session_count}!"

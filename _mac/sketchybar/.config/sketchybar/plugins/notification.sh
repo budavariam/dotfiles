@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 TEXT_ITEM="notification.text"
 # ICON_EMPTY="􀍕"
@@ -10,10 +10,10 @@ RED=0xfff7768e
 COLOR_RED="$RED"
 COLOR_DEFAULT="$WHITE"
 
-if [[ "$SENDER" == "mouse.clicked" ]]; then
+if [ "$SENDER" = "mouse.clicked" ]; then
     # Reset on click
     sketchybar --set "$TEXT_ITEM" icon="$ICON_EMPTY" icon.color="$COLOR_DEFAULT" label="" label.drawing=off background.drawing=off
-elif [[ "$SENDER" == "notification_update" ]]; then
+elif [ "$SENDER" = "notification_update" ]; then
     # Update when event is triggered
     sketchybar --set "$TEXT_ITEM" icon="$ICON_ALERT" icon.color="$COLOR_RED" label="$VAR" label.drawing=on background.drawing=on
 fi

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# plain-git-filter-repo — run git-filter-repo with a minimal gitconfig so that
+# complex aliases/functions in your global ~/.gitconfig don't break the parser.
+#
+# Usage:
+#   plain-git-filter-repo [git-filter-repo options...]
+#
+# Example — remove files from all history:
+#   plain-git-filter-repo --force --invert-paths --path package-lock.json --path task.md
+#
+# Requirements: git-filter-repo must be installed for the active Python version.
+# On pyenv: pyenv global <version-with-filter-repo> before running.
+
+set -euo pipefail
+
+TMPCONFIG=$(mktemp /tmp/minimal-gitconfig.XXXXXX)
+trap 'rm -f "$TMPCONFIG"' EXIT
+
+USER_NAME=$(git config user.name 2>/dev/null || echo "Git User")
+USER_EMAIL=$(git config user.email 2>/dev/null || echo "user@example.com")
+
+cat > "$TMPCONFIG" <<EOF
+[user]
+    name = $USER_NAME
+    email = $USER_EMAIL
+EOF
+
+GIT_CONFIG_GLOBAL="$TMPCONFIG" git filter-repo "$@"

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 LAYOUT_NAME=$(
     defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources | # get input layouts
@@ -8,11 +8,10 @@ LAYOUT_NAME=$(
         tr -d "\"" # remove quotes
 )
 
-if [[ "$LAYOUT_NAME" =~ "Hungarian" ]]; then
-    FLAG="🇭🇺"
-else
-    FLAG="🇺🇸"
-fi
+case "$LAYOUT_NAME" in
+    *Hungarian*) FLAG="🇭🇺" ;;
+    *) FLAG="🇺🇸" ;;
+esac
 
 # sketchybar --set keyboard label="$FLAG $LAYOUT_NAME"
 sketchybar --set keyboard icon="$FLAG"

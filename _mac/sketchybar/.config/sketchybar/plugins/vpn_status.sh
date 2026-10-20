@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
 VPN_NAME=$(scutil --nc list | grep Connected | awk -F'"' '{print $2}')
 
-if [[ "$SENDER" == "mouse.entered" ]]; then
+if [ "$SENDER" = "mouse.entered" ]; then
     sketchybar --set vpn_status label.drawing=on label="$VPN_NAME"
-elif [[ "$SENDER" == "mouse.exited" ]]; then
+elif [ "$SENDER" = "mouse.exited" ]; then
     sketchybar --set vpn_status label.drawing=off
 fi
 

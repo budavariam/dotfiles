@@ -1,0 +1,195 @@
+#!/usr/bin/env bash
+# Resolves review threads on a GitHub PR.
+# Usage: resolve-pr-suggestions <pr_url> [thread_numbers...]
+# Env:
+#   GH_HOST        — GitHub hostname (default: github.com)
+#   REVIEWER       — reviewer login to filter by (default: budavariam); ignored when ALL_REVIEWERS=true
+#   SINCE          — only include threads newer than this duration (default: 0m = all time)
+#                    format: <number><unit>  units: m=minutes, h=hours, d=days
+#   ALL_REVIEWERS  — set to "true" to resolve threads from any reviewer
+
+set -euo pipefail
+IFS=$'\n\t'
+
+# --- help ---
+_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <pr_url> [thread_numbers...]
+
+Resolves unresolved review threads on a GitHub PR.
+Uses the same filtering logic as fetch-pr-suggestions, so thread numbers
+correspond to the [N] index in the suggestions file.
+
+Arguments:
+  pr_url          Full URL of the pull request
+  thread_numbers  Optional: 1-based indices of threads to resolve (space-separated).
+                  Omit to resolve all matching unresolved threads.
+
+Environment variables:
+  GH_HOST       GitHub hostname            (default: github.com)
+  REVIEWER      Reviewer login to filter   (default: budavariam); ignored when ALL_REVIEWERS=true
+  SINCE         Only include threads newer than this duration (default: 0m = all time)
+                Format: <number><unit> — m=minutes, h=hours, d=days
+  ALL_REVIEWERS Set to "true" to resolve threads from any reviewer
+
+Examples:
+  # Resolve all unresolved threads on a PR
+  GH_HOST=github.pie.apple.com ALL_REVIEWERS=true $(basename "$0") https://github.pie.apple.com/org/repo/pull/42
+
+  # Resolve only threads 1 and 3
+  GH_HOST=github.pie.apple.com ALL_REVIEWERS=true $(basename "$0") https://github.pie.apple.com/org/repo/pull/42 1 3
+EOF
+}
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  _usage
+  exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+  _usage >&2
+  exit 1
+fi
+
+# --- config ---
+PR_URL="${1}"
+shift
+THREAD_NUMBERS=("$@")  # remaining args are thread numbers (1-based); empty = all
+
+REVIEWER="${REVIEWER:-budavariam}"
+GH_HOST="${GH_HOST:-github.com}"
+SINCE="${SINCE:-0m}"
+ALL_REVIEWERS="${ALL_REVIEWERS:-false}"
+
+# --- validate and parse SINCE ---
+if [[ "$SINCE" =~ ^([0-9]+)([mhd])$ ]]; then
+  _amount="${BASH_REMATCH[1]}"
+  _unit="${BASH_REMATCH[2]}"
+else
+  echo "ERROR: Invalid SINCE format '$SINCE' — use e.g. 30m, 2h, 1d, 0m" >&2
+  exit 1
+fi
+
+if date -v -1S +%s &>/dev/null 2>&1; then
+  # macOS
+  case "$_unit" in
+    m) SINCE_EPOCH=$(date -v "-${_amount}M" +%s) ;;
+    h) SINCE_EPOCH=$(date -v "-${_amount}H" +%s) ;;
+    d) SINCE_EPOCH=$(date -v "-${_amount}d" +%s) ;;
+  esac
+else
+  # GNU/Linux
+  case "$_unit" in
+    m) SINCE_EPOCH=$(date -d "${_amount} minutes ago" +%s) ;;
+    h) SINCE_EPOCH=$(date -d "${_amount} hours ago" +%s) ;;
+    d) SINCE_EPOCH=$(date -d "${_amount} days ago" +%s) ;;
+  esac
+fi
+
+# --- auth check ---
+if ! gh auth status --hostname "$GH_HOST" &>/dev/null; then
+  echo "Not authenticated against $GH_HOST. Logging in..."
+  gh auth login --hostname "$GH_HOST"
+fi
+
+# --- parse PR URL: https://<host>/<owner>/<repo>/pull/<number> ---
+if [[ "$PR_URL" =~ https://([^/]+)/([^/]+)/([^/]+)/pull/([0-9]+) ]]; then
+  OWNER="${BASH_REMATCH[2]}"
+  REPO="${BASH_REMATCH[3]}"
+  PR_NUMBER="${BASH_REMATCH[4]}"
+else
+  echo "ERROR: Cannot parse PR URL: $PR_URL" >&2
+  exit 1
+fi
+
+# --- fetch threads with IDs (same filter logic as fetch-pr-suggestions) ---
+QUERY='query($owner: String!, $repo: String!, $pr: Int!) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $pr) {
+      reviewThreads(first: 100) {
+        nodes {
+          id
+          isResolved
+          isOutdated
+          comments(first: 20) {
+            nodes {
+              author { login }
+              body
+              path
+              line
+              originalLine
+              createdAt
+            }
+          }
+        }
+      }
+    }
+  }
+}'
+
+# Fetch matching thread IDs as a newline-separated list
+THREAD_IDS=$(GH_HOST="$GH_HOST" gh api graphql \
+  -F owner="$OWNER" \
+  -F repo="$REPO" \
+  -F pr="$PR_NUMBER" \
+  -f query="$QUERY" \
+| jq -r --arg reviewer "$REVIEWER" --argjson since "$SINCE_EPOCH" --argjson all_reviewers "$([[ "$ALL_REVIEWERS" == "true" ]] && echo "true" || echo "false")" '
+  .data.repository.pullRequest.reviewThreads.nodes
+  | map(
+      select(.isResolved == false)
+      | if $all_reviewers then .
+        else
+          select(.comments.nodes[0].author.login == $reviewer)
+          | select(.comments.nodes[0].createdAt | fromdateiso8601 >= $since)
+          | select(
+              (.comments.nodes | map(select(.author.login != $reviewer)) | length) == 0
+            )
+        end
+    )
+  | .[].id
+')
+
+if [[ -z "$THREAD_IDS" ]]; then
+  echo "No matching unresolved threads found."
+  exit 0
+fi
+
+# Convert to array
+mapfile -t ALL_IDS <<< "$THREAD_IDS"
+TOTAL=${#ALL_IDS[@]}
+
+# If specific thread numbers were requested, select only those (1-based)
+if [[ ${#THREAD_NUMBERS[@]} -gt 0 ]]; then
+  SELECTED_IDS=()
+  for n in "${THREAD_NUMBERS[@]}"; do
+    if ! [[ "$n" =~ ^[0-9]+$ ]] || (( n < 1 || n > TOTAL )); then
+      echo "ERROR: Thread number $n is out of range (1–$TOTAL)" >&2
+      exit 1
+    fi
+    SELECTED_IDS+=("${ALL_IDS[$((n - 1))]}")
+  done
+else
+  SELECTED_IDS=("${ALL_IDS[@]}")
+fi
+
+# --- resolve each selected thread ---
+RESOLVED=0
+FAILED=0
+for thread_id in "${SELECTED_IDS[@]}"; do
+  result=$(GH_HOST="$GH_HOST" gh api graphql -f query="
+    mutation {
+      resolveReviewThread(input: { threadId: \"$thread_id\" }) {
+        thread { isResolved }
+      }
+    }
+  " 2>&1)
+
+  if echo "$result" | jq -e '.data.resolveReviewThread.thread.isResolved == true' &>/dev/null; then
+    (( RESOLVED++ )) || true
+  else
+    echo "  FAILED: $thread_id" >&2
+    (( FAILED++ )) || true
+  fi
+done
+
+echo "Resolved $RESOLVED thread(s) on $PR_URL${FAILED:+" ($FAILED failed)"}"

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BINARY="$SCRIPT_DIR/newtask_src/target/release/newtask"
+MANIFEST="$SCRIPT_DIR/newtask_src/Cargo.toml"
+
+needs_build() {
+    [[ ! -f "$BINARY" ]] && return 0
+    find "$SCRIPT_DIR/newtask_src/src" -name "*.rs" -newer "$BINARY" -print -quit \
+        | grep -q . && return 0
+    [[ "$MANIFEST" -nt "$BINARY" ]] && return 0
+    return 1
+}
+
+BUILD_STATUS=""
+
+if needs_build; then
+    echo "newtask: building…" >&2
+    if cargo build --release --manifest-path "$MANIFEST" >&2; then
+        BUILD_STATUS="rebuilt"
+    else
+        if [[ -f "$BINARY" ]]; then
+            echo "" >&2
+            echo "newtask: ⚠  build failed — a previous binary exists." >&2
+            read -r -p "newtask: use stale binary and continue? [y/N] " answer >&2 </dev/tty
+            case "$answer" in
+                [yY]|[yY][eE][sS])
+                    BUILD_STATUS="stale"
+                    ;;
+                *)
+                    echo "newtask: aborted." >&2
+                    exit 1
+                    ;;
+            esac
+        else
+            echo "newtask: ✗  build failed and no previous binary found. Aborting." >&2
+            exit 1
+        fi
+    fi
+fi
+
+case "$BUILD_STATUS" in
+    rebuilt) echo "newtask: ✓ rebuilt" >&2 ;;
+    stale)   echo "newtask: ⚠ using previous binary (build failed)" >&2 ;;
+esac
+
+export NEWTASK_CONFIG="${NEWTASK_CONFIG:-$HOME/project/todolog/utils/config.json}"
+exec "$BINARY" "$@"
