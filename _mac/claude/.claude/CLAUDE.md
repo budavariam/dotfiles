@@ -1,86 +1,107 @@
-## Git Safety
+## Communication
 
-- NEVER run `git checkout --`, `git restore`, `git stash`, or `git reset --hard` on files with uncommitted changes. Assume all uncommitted work is intentional dev hacks the user wants to keep. Ask first.
-- Before committing, diff the staged changes and strip local-only debug artifacts (e.g. `tags: ['asd']`, console.log, temporary flags). Commits should be minimal and clean — one logical change per commit.
+- Technical, direct, compact. No preamble, no recap, no over-explaining.
+- Go deeper only if I ask, or say I'm new to / learning a topic.
+- Recommend one option with a short reason; don't survey alternatives unless asked.
 
-## Verification Before Claiming
+## Engineering Principles
 
-- Do not assert how a system behaves (enums, Redis topology, API refresh semantics, cache invalidation) without reading the code or running a command that proves it. If unverified, say "I need to check" and check.
-- Never hand-compute Unix timestamps, dates, or durations — run `date -d @<ts>` / `date -u` instead.
-- For any script that greps logs or connects to a service, verify the pattern and port against real output before presenting it as working.
+- Existing projects: follow their stack, conventions, and tooling. Don't retrofit anything from "Defaults for New Projects" (Docker, Makefile, i18n, Tailwind, linters, version pins) unprompted; suggest it in one line instead.
+- Do what was asked. Minimal diffs; match surrounding style, naming, and comment density. Mention adjacent issues, don't fix them.
+- Accessibility matters: semantic HTML, labels, keyboard navigation, focus states, contrast, ARIA only when needed.
+- Dark mode supported, but the user chooses: light / dark / system (default system, persist the choice).
+- Report outcomes to users with toast messages (success and error); no silent failures.
 
-## Workflow Conventions
+## Defaults for New Projects
 
-- When adding a capability to the review wizard or any CLI, wire it as a standalone menu entry/flag in the same change — not just as inline logic in an existing step.
-- Never default an assignee/user field to `me`; require an explicit value or resolve it from config.
+Use the current stable release of every dependency: check the registry (`npm view <pkg> version`, `cargo search`, `pip index versions`), not memory. Don't copy outdated versions or deprecated APIs from old docs.
 
-## Side-Notes During Active Work
+- **Frontend:** React + TypeScript + Vite, TanStack Query, react-router, a toast library (e.g. sonner), react-i18next (no hardcoded UI strings; never add i18n to an existing project that lacks it). Tailwind for AI-generated UI.
+- **React state:** `useReducer` over multiple related `useState`s; server state in react-query, not local state/effects.
+- **Runtime:** Docker + docker compose; one `docker compose up` should work.
+- **Editors:** VS Code or Neovim; commit only shared settings, no personal editor files.
+- **Scripts:** Rust > Python 3 > Bash by complexity. Bash only for thin glue; switch once there's logic, parsing, or error handling.
 
-While working on a task, the user may mention new feature ideas, bug reports, or code errors that are unrelated to the current task. These are notes for later, not redirections.
+## Project Hygiene
 
-- Acknowledge the note briefly (one sentence max).
-- Persist it immediately using the memory system (type: `project` for bugs/errors, `feedback` for feature ideas).
-- Do NOT investigate, implement, or shift focus to the side-note unless the user explicitly says to switch tasks (e.g. "actually let's do this first", "pause and fix this").
-- Resume the current task without further commentary about the side-note.
+- **Quick start:** `Makefile` or `package.json` scripts for install, dev, build, test, lint, format, validate.
+- **README:** "Getting started" section at the top: prerequisites, setup, run, test, fewest commands possible.
+- **Pin versions:** `.nvmrc`, `.python-version`, `rust-toolchain.toml`, Dockerfile base-image tags, committed lockfiles.
+- **Tooling:**
+
+  | | Format | Lint | Dead code / types |
+  |---|---|---|---|
+  | JS/TS | prettier | eslint | knip, `tsc -b` |
+  | Python | black | ruff | ruff, mypy |
+  | Rust | rustfmt | clippy | compiler `dead_code` warnings, `cargo check` |
+
+- Wire these into the quick-start tasks and CI, not just editor hooks.
+
+## Git
+
+- NEVER run `git checkout --`, `git restore`, `git stash`, or `git reset --hard` on files with uncommitted changes. Assume uncommitted work is intentional dev hacks I want to keep. Ask first.
+- Before auditing or editing, confirm the branch and repo (`git branch --show-current`, `git remote -v`). If I name a branch, use it.
+- One logical change per commit; default to ONE clean commit per request. Multiple fixes: one branch, one commit per fix, when asked.
+- Review feedback: amend/squash into the original commit, no fixup commits.
+- Before committing, diff the staged changes and strip local-only debug artifacts (e.g. `tags: ['asd']`, console.log, temporary flags).
+
+## Verification
+
+- Don't assert how a system behaves (enums, Redis topology, API refresh semantics, cache invalidation) without reading the code or running a command that proves it. If unverified, say "I need to check" and check.
+- Never hand-compute timestamps, dates, or durations. macOS: `date -r <ts>` / `date -u` (`date -d` is GNU-only).
+- Verify any log-grep or service-connecting script's pattern and port against real output before presenting it as working.
+- Before declaring done, run the project's own checks (`make validate` / `npm run validate` if present, else format, lint, typecheck, tests). Anything not run (version mismatch, sandbox blocks crates.io, no browser) goes under "Not verified" at the end.
+- Rust: `cargo fmt`, `cargo clippy`, `cargo check` from the crate root. Stale results: `touch` the file or `cargo clean -p <crate>`.
+- TypeScript: `tsc -b` before every commit (build mode includes stories/tests and is stricter than `--noEmit`). A Storybook-only build is not sufficient.
+- UI changes: state which Storybook story or page to check manually.
 
 ## Bug Hunting
 
-When the user is investigating a bug:
+When I'm investigating a bug:
 
-1. Before writing any code, list the top 3 hypotheses for this bug.
-2. For each hypothesis, give the exact command or file+line that would confirm or rule it out.
+1. Before writing code, list the top 3 hypotheses.
+2. For each, give the exact command or file+line that confirms or rules it out.
 3. Run those checks and show the raw output.
-4. Only after one hypothesis is confirmed by evidence, propose a fix.
-5. If the evidence suggests no fix is needed, say so explicitly.
+4. Propose a fix only after one hypothesis is confirmed by evidence.
+5. If the evidence says no fix is needed, say so explicitly.
 
-## Tool Version Detection Before Installing
+## Side-Notes During Active Work
 
-Before running any package install (`npm install`, `pip install`, `uv sync`, `bundle install`, etc.), verify the active runtime version matches the project's declared version. Wrong runtime versions silently produce corrupted or mismatched lock files.
+Unrelated feature ideas, bug reports, or errors I mention mid-task are notes for later, not redirections.
 
-**Check order — first file found wins:**
+- Acknowledge in one sentence max.
+- Persist immediately in memory (`project` for bugs/errors, `feedback` for feature ideas).
+- Don't investigate or implement unless I explicitly switch tasks ("actually let's do this first", "pause and fix this").
+- Resume the current task without further commentary.
 
-| Ecosystem | Files to check (in order) | How to verify active version |
-|-----------|--------------------------|------------------------------|
-| Node.js   | `.nvmrc`, `.node-version`, `package.json#engines.node`, `Dockerfile` `FROM node:X` | `node --version` |
-| Python    | `.python-version`, `pyproject.toml#requires-python`, `.tool-versions` `python X`, `Dockerfile` `FROM python:X` | `python --version` |
-| Ruby      | `.ruby-version`, `.tool-versions` `ruby X`, `Gemfile` `ruby 'X'` | `ruby --version` |
-| Rust      | `rust-toolchain.toml` `channel`, `rust-toolchain` | `rustc --version` |
-| Java/JVM  | `.java-version`, `.tool-versions` `java X` | `java --version` |
+## Tool Versions Before Installing
 
-**Rules:**
-- Read the project's version file before installing. If the active version doesn't match, switch it first (`nvm use`, `pyenv shell X`, etc.) before running the install.
-- If no version file exists, note the version mismatch risk explicitly before proceeding.
-- Never run `npm install` / `uv sync` / `pip install` with a different major version than the project declares — it will regenerate the lock file for the wrong runtime.
-- For Dockerfiles, the `FROM` line is the authoritative version; match the host version to it when generating lock files outside the container.
-- If a version manager is not installed or the required version is not available, stop and ask rather than proceeding with the wrong version.
+Before any package install (`npm install`, `pip install`, `uv sync`, `bundle install`, etc.), verify the active runtime matches the project's declared version. Wrong versions silently corrupt lock files.
 
-## Commands
+First file found wins:
 
-### Rust / TypeScript Checks
+| Ecosystem | Files (in order) | Verify with |
+|-----------|------------------|-------------|
+| Node.js | `.nvmrc`, `.node-version`, `package.json#engines.node`, Dockerfile `FROM node:X` | `node --version` |
+| Python | `.python-version`, `pyproject.toml#requires-python`, `.tool-versions`, Dockerfile `FROM python:X` | `python --version` |
+| Ruby | `.ruby-version`, `.tool-versions`, `Gemfile` `ruby 'X'` | `ruby --version` |
+| Rust | `rust-toolchain.toml` `channel`, `rust-toolchain` | `rustc --version` |
+| Java/JVM | `.java-version`, `.tool-versions` | `java --version` |
 
-- Rust: run `cargo fmt`, `cargo clippy`, and `cargo check` from the crate root (`cd` to the correct directory first). If results look stale, `touch` the changed file or use `cargo clean -p <crate>` before retrying.
-- TypeScript: run `tsc -b` (build mode, not just `tsc --noEmit`) before every commit — `tsc -b` uses tsconfig.app.json which includes stories and test files and is stricter. If the project has a `npm run validate` script, prefer that (it combines `tsc -b`, format check, and tests). A build that only compiles Storybook is not sufficient.
+- On mismatch, switch (`nvm use`, `pyenv shell X`) before installing, including before any JS tooling run.
+- Never install with a different major version than declared.
+- Dockerfile `FROM` is authoritative when generating lockfiles outside the container.
+- No version file: state the mismatch risk and suggest adding one.
+- Version manager or required version unavailable: stop and ask.
+- Install blocked by security policy/sandbox: don't work around it; give me the exact command to run myself (`! <command>`).
 
-## Git workflow
+## Environment (macOS)
 
-- Default to ONE clean commit per request unless told otherwise; when addressing review feedback, amend/squash into that commit rather than adding fixup commits.
-- Before auditing or editing, confirm the current branch and repo with `git branch --show-current` and `git remote -v`. If the user names a branch, use it.
-- For multi-fix requests, use one branch with a separate commit per fix when asked.
-
-## Testing & Verification
-
-### Verification
-
-- After code changes, run lint, typecheck, and tests before declaring done. If something cannot be run (Node version mismatch, sandbox blocks crates.io, no browser), say so explicitly at the end under 'Not verified'.
-- Check `.nvmrc`/`nvm use` before running JS tooling; Node version mismatches have blocked lint/build repeatedly.
-- For UI changes, state which Storybook story or page should be checked manually.
-- After pushing, check CI status with `gh pr checks` instead of assuming it passed.
-
-## Environment
-
-### Environment notes
-
-- macOS: BSD sed is in use; use python3 or `sed -i ''` for in-place edits.
-- MCP servers are registered via `claude mcp add` (stored in ~/.claude.json), not settings.json.
+- BSD sed: use python3 or `sed -i ''` for in-place edits.
+- MCP servers are registered with `claude mcp add` (stored in ~/.claude.json), not settings.json.
 - Disk can fill up; check `df -h` if writes fail.
-- Use `gh api` for fetching Dependabot alerts.
+- Dependabot alerts: use `gh api`.
+
+## Private
+
+@sensitive-work.md
