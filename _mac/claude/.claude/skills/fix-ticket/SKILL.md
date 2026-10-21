@@ -1,4 +1,4 @@
-# Fix Ticket — Wrike-to-Worktree Bug Fix Skill
+# Fix Ticket — Ticket-to-Worktree Bug Fix Skill
 
 Use this skill when the user provides one or more Wrike ticket URLs and asks you to fix the issue described in the ticket. The skill fetches the ticket, creates an isolated git worktree (or works in the current checkout), implements the fix, and commits it — without modifying the ticket itself.
 
@@ -32,6 +32,7 @@ chore/update-dependencies
 - The type comes from the nature of the work: `fix` for bugs, `feat` for features, `chore` for maintenance.
 - The ID is the numeric task ID from the Wrike permalink URL (`https://www.wrike.com/open.htm?id=1771681161` → `1771681161`). Include it whenever a ticket was fetched — omit it only when working without a ticket.
 - The slug is lowercase, words separated by `-`, a short description derived from the ticket title (3–5 words max).
+- **The final branch name MUST NOT contain the word `worktree`** — `EnterWorktree` internally prefixes its branch with `worktree-`, but the `git branch -m` rename in Step 2 must always produce a clean branch name free of that word.
 
 If the user says **"no worktree"** or **"in the current folder"**: skip `EnterWorktree` and work directly in the current git checkout. Create and switch to a new branch with `git checkout -b <branch-name>`.
 
@@ -55,13 +56,27 @@ wrike tasks get --permalink "https://www.wrike.com/open.htm?id=<ID>" --json
 
 Read the full JSON output: title, description, acceptance criteria, technical notes. Understand the bug before touching any code.
 
+> **Never default any assignee or user field to `me`** — require an explicit value or resolve it from config.
+
+### Step 1b — Confirm names before creating anything
+
+After fetching the ticket, print the exact names you will use and **stop for user confirmation** before creating the worktree or branch:
+
+```
+Ticket: <title>
+Worktree path: ../worktrees/<worktree-folder-name>
+Branch:        <type>/<id>_<kebab-slug>
+```
+
+Only proceed to Step 2 once the user confirms. If they correct the name, update it before continuing.
+
 ### Step 2 — Set up the working environment
 
 **Worktree mode (default):**
 
 Use the `EnterWorktree` tool. Since `EnterWorktree` doesn't allow `/` in names, use `_` as the separator for the worktree folder name (e.g. `fix_1771681161_date-boundary-fix`). The base branch defaults to `origin/<default-branch>` unless overridden. `EnterWorktree` runs any `PostToolUse` setup hooks automatically.
 
-After the worktree is created, rename the branch to the correct format (`<type>/<id>_<slug>`) — this drops the `worktree-` prefix and replaces the first `_` with `/` — then unset the upstream tracking:
+After the worktree is created, rename the branch to the correct format (`<type>/<id>_<slug>`). **This rename is mandatory** — `EnterWorktree` creates the branch with a `worktree-` prefix, and the rename must fully remove it so no part of the word `worktree` remains in the final branch name. Then unset the upstream tracking:
 
 ```bash
 git branch -m fix/1771681161_date-boundary-fix
@@ -87,6 +102,25 @@ Locate the relevant code using `grep`, `find`, and `Read`. Do not make assumptio
 ### Step 4 — Fix the bug
 
 Apply the minimal change that satisfies the acceptance criteria. Do not refactor, add features, or clean up unrelated code. Follow the existing patterns in the file.
+
+### Step 4b — Storybook stories (UI changes only)
+
+If the fix touches a UI component, add or update a `{ComponentName}.stories.tsx` file alongside the component. Tag every story with the ticket ID so it can be traced back:
+
+```tsx
+const meta = {
+  title: '{Directory}/{ComponentName}',
+  component: MyComponent,
+  tags: ['autodocs', 'ticket:<TICKET_ID>'],   // ← always include the ticket ID
+  ...
+} satisfies Meta<typeof MyComponent>;
+```
+
+- Follow the project's existing story title convention for the `title` field.
+- Tests are Storybook `play` functions — add one for the fixed behaviour if the component has interactive acceptance criteria.
+- If a story file already exists, add the `ticket:<TICKET_ID>` tag to `meta.tags` without removing existing tags.
+- Consistency first: if the project's stories already use a ticket-tag prefix (e.g. `jira:<ID>`, `linear:<ID>`), reuse that prefix instead of `ticket:`. Check existing stories first (`grep -rn "tags:" --include="*.stories.tsx" src | head`).
+- Skip this step for non-UI changes (backend routes, utility functions, pure type fixes).
 
 ### Step 5 — Run tests
 
@@ -117,6 +151,8 @@ npm run typecheck
 - If a script fails for pre-existing reasons unrelated to your change, note it but do not block the commit.
 
 ### Step 7 — Commit
+
+Before staging, run `git diff` and strip any local-only debug artifacts — e.g. `tags: ['asd']`, stray `console.log`, temporary flags — that were not part of the original ticket scope.
 
 ```bash
 git add <changed files>
@@ -156,7 +192,7 @@ Use Conventional Commits: `<type>: <description>`. No scope, no emojis, no LLM a
 | Bad | Good |
 |-----|------|
 | `fix bug in datepicker component per AC1-AC3` | `fix: dropdown not closing on outside click` |
-| `WIP: addressing Wrike ticket issue` | `fix: show collection modal in expanded card view` |
+| `WIP: addressing ticket issue` | `fix: show collection modal in expanded card view` |
 | `fix(modal): updated constants.ts to use Temporal.Now` | `fix: missing close button on settings panel` |
 | `feat(auth)!: add login` | `feat: add login` |
 | `🐛 fix dropdown` | `fix: dropdown not closing on outside click` |
