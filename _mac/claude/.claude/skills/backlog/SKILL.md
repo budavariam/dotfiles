@@ -1,9 +1,9 @@
 ---
 name: backlog
 description: Turn a raw brain dump of project improvements into a traceable, dependency-ordered backlog, then execute it one task at a time with verification until every item is done or explicitly dropped. Resumes automatically if a backlog exists.
-argument-hint: "[paste brain dump | status | resume | audit | todo-sync [path]]"
+argument-hint: "[paste brain dump | status | resume | audit | clear | list [all] | todo-sync [path]]"
 disable-model-invocation: true
-allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(git remote *) Bash(mkdir -p docs/backlog)
+allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d) Bash(git remote *) Bash(mkdir -p docs/backlog)
 ---
 
 # Backlog orchestrator
@@ -26,6 +26,8 @@ Existing backlog: Read `docs/backlog/BACKLOG.md`. If it does not exist, the back
 - Backlog exists and input is empty or "resume" -> PHASE 3 (execute) from the first non-done task.
 - Input is "status" -> print the status table only. Change nothing.
 - Input is "audit" -> PHASE 4 only.
+- Input starts with "list" -> LIST (below). Change nothing.
+- Input is "clear" -> CLEAR (below). Change nothing else.
 - Input starts with "todo-sync" -> TODO SYNC (below), then continue as for a new dump.
 - Backlog exists and input is a new dump -> append the new items to `inbox.md`, re-run PHASE 1 for the new items only, and keep all existing IDs and statuses.
 - Backlog is NONE and input is empty -> ask the user to paste the dump. Stop.
@@ -35,8 +37,29 @@ Existing backlog: Read `docs/backlog/BACKLOG.md`. If it does not exist, the back
 - `docs/backlog/inbox.md`: the verbatim raw dump, never edited after saving. Each fragment gets an ID: I-01, I-02, ...
 - `docs/backlog/BACKLOG.md`: status table plus task specs.
 - `docs/backlog/LOG.md`: append-only record of what was done per task.
+- `docs/backlog/ARCHIVE.md`: finished task rows and specs moved out by `clear`. Created on first clear.
 
-Create `docs/backlog/` if missing. These files are working state: never stage or commit them (status updates would otherwise need a commit per task, and a task's own hash can't be inside itself). If the repo doesn't ignore them, add `docs/backlog/` to `.git/info/exclude`, not `.gitignore`.
+Create `docs/backlog/` if missing. These files are working state: never stage or commit them (status updates would otherwise need a commit per task, and a task's own hash can't be inside itself).
+
+**Setup (run first in every mode that writes, i.e. everything except `status`, `list`, `audit`; idempotent, no prompt):**
+1. `ex=$(git rev-parse --git-path info/exclude)`; if `docs/backlog/` is not already a line in `$ex`, append it (`mkdir -p "$(dirname "$ex")"`). Never edit `.gitignore` for this, and never commit anything for it. This is what keeps the folder out of `git status` without touching a tracked file.
+2. `git ls-files docs/backlog` : if it prints anything, those files are already tracked (an exclude entry does not untrack them). Do not untrack or commit on your own; tell the user in one line and give the command: `git rm -r --cached docs/backlog` (then a commit of their choosing). Until then, still never stage them.
+3. If the user keeps the files elsewhere (for example `/tmp/backlog`), use that path for all three files instead and skip the exclude step.
+
+## LIST
+
+Read-only. Print the current backlog items grouped by status in this order: in-progress, blocked, todo, done, dropped (skip empty groups). One line per task: `T-xx  [size]  title  (deps: T-yy)  [commit]`. Then, under "Open fragments", list inbox fragments with outcome UNCLEAR or CONFLICT (`I-xx  excerpt`). With `list all`, also include tasks from `ARCHIVE.md`. If the backlog is NONE, say so. No narration.
+
+## CLEAR
+
+Archive finished work so `BACKLOG.md` only shows what is left. Nothing is deleted.
+
+1. Move every `done` and `dropped` row from the Status table, together with its `### T-xx` spec, to the end of `ARCHIVE.md` (keep the commit hash, add the clear date from `date -u`).
+2. Leave `todo`, `in-progress` and `blocked` tasks untouched. If a remaining task depends on an archived `done` task, keep the Depends entry; archived `done` counts as satisfied.
+3. Leave the Traceability table, `inbox.md` and `LOG.md` untouched (the Task column still points to archived IDs).
+4. Report in one line: N tasks archived, M remain. If none were finished, say so and change nothing.
+
+PHASE 4 and `status` must also read `ARCHIVE.md` when checking that every fragment is accounted for.
 
 ## TODO SYNC (explicit opt-in only)
 
@@ -105,7 +128,7 @@ Proceed to execution only after the user approves (e.g. "go", "approved", "looks
 
 ## PHASE 3: Execute (one task at a time)
 
-Confirm repo and branch first (`git branch --show-current`, `git remote -v`). Create a work branch if on main/master: `backlog/<short-slug>`. Never commit to main/master. Respect uncommitted changes already in the tree: never stash, restore, or reset them, and stage only the task's own files by path (never `git add -A`). If unrelated uncommitted changes overlap the task's files, mark the task `blocked` and ask.
+Confirm repo and branch first (`git branch --show-current`, `git remote -v`). If on main/master, create one work branch for the whole backlog, named `backlog/<YYYYMMDD>` (date from `date +%Y%m%d`, never hand-typed), never derived from a task or topic. Record it in the `Branch:` header of BACKLOG.md; on resume or after a new dump, reuse that branch. If the name already exists and isn't the recorded one, append `-2`, `-3`. Never commit to main/master. Respect uncommitted changes already in the tree: never stash, restore, or reset them, and stage only the task's own files by path (never `git add -A`). If unrelated uncommitted changes overlap the task's files, mark the task `blocked` and ask.
 
 Before any package install, check the runtime matches the project's declared version (`.nvmrc`, `.python-version`, etc.); on mismatch, stop and ask.
 
@@ -156,6 +179,6 @@ Example: `T-01 blocked: sandbox cannot reach registry.npmjs.org (ENOTFOUND). Unb
 - Never claim something is done without having run its verification and seen it pass.
 - Never delete or reword inbox fragments. Never remove rows from the traceability table.
 - Never expand scope silently. New work becomes a new fragment.
-- Never push, force-push, rewrite history, or touch files outside the repo.
+- Never push, force-push, merge the backlog branch into main/master, rewrite history, or touch files outside the repo.
 - Ask the user only for decisions that change architecture or product behavior. Otherwise decide, state the assumption in LOG.md, and continue.
 - Keep reports short: status table, then exceptions. No narration of routine steps.
