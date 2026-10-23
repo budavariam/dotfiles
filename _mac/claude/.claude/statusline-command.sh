@@ -59,6 +59,27 @@ else
   agent_section=""
 fi
 
+# Backlog skill progress: shown only when docs/backlog/BACKLOG.md exists
+backlog_section=""
+backlog_file="$cwd/docs/backlog/BACKLOG.md"
+if [ -f "$backlog_file" ]; then
+  backlog_stats=$(awk -F'|' '/^\| *T-[0-9]+ *\|/ {
+    gsub(/ /, "", $2); gsub(/ /, "", $6); total++
+    if ($6 == "done" || $6 == "dropped") done++
+    else if ($6 == "in-progress") cur = $2
+    else if ($6 == "blocked") blocked++
+  } END { if (total) printf "%d/%d %s %d", done, total, cur, blocked }' "$backlog_file")
+  if [ -n "$backlog_stats" ]; then
+    read -r b_prog b_cur b_blocked <<< "$backlog_stats"
+    [ -z "$b_blocked" ] && { b_blocked="$b_cur"; b_cur=""; }
+    b_color="$C_TURQUOISE"
+    [ "${b_prog%/*}" = "${b_prog#*/}" ] && b_color="$C_LIMEGREEN"
+    backlog_section=" | backlog:${b_color}${b_prog}${C_RESET}"
+    [ -n "$b_cur" ] && backlog_section="${backlog_section} ${C_ORANGE}${b_cur}${C_RESET}"
+    [ "${b_blocked:-0}" -gt 0 ] 2>/dev/null && backlog_section="${backlog_section} ${C_RED}!${b_blocked}${C_RESET}"
+  fi
+fi
+
 # Snapshot for the sketchybar claude dropdown (tiny write, one file per session)
 session_id=$(echo "$input" | jq -r '.session_id // empty')
 if [ -n "$session_id" ]; then
@@ -67,4 +88,4 @@ if [ -n "$session_id" ]; then
 fi
 
 # Build the final output
-printf "%s | %s | %s | %s%s" "$folder" "$git_section" "$model" "$context_section" "$agent_section"
+printf "%s | %s | %s | %s%s" "$folder" "$git_section" "$model" "$context_section" "$backlog_section$agent_section"

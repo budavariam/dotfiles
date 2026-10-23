@@ -4,6 +4,10 @@
 - Go deeper only if I ask, or say I'm new to / learning a topic.
 - Recommend one option with a short reason; don't survey alternatives unless asked.
 
+## Tool Names
+
+- Tool names are case-sensitive and capitalized: `Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`. Never call `bash`, `read`, etc.; a wrong-case call errors and wastes tokens.
+
 ## Engineering Principles
 
 - Existing projects: follow their stack, conventions, and tooling. Don't retrofit anything from "Defaults for New Projects" (Docker, Makefile, i18n, Tailwind, linters, version pins) unprompted; suggest it in one line instead.

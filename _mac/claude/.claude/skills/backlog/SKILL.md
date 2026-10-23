@@ -1,9 +1,9 @@
 ---
 name: backlog
 description: Turn a raw brain dump of project improvements into a traceable, dependency-ordered backlog, then execute it one task at a time with verification until every item is done or explicitly dropped. Resumes automatically if a backlog exists.
-argument-hint: "[paste brain dump | status | resume | audit]"
+argument-hint: "[paste brain dump | status | resume | audit | todo-sync [path]]"
 disable-model-invocation: true
-allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *)
+allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(git remote *) Bash(mkdir -p docs/backlog)
 ---
 
 # Backlog orchestrator
@@ -16,10 +16,9 @@ State lives in files, not in conversation memory.
 Git status:
 !`git status --short --branch 2>/dev/null || echo "not a git repo"`
 
-Existing backlog:
-!`cat docs/backlog/BACKLOG.md 2>/dev/null || echo "NONE"`
-
 User input: $ARGUMENTS
+
+Existing backlog: Read `docs/backlog/BACKLOG.md`. If it does not exist, the backlog is NONE.
 
 ## Mode selection
 
@@ -27,6 +26,7 @@ User input: $ARGUMENTS
 - Backlog exists and input is empty or "resume" -> PHASE 3 (execute) from the first non-done task.
 - Input is "status" -> print the status table only. Change nothing.
 - Input is "audit" -> PHASE 4 only.
+- Input starts with "todo-sync" -> TODO SYNC (below), then continue as for a new dump.
 - Backlog exists and input is a new dump -> append the new items to `inbox.md`, re-run PHASE 1 for the new items only, and keep all existing IDs and statuses.
 - Backlog is NONE and input is empty -> ask the user to paste the dump. Stop.
 
@@ -36,7 +36,18 @@ User input: $ARGUMENTS
 - `docs/backlog/BACKLOG.md`: status table plus task specs.
 - `docs/backlog/LOG.md`: append-only record of what was done per task.
 
-Create `docs/backlog/` if missing.
+Create `docs/backlog/` if missing. These files are working state: never stage or commit them (status updates would otherwise need a commit per task, and a task's own hash can't be inside itself). If the repo doesn't ignore them, add `docs/backlog/` to `.git/info/exclude`, not `.gitignore`.
+
+## TODO SYNC (explicit opt-in only)
+
+`TODO.md` is never read, written, or used as intake unless the input starts with `todo-sync`. Every other mode ignores it.
+
+1. Read `TODO.md` at the repo root (or the path given after `todo-sync`). If missing, say so and stop.
+2. Collect unfinished items: unchecked checkbox lines (`- [ ] ...`, nested ones included) that carry no `[backlog:...]` tag. Already tagged lines are skipped, so re-running is safe. If none, report that and stop.
+3. Treat the collected lines as a new dump: save them verbatim to `inbox.md` as new fragments, then run PHASE 1 for them (the approval gate still applies).
+4. After the plan is written, tag each source line in `TODO.md` in place, appending ` [backlog:T-03]` (several tasks: `[backlog:T-03,T-04]`). A fragment that is not a TASK gets `[backlog:I-05 UNCLEAR]` (or MERGED/REJECTED/CONFLICT). Change nothing else in the line or file.
+5. Ticking: whenever a task becomes `done`, find lines tagged with its ID; flip `- [ ]` to `- [x]` only when every task ID on that line is `done` or `dropped`. Lines tagged with a non-TASK outcome are never ticked. Untagged lines are never touched.
+6. `TODO.md` edits are working state like `docs/backlog/`: never stage them in task commits. Mention in the final report which lines were tagged and ticked.
 
 ## PHASE 1: Intake (no code changes)
 
@@ -94,7 +105,9 @@ Proceed to execution only after the user approves (e.g. "go", "approved", "looks
 
 ## PHASE 3: Execute (one task at a time)
 
-Create a work branch if on main/master: `backlog/<short-slug>`. Never commit to main.
+Confirm repo and branch first (`git branch --show-current`, `git remote -v`). Create a work branch if on main/master: `backlog/<short-slug>`. Never commit to main/master. Respect uncommitted changes already in the tree: never stash, restore, or reset them, and stage only the task's own files by path (never `git add -A`). If unrelated uncommitted changes overlap the task's files, mark the task `blocked` and ask.
+
+Before any package install, check the runtime matches the project's declared version (`.nvmrc`, `.python-version`, etc.); on mismatch, stop and ask.
 
 For each task in order, skipping `done`/`dropped` and tasks whose dependencies are not `done`:
 
@@ -105,8 +118,8 @@ For each task in order, skipping `done`/`dropped` and tasks whose dependencies a
    - Pass: continue.
    - Fail: fix and retry, at most 3 attempts. Then set `blocked`, record the exact error in LOG.md, and move on to the next task that does not depend on it. Never mark done on a failing or unrun check.
 5. Self-review `git diff` against the acceptance criteria, one criterion at a time. Check for scope creep, leftover debug code, and unrelated formatting changes.
-6. Commit with a message referencing the task ID (e.g. `T-03: add retry to HTTP client`). Do not push.
-7. Set status to `done` with the commit hash. Append to LOG.md: files changed, commands run and results, deviations from the plan.
+6. Stage by path, diff the staged changes, then commit one commit per task with a message referencing the task ID (e.g. `T-03: add retry to HTTP client`). Do not push. If a later review needs changes to an earlier task, amend or squash into it; no fixup commits.
+7. Set status to `done` with the commit hash. Append to LOG.md: files changed, commands run and results, deviations from the plan. If the task was synced from `TODO.md`, apply the ticking rule from TODO SYNC.
 8. If the task invalidated an assumption in later tasks, update those specs now and note it in LOG.md.
 
 Use a subagent only for read-heavy investigation (broad searches, reading many files) so the main context stays focused. Implement and verify in the main thread.
@@ -122,7 +135,8 @@ Context hygiene: if the context becomes large mid-run, finish the current task f
    - Blocked: reason and what is needed.
    - Dropped/rejected/unclear: with reasons.
    - New ideas discovered during the work (new inbox fragments).
-   - Anything not verified and why.
+   - Not verified: anything not run, and why.
+   - For UI changes: which page or story to check manually.
 4. State plainly whether every original fragment is accounted for. If it isn't, list the gaps.
 
 ## Hard rules
