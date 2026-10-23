@@ -116,7 +116,8 @@ For each task in order, skipping `done`/`dropped` and tasks whose dependencies a
 3. Implement the smallest change that meets the acceptance criteria. Follow existing conventions. Add or update tests for behavior changes.
 4. Verify: run the task's verification commands plus the project's lint/build/test commands. Read the actual output.
    - Pass: continue.
-   - Fail: fix and retry, at most 3 attempts. Then set `blocked`, record the exact error in LOG.md, and move on to the next task that does not depend on it. Never mark done on a failing or unrun check.
+   - Blocked by permissions or sandbox (install, network, denied command): do not retry or work around it. Set `blocked`, record the exact error in LOG.md, and follow "Blocked-by-environment report" below.
+   - Other failure: fix and retry, at most 3 attempts. Then set `blocked`, record the exact error in LOG.md, and move on to the next task that does not depend on it. Never mark done on a failing or unrun check.
 5. Self-review `git diff` against the acceptance criteria, one criterion at a time. Check for scope creep, leftover debug code, and unrelated formatting changes.
 6. Stage by path, diff the staged changes, then commit one commit per task with a message referencing the task ID (e.g. `T-03: add retry to HTTP client`). Do not push. If a later review needs changes to an earlier task, amend or squash into it; no fixup commits.
 7. Set status to `done` with the commit hash. Append to LOG.md: files changed, commands run and results, deviations from the plan. If the task was synced from `TODO.md`, apply the ticking rule from TODO SYNC.
@@ -125,6 +126,17 @@ For each task in order, skipping `done`/`dropped` and tasks whose dependencies a
 Use a subagent only for read-heavy investigation (broad searches, reading many files) so the main context stays focused. Implement and verify in the main thread.
 
 Context hygiene: if the context becomes large mid-run, finish the current task fully, make sure BACKLOG.md and LOG.md are current, tell the user to run `/compact` or start a fresh session and invoke `/backlog` to resume. All state is on disk.
+
+### Blocked-by-environment report
+
+Never ask whether to proceed and never write a vague line like "you'll need to run the install yourself". Do not pause the run: continue with tasks that don't depend on the blocked one. In the same message, and again in the final report, give each blocker as:
+
+- Blocked task(s) and what the command unblocks (e.g. "T-01; unblocks T-02, T-05 Storybook tasks").
+- The exact command in a copyable `! <command>` line, with the real package manager (from the lockfile: `pnpm-lock.yaml` -> `pnpm install`, `package-lock.json` -> `npm install`, `yarn.lock` -> `yarn install`; never guess) and exact package names/versions if it is an add. If the command must run in a subdirectory, prefix `cd <dir> &&`. Check the runtime version first (`.nvmrc` etc.) and include the switch (`nvm use &&`) when needed.
+- Why it was blocked, quoting the error in one line (e.g. `ENOTFOUND registry.npmjs.org`: sandbox has no network).
+- How to resume: "run it, then `/backlog resume`".
+
+Example: `T-01 blocked: sandbox cannot reach registry.npmjs.org (ENOTFOUND). Unblocks T-02, T-05. Run: ! cd web && nvm use && pnpm install   then: /backlog resume`
 
 ## PHASE 4: Final audit (always runs when no `todo` tasks remain)
 
