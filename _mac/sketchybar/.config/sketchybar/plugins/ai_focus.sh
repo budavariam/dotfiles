@@ -84,6 +84,16 @@ case "$host" in
     else
       open -a "Visual Studio Code"
     fi
+    # ai-focus extension (_mac/vscode/extensions/ai-focus): select the terminal tab whose shell is an ancestor
+    pids="$PID"; q="$PID"
+    for _ in $(seq 1 15); do
+      q=$(ps -o ppid= -p "$q" 2>/dev/null | tr -d ' ')
+      [ -z "$q" ] || [ "$q" = 0 ] || [ "$q" = 1 ] && break
+      pids="$pids,$q"
+    done
+    log "vscode terminal pids=$pids"
+    sleep 0.3  # let the window come forward so the URI reaches it
+    open "vscode://budavariam.ai-focus/terminal?pids=$pids"
     ;;
   app)
     /usr/bin/osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $app_pid) to true" >/dev/null

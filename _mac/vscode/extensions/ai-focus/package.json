@@ -1,0 +1,10 @@
+{
+  "name": "ai-focus",
+  "displayName": "AI Focus",
+  "publisher": "budavariam",
+  "version": "0.0.1",
+  "description": "vscode://budavariam.ai-focus/terminal?pids=1,2,3 focuses the integrated terminal whose shell pid is in the list (used by the sketchybar AI sessions menu).",
+  "engines": { "vscode": "^1.80.0" },
+  "main": "./extension.js",
+  "activationEvents": ["onUri"]
+}
