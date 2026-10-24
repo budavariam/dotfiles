@@ -1,9 +1,9 @@
 ---
 name: backlog
 description: Turn a raw brain dump of project improvements into a traceable, dependency-ordered backlog, then execute it one task at a time with verification until every item is done or explicitly dropped. Resumes automatically if a backlog exists.
-argument-hint: "[paste brain dump | status | resume | audit | clear | list [all] | todo-sync [path]]"
+argument-hint: "[agent] [paste brain dump | status | resume | audit | clear | list [all] | todo-sync [path]]"
 disable-model-invocation: true
-allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d) Bash(git remote *) Bash(mkdir -p docs/backlog)
+allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d) Bash(git remote *) Bash(mkdir -p docs/backlog) Agent
 ---
 
 # Backlog orchestrator
@@ -16,7 +16,15 @@ State lives in files, not in conversation memory.
 Git status:
 !`git status --short --branch 2>/dev/null || echo "not a git repo"`
 
-User input: $ARGUMENTS
+Raw input: $ARGUMENTS
+
+**Execution mode** (parse first):
+- Input starts with the literal word `agent` -> AGENT mode. Strip that word; the rest is the input for everything below (a dump, `resume`, empty, ...). `agent` + empty with an existing backlog = resume in AGENT mode.
+- Otherwise -> MAIN mode (default). The input is used as is.
+- The mode applies to this invocation only. It is not stored; call `agent` again on resume to keep using it.
+- `status`, `list`, `audit`, `clear`, `todo-sync` ignore the mode, except `todo-sync` followed by execution, which uses it.
+
+User input: the raw input minus a leading `agent`.
 
 Existing backlog: Read `docs/backlog/BACKLOG.md`. If it does not exist, the backlog is NONE.
 
@@ -29,12 +37,12 @@ Existing backlog: Read `docs/backlog/BACKLOG.md`. If it does not exist, the back
 - Input starts with "list" -> LIST (below). Change nothing.
 - Input is "clear" -> CLEAR (below). Change nothing else.
 - Input starts with "todo-sync" -> TODO SYNC (below), then continue as for a new dump.
-- Backlog exists and input is a new dump -> append the new items to `inbox.md`, re-run PHASE 1 for the new items only, and keep all existing IDs and statuses.
+- Backlog exists and input is a new dump -> OVERLAPPING DUMPS (below).
 - Backlog is NONE and input is empty -> ask the user to paste the dump. Stop.
 
 ## Files (single source of truth)
 
-- `docs/backlog/inbox.md`: the verbatim raw dump, never edited after saving. Each fragment gets an ID: I-01, I-02, ...
+- `docs/backlog/inbox.md`: the verbatim raw dump. Append-only: dumps are added at the end, existing text is never edited. Each fragment gets an ID: I-01, I-02, ...
 - `docs/backlog/BACKLOG.md`: status table plus task specs.
 - `docs/backlog/LOG.md`: append-only record of what was done per task.
 - `docs/backlog/ARCHIVE.md`: finished task rows and specs moved out by `clear`. Created on first clear.
@@ -71,6 +79,24 @@ PHASE 4 and `status` must also read `ARCHIVE.md` when checking that every fragme
 4. After the plan is written, tag each source line in `TODO.md` in place, appending ` [backlog:T-03]` (several tasks: `[backlog:T-03,T-04]`). A fragment that is not a TASK gets `[backlog:I-05 UNCLEAR]` (or MERGED/REJECTED/CONFLICT). Change nothing else in the line or file.
 5. Ticking: whenever a task becomes `done`, find lines tagged with its ID; flip `- [ ]` to `- [x]` only when every task ID on that line is `done` or `dropped`. Lines tagged with a non-TASK outcome are never ticked. Untagged lines are never touched.
 6. `TODO.md` edits are working state like `docs/backlog/`: never stage them in task commits. Mention in the final report which lines were tagged and ticked.
+
+## OVERLAPPING DUMPS (second and later dumps)
+
+A new dump can arrive at any time (`/backlog <dump>`): before approval, mid-run, with blocked tasks, after a `clear`. It extends the backlog; it never restarts or rewrites it. Nothing is implemented in the intake turn.
+
+1. **Append** the dump to `inbox.md` under a `## Dump N (<date -u>)` heading. Fragment IDs continue from the highest I-ID ever used (inbox is append-only, so never reuse).
+2. **Classify** only the new fragments (same outcomes as PHASE 1), checking against ALL existing fragments, tasks and specs, including `ARCHIVE.md`. Same idea as an existing fragment -> MERGED (name it; if that task is `done`, say so and don't recreate it).
+3. **Place** each new TASK fragment:
+   - Fits an existing task that is still `todo`: add the fragment to that task's Source and adjust its spec. Say so in the delta.
+   - Fits a task that is `in-progress`, `done` or `blocked`: never touch that task. Create a new task; add it to Depends on the old one if it builds on it.
+   - Otherwise: new task. IDs continue from the highest T-ID ever used (archive included).
+   - Contradicts an existing `todo` spec or the codebase: CONFLICT, ask.
+4. **Order**: re-sort only `todo` tasks (dependencies first, then value/effort). Never reorder or change `in-progress`, `done`, `dropped` rows, their IDs, statuses, or commit hashes.
+5. **Update** `BACKLOG.md`: add rows and specs, add traceability rows. Remove nothing.
+6. **Approval**: tasks already approved stay approved. Present only the delta, marked NEW / CHANGED (a `todo` task that gained fragments), plus open questions. If the original plan was never approved, this approval covers the whole plan.
+7. **After approval** (or on `/backlog resume`), execution continues from the first runnable `todo` task. The branch stays the one recorded in `Branch:`.
+
+If a run is in progress, the dump is handled once the current turn ends; the in-progress task finishes as specified and is not affected by the new dump.
 
 ## PHASE 1: Intake (no code changes)
 
@@ -146,7 +172,22 @@ For each task in order, skipping `done`/`dropped` and tasks whose dependencies a
 7. Set status to `done` with the commit hash. Append to LOG.md: files changed, commands run and results, deviations from the plan. If the task was synced from `TODO.md`, apply the ticking rule from TODO SYNC.
 8. If the task invalidated an assumption in later tasks, update those specs now and note it in LOG.md.
 
-Use a subagent only for read-heavy investigation (broad searches, reading many files) so the main context stays focused. Implement and verify in the main thread.
+### Execution by mode
+
+**MAIN mode (default):** implement and verify in the main thread. Spawn a subagent only for read-heavy investigation (broad searches, reading many files) so the main context stays focused, or when a task is clearly too big for the main context. Model rule below applies to any agent spawned.
+
+**AGENT mode:** every task's implementation is delegated to a subagent, to save main-thread tokens and run independent work in parallel. The main thread only orchestrates.
+1. Pick the runnable tasks (status `todo`, all dependencies `done`). Group them into a batch: tasks marked `parallel-safe` whose Scope files do not overlap run together in one message (several Agent calls at once); anything else runs alone, in order.
+2. Per task, set `in-progress`, then spawn a fresh `general-purpose` agent (not `fork`: it ignores the model override). Its prompt is self-contained: the full task spec, the repo conventions and verify commands from the `BACKLOG.md` header, and these constraints: touch only the Scope files, do not commit or stage, do not touch `docs/backlog/`, report files changed and the commands it ran with results.
+3. When agents return, the main thread does steps 4-8 above itself, task by task: run verification and read the real output, self-review `git diff` limited to that task's paths, stage by path, commit, set `done`, write LOG.md. Never trust the agent's own "tests pass"; re-run.
+4. If verification of a parallel task fails because of another task's uncommitted changes in the shared tree, commit the others first, then re-verify. A genuine failure goes back to a new agent run (counts toward the 3 attempts, with escalation below).
+5. Blocked agents or environment errors follow the same blocked rules as MAIN mode.
+
+**Model for spawned agents (both modes):** set the Agent `model` from the task's Size:
+- S -> `haiku`, M -> `sonnet`, L -> `sonnet`.
+- Never above `sonnet`, whatever model the main thread runs on. Read-only investigation agents: `haiku` for simple lookups, else `sonnet`.
+- An optional `Model:` line in the task spec overrides the default, still capped at `sonnet`.
+- If a `haiku` attempt fails verification, the next attempt uses `sonnet`. There is no escalation beyond `sonnet`.
 
 Context hygiene: if the context becomes large mid-run, finish the current task fully, make sure BACKLOG.md and LOG.md are current, tell the user to run `/compact` or start a fresh session and invoke `/backlog` to resume. All state is on disk.
 
