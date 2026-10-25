@@ -1,7 +1,7 @@
 ---
 name: backlog
 description: Turn a raw brain dump of project improvements into a traceable, dependency-ordered backlog, then execute it one task at a time with verification until every item is done or explicitly dropped. Resumes automatically if a backlog exists.
-argument-hint: "[agent] [lean] [paste brain dump | status | resume | audit | clear | clear all | list [all] | todo-sync [path]]"
+argument-hint: "[agent] [lean] [silent] [paste brain dump | status | resume | audit | clear | clear all | list [all] | todo-sync [path]]"
 disable-model-invocation: true
 allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d-%H%M) Bash(git remote *) Bash(mkdir -p docs/backlog) Agent
 ---
@@ -19,10 +19,12 @@ Git status:
 Raw input: $ARGUMENTS
 
 **Execution mode** (parse first):
-- The input may start with the literal flag words `agent` and/or `lean`, in any order. Strip them; the rest is the input for everything below (a dump, `resume`, empty, ...).
+- The input may start with the literal flag words `agent`, `lean` and/or `silent`, in any order. Strip them; the rest is the input for everything below (a dump, `resume`, empty, ...).
 - `agent` -> AGENT mode. `agent` + empty with an existing backlog = resume in AGENT mode.
 - `lean` -> LEAN mode (token saver, for when the daily limit is approaching). It includes everything AGENT mode does, so `lean` alone is enough; `agent lean` is the same.
-- No flag -> MAIN mode (default). The input is used as is.
+- `silent` -> no per-task progress lines (see PHASE 3 step 7). Combines with any mode, alone or with `agent`/`lean`; alone it means MAIN mode.
+- No mode flag -> MAIN mode (default). The input is used as is.
+- Flags can also be given when approving the plan (PHASE 2, e.g. `go lean silent`); they then apply to the execution that follows and override the ones from the invocation.
 - The mode applies to this invocation only. It is not stored; pass the flag again on resume to keep using it.
 - `status`, `list`, `audit`, `clear`, `clear all`, `todo-sync` ignore the mode, except `todo-sync` followed by execution, which uses it.
 
@@ -131,7 +133,7 @@ If a run is in progress, the dump is handled once the current turn ends; the in-
    - Mark tasks that are independent of each other as `parallel-safe`.
 5. Write `BACKLOG.md` in the format below.
 6. Ask the user only about CONFLICT and UNCLEAR items that block planning. Batch them into one message with a recommended default for each. Do not ask anything else.
-7. STOP and present: the task list (ID, title, size, depends-on), the traceability summary, and the open questions. Wait for approval. Do not implement anything in this turn.
+7. STOP and present: the task list (ID, title, size, depends-on), the traceability summary, and the open questions. End with one line: `Reply go [agent] [lean] [silent] to run (current: <active flags or none>)`. Wait for approval. Do not implement anything in this turn.
 
 ### BACKLOG.md format
 
@@ -166,7 +168,7 @@ Setting `dropped` (or rejecting a fragment) also appends an entry with the reaso
 
 ## PHASE 2: Approval gate
 
-Proceed to execution only after the user approves (e.g. "go", "approved", "looks good") or amends the plan. Apply amendments to `BACKLOG.md` first, then continue. If the user wants a different execution style (all tasks, N tasks, or one at a time), follow it. Default: run all approved tasks sequentially, stopping on any failure.
+Proceed to execution only after the user approves (e.g. "go", "approved", "looks good") or amends the plan. The approval reply may carry the flag words `agent`, `lean`, `silent` (e.g. `go lean silent`); strip them and use them as the execution mode, replacing the invocation's flags (a reply with none keeps the invocation's). Apply amendments to `BACKLOG.md` first, then continue. If the user wants a different execution style (all tasks, N tasks, or one at a time), follow it. Default: run all approved tasks sequentially, stopping on any failure.
 
 ## PHASE 3: Execute (one task at a time)
 
@@ -185,7 +187,7 @@ For each task in order, skipping `done`/`dropped` and tasks whose dependencies a
    - Other failure: fix and retry, at most 3 attempts. Then set `blocked`, record the exact error in LOG.md, and move on to the next task that does not depend on it. Never mark done on a failing or unrun check.
 5. Self-review `git diff` against the acceptance criteria, one criterion at a time. Check for scope creep, leftover debug code, and unrelated formatting changes.
 6. Stage by path, diff the staged changes, then commit one commit per task with a message referencing the task ID (e.g. `T-03: add retry to HTTP client`). Do not push. If a later review needs changes to an earlier task, amend or squash into it; no fixup commits.
-7. Set status to `done` with the commit hash. Append to LOG.md: files changed, commands run and results, deviations from the plan. If the task was synced from `TODO.md`, apply the ticking rule from TODO SYNC.
+7. Set status to `done` with the commit hash. Unless `silent`, immediately emit one plain line: `[<done>/<total>] T-03 done  <short hash>  <title>` (`<done>` counts `done` rows after this task; `<total>` counts Status-table rows that are not `dropped`). A task set to `blocked` gets `[<done>/<total>] T-03 blocked  <one-line reason>`. Nothing else per task; no summary until the end. Append to LOG.md: files changed, commands run and results, deviations from the plan. If the task was synced from `TODO.md`, apply the ticking rule from TODO SYNC.
 8. If the task invalidated an assumption in later tasks, update those specs now and note it in LOG.md.
 
 ### Execution by mode
@@ -249,4 +251,4 @@ Example: `T-01 blocked: sandbox cannot reach registry.npmjs.org (ENOTFOUND). Unb
 - Never expand scope silently. New work becomes a new fragment.
 - Never push, force-push, merge the backlog branch into main/master, rewrite history, or touch files outside the repo.
 - Ask the user only for decisions that change architecture or product behavior. Otherwise decide, state the assumption in LOG.md, and continue.
-- Keep reports short: status table, then exceptions. No narration of routine steps.
+- Keep reports short: status table, then exceptions. No narration of routine steps; the one-line per-task progress is the only per-task output (suppressed by `silent`).
