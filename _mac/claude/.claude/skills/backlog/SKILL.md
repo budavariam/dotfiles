@@ -1,9 +1,9 @@
 ---
 name: backlog
 description: Turn a raw brain dump of project improvements into a traceable, dependency-ordered backlog, then execute it one task at a time with verification until every item is done or explicitly dropped. Resumes automatically if a backlog exists.
-argument-hint: "[agent] [lean] [silent] [paste brain dump | status | resume | audit | clear | clear all | list [all] | todo-sync [path]]"
+argument-hint: "[agent] [lean] [silent] [yolo] [paste brain dump | status | resume | audit | clear | clear all | list [all] | todo-sync [path]]"
 disable-model-invocation: true
-allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d-%H%M) Bash(git remote *) Bash(mkdir -p docs/backlog) Agent
+allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d-%H%M) Bash(git remote *) Bash(mkdir -p docs/backlog) Agent AskUserQuestion
 ---
 
 # Backlog orchestrator
@@ -19,10 +19,12 @@ Git status:
 Raw input: $ARGUMENTS
 
 **Execution mode** (parse first):
-- The input may start with the literal flag words `agent`, `lean` and/or `silent`, in any order. Strip them; the rest is the input for everything below (a dump, `resume`, empty, ...).
+- The input may start with the literal flag words `agent`, `lean`, `silent` and/or `yolo`, in any order. Strip them; the rest is the input for everything below (a dump, `resume`, empty, ...).
 - `agent` -> AGENT mode. `agent` + empty with an existing backlog = resume in AGENT mode.
 - `lean` -> LEAN mode (token saver, for when the daily limit is approaching). It includes everything AGENT mode does, so `lean` alone is enough; `agent lean` is the same.
 - `silent` -> no per-task progress lines (see PHASE 3 step 7). Combines with any mode, alone or with `agent`/`lean`; alone it means MAIN mode.
+- `yolo` -> the planner decides and assumes instead of asking: skips the CLARIFY step and uses the "decide, note the assumption in LOG.md" rule (Hard rules). Independent of the execution mode; combines with any flag. Only meaningful at intake and mid-run, so it is not offered at approval; pass it again on resume to keep it.
+- Default (no `yolo`): the planner assumes nothing and asks (CLARIFY step in PHASE 1; mid-run rule in Hard rules).
 - No mode flag -> MAIN mode (default). The input is used as is.
 - Flags can also be given when approving the plan (PHASE 2, e.g. `go lean silent`); they then apply to the execution that follows and override the ones from the invocation.
 - The mode applies to this invocation only. It is not stored; pass the flag again on resume to keep using it.
@@ -108,6 +110,7 @@ A new dump can arrive at any time (`/backlog <dump>`): before approval, mid-run,
    - Fits a task that is `in-progress`, `done` or `blocked`: never touch that task. Create a new task; add it to Depends on the old one if it builds on it.
    - Otherwise: new task. IDs continue from the highest T-ID ever used (archive included).
    - Contradicts an existing `todo` spec or the codebase: CONFLICT, ask.
+   - Unless `yolo`: run the CLARIFY step (PHASE 1) for the new fragments before placing them.
 4. **Order**: re-sort only `todo` tasks (dependencies first, then value/effort). Never reorder or change `in-progress`, `done`, `dropped` rows, their IDs, statuses, or commit hashes.
 5. **Update** `BACKLOG.md`: add rows and specs, add traceability rows. Remove nothing.
 6. **Approval**: tasks already approved stay approved. Present only the delta, marked NEW / CHANGED (a `todo` task that gained fragments), plus open questions. If the original plan was never approved, this approval covers the whole plan.
@@ -119,20 +122,21 @@ If a run is in progress, the dump is handled once the current turn ends; the in-
 
 1. Save the raw dump verbatim to `inbox.md`. Split it into atomic fragments with IDs (I-01...). One fragment = one idea. Keep the user's wording.
 2. Explore the repo enough to ground the plan: structure, build/test/lint commands, conventions, and the files each idea touches. Read the CLAUDE.md files. Detect the real verification commands. Never invent them.
-3. Classify every fragment into exactly one outcome:
+3. Classify every fragment into exactly one outcome (unless `yolo`, do this, then run the CLARIFY step below before grouping into tasks):
    - TASK: becomes or joins a task.
    - MERGED: duplicate of another fragment (name it).
    - CONFLICT: contradicts another fragment or the codebase (explain).
    - UNCLEAR: cannot be actioned without a decision.
    - REJECTED: harmful or pointless (give the reason).
    Every fragment must appear in the traceability table. Nothing may be silently dropped.
+   **CLARIFY step (default; skipped with `yolo`):** do not assume anything, even if the dump looks clear. After exploring and classifying, prepare questions for every real gap or decision point: scope boundaries, intended behavior and edge cases, approach/library choice, naming, acceptance criteria, priority/order, what is explicitly out of scope, and every CONFLICT/UNCLEAR. At least one question per TASK fragment that has any choice in it; if a fragment truly has none, say so in one line instead of inventing a question. Each question: short, 2-4 concrete options with the recommended one first and marked, plus the user's free-text "other". Ask with `AskUserQuestion` (up to 4 questions per call, repeat calls until all are asked); if unavailable, a numbered list. Then STOP and wait. Record the answers in the task specs and in LOG.md under "Decisions (clarify)"; an answered question is not asked again. Answers that raise new gaps get one follow-up round at most. Then continue with step 4.
 4. Group TASK fragments into tasks. Rules:
    - A task is one coherent, reviewable change (target: one commit, under about 300 changed lines, under about 8 files).
    - Split anything larger. Do not bundle unrelated ideas.
    - Order by dependency first, then by value/effort. Put risky refactors before features that build on them.
    - Mark tasks that are independent of each other as `parallel-safe`.
 5. Write `BACKLOG.md` in the format below.
-6. Ask the user only about CONFLICT and UNCLEAR items that block planning. Batch them into one message with a recommended default for each. Do not ask anything else.
+6. Ask the user only about CONFLICT and UNCLEAR items that block planning. Batch them into one message with a recommended default for each. Do not ask anything else (unless `yolo`, the CLARIFY step has already asked everything).
 7. STOP and present: the task list (ID, title, size, depends-on), the traceability summary, and the open questions. End with one line: `Reply go [agent] [lean] [silent] to run (current: <active flags or none>)`. Wait for approval. Do not implement anything in this turn.
 
 ### BACKLOG.md format
@@ -250,5 +254,5 @@ Example: `T-01 blocked: sandbox cannot reach registry.npmjs.org (ENOTFOUND). Unb
 - Never delete or reword inbox fragments. Never remove rows from the traceability table.
 - Never expand scope silently. New work becomes a new fragment.
 - Never push, force-push, merge the backlog branch into main/master, rewrite history, or touch files outside the repo.
-- Ask the user only for decisions that change architecture or product behavior. Otherwise decide, state the assumption in LOG.md, and continue.
+- By default, ask instead of assuming, at intake and mid-run (a task whose spec leaves a choice open is set `blocked` with the question and options, and the run continues with other tasks). With `yolo`: decide, state the assumption in LOG.md, and continue.
 - Keep reports short: status table, then exceptions. No narration of routine steps; the one-line per-task progress is the only per-task output (suppressed by `silent`).
