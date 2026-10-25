@@ -22,7 +22,7 @@ GLOBAL_FOCUSED=$(aerospace list-workspaces --focused)
 # correct even when --visible is not supported by this AeroSpace version.
 # Display 1 = main (built-in). Display 2 = secondary (Sidecar).
 update_all_labels() {
-    local CACHE="/tmp/aerospace_sketchybar"
+    local CACHE="${AEROSPACE_CACHE:-/tmp/aerospace_sketchybar}"
     mkdir -p "$CACHE"
 
     local focused monitors main_mid focused_mid mid ws

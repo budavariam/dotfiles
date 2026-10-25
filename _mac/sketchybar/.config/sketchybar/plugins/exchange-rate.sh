@@ -14,7 +14,7 @@ else
 fi
 
 # Configuration
-CACHE_DIR="/tmp/sketchybar_currency"
+CACHE_DIR="${CACHE_DIR:-/tmp/sketchybar_currency}"
 CACHE_FILE="$CACHE_DIR/rates_$(date +%Y%m%d).json"
 # PREVIOUS_FILE="$CACHE_DIR/rates_$(date -v-1d +%Y%m%d).json"
 #API_KEY_EXCHANGE_RATE="YOUR_API_KEY_HERE"  # load from file

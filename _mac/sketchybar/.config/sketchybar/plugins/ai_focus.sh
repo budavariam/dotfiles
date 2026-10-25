@@ -7,7 +7,7 @@
 
 PID="$1"
 CWD="$2"
-export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+[ -n "$AI_FOCUS_KEEP_PATH" ] || export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
 log() { [ -n "$AI_FOCUS_DEBUG" ] && echo "$(date +%T) $*" >> /tmp/ai-focus.log; }
 
@@ -16,7 +16,7 @@ log() { [ -n "$AI_FOCUS_DEBUG" ] && echo "$(date +%T) $*" >> /tmp/ai-focus.log; 
 tty_of() { ps -o tty= -p "$1" 2>/dev/null | tr -d ' '; }
 
 focus_iterm_tty() { # $1 = tty name like ttys003
-  /usr/bin/osascript - "/dev/$1" <<'OSA'
+  osascript - "/dev/$1" <<'OSA'
 on run argv
   set target to item 1 of argv
   tell application "iTerm2"
@@ -96,7 +96,7 @@ case "$host" in
     open "vscode://budavariam.ai-focus/terminal?pids=$pids"
     ;;
   app)
-    /usr/bin/osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $app_pid) to true" >/dev/null
+    osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $app_pid) to true" >/dev/null
     ;;
   *) log "unknown host; nothing to focus" ;;
 esac

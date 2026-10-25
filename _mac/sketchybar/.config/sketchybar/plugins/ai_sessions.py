@@ -23,8 +23,9 @@ import time
 CLAUDE = "Claude"
 
 HOME = os.path.expanduser("~")
-FLAG_DIR = "/tmp/claude-needs-action.d"
-SL_DIR = "/tmp/claude-sl"
+FLAG_DIR = os.environ.get("AI_FLAG_DIR", "/tmp/claude-needs-action.d")
+SL_DIR = os.environ.get("AI_SL_DIR", "/tmp/claude-sl")
+PS = os.environ.get("AI_PS", "/bin/ps")
 
 HOSTS = [  # (substring of executable path, display name)
     ("iTerm", "iTerm"), ("Visual Studio Code", "VS Code"), ("Code Helper", "VS Code"),
@@ -52,7 +53,7 @@ def trunc(s, n):
 def process_table():
     procs = {}
     try:
-        out = subprocess.run(["/bin/ps", "-axo", "pid=,ppid=,comm="], capture_output=True, text=True).stdout
+        out = subprocess.run([PS, "-axo", "pid=,ppid=,comm="], capture_output=True, text=True).stdout
         for line in out.splitlines():
             parts = line.split(None, 2)
             if len(parts) == 3:
@@ -203,7 +204,7 @@ SORT_KEYS = {
 def process_rows(tools, procs, now):
     """Rows for tools detected by process command line (no session files); a child of a matching process is skipped."""
     try:
-        out = subprocess.run(["/bin/ps", "-axo", "pid=,ppid=,etime=,args="], capture_output=True, text=True).stdout
+        out = subprocess.run([PS, "-axo", "pid=,ppid=,etime=,args="], capture_output=True, text=True).stdout
     except Exception:
         return []
     found = {}  # pid -> (ppid, tool, etime seconds, args)
