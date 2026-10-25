@@ -1,7 +1,7 @@
 ---
 name: backlog
 description: Turn a raw brain dump of project improvements into a traceable, dependency-ordered backlog, then execute it one task at a time with verification until every item is done or explicitly dropped. Resumes automatically if a backlog exists.
-argument-hint: "[agent] [lean] [silent] [yolo] [paste brain dump | status | resume | audit | clear | clear all | list [all] | todo-sync [path]]"
+argument-hint: "[agent] [lean] [silent] [yolo] [parallel=N] [paste brain dump | status | resume | audit | clear | clear all | list [all] | todo-sync [path]]"
 disable-model-invocation: true
 allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d-%H%M) Bash(git remote *) Bash(mkdir -p docs/backlog) Agent AskUserQuestion
 ---
@@ -19,14 +19,15 @@ Git status:
 Raw input: $ARGUMENTS
 
 **Execution mode** (parse first):
-- The input may start with the literal flag words `agent`, `lean`, `silent` and/or `yolo`, in any order. Strip them; the rest is the input for everything below (a dump, `resume`, empty, ...).
+- The input may start with the literal flag words `agent`, `lean`, `silent`, `yolo` and/or `parallel=N`, in any order. Strip them; the rest is the input for everything below (a dump, `resume`, empty, ...).
 - `agent` -> AGENT mode. `agent` + empty with an existing backlog = resume in AGENT mode.
 - `lean` -> LEAN mode (token saver, for when the daily limit is approaching). It includes everything AGENT mode does, so `lean` alone is enough; `agent lean` is the same.
 - `silent` -> no per-task progress lines (see PHASE 3 step 7). Combines with any mode, alone or with `agent`/`lean`; alone it means MAIN mode.
 - `yolo` -> the planner decides and assumes instead of asking: skips the CLARIFY step and uses the "decide, note the assumption in LOG.md" rule (Hard rules). Independent of the execution mode; combines with any flag. Only meaningful at intake and mid-run, so it is not offered at approval; pass it again on resume to keep it.
+- `parallel=N` (N >= 1) -> at most N subagents run at the same time in AGENT mode. Default 1 (strictly one agent at a time). `N` > 1 implies AGENT mode; in MAIN mode there is nothing to parallelize, so it has no effect.
 - Default (no `yolo`): the planner assumes nothing and asks (CLARIFY step in PHASE 1; mid-run rule in Hard rules).
 - No mode flag -> MAIN mode (default). The input is used as is.
-- Flags can also be given when approving the plan (PHASE 2, e.g. `go lean silent`); they then apply to the execution that follows and override the ones from the invocation.
+- Flags can also be given when approving the plan (PHASE 2, e.g. `go lean silent parallel=3`); they then apply to the execution that follows and override the ones from the invocation.
 - The mode applies to this invocation only. It is not stored; pass the flag again on resume to keep using it.
 - `status`, `list`, `audit`, `clear`, `clear all`, `todo-sync` ignore the mode, except `todo-sync` followed by execution, which uses it.
 
@@ -137,7 +138,7 @@ If a run is in progress, the dump is handled once the current turn ends; the in-
    - Mark tasks that are independent of each other as `parallel-safe`.
 5. Write `BACKLOG.md` in the format below.
 6. Ask the user only about CONFLICT and UNCLEAR items that block planning. Batch them into one message with a recommended default for each. Do not ask anything else (unless `yolo`, the CLARIFY step has already asked everything).
-7. STOP and present: the task list (ID, title, size, depends-on), the traceability summary, and the open questions. End with one line: `Reply go [agent] [lean] [silent] to run (current: <active flags or none>)`. Wait for approval. Do not implement anything in this turn.
+7. STOP and present: the task list (ID, title, size, depends-on), the traceability summary, and the open questions. End with one line: `Reply go [agent] [lean] [silent] [parallel=N] to run (current: <active flags or none>)`. Wait for approval. Do not implement anything in this turn.
 
 ### BACKLOG.md format
 
@@ -172,7 +173,7 @@ Setting `dropped` (or rejecting a fragment) also appends an entry with the reaso
 
 ## PHASE 2: Approval gate
 
-Proceed to execution only after the user approves (e.g. "go", "approved", "looks good") or amends the plan. The approval reply may carry the flag words `agent`, `lean`, `silent` (e.g. `go lean silent`); strip them and use them as the execution mode, replacing the invocation's flags (a reply with none keeps the invocation's). Apply amendments to `BACKLOG.md` first, then continue. If the user wants a different execution style (all tasks, N tasks, or one at a time), follow it. Default: run all approved tasks sequentially, stopping on any failure.
+Proceed to execution only after the user approves (e.g. "go", "approved", "looks good") or amends the plan. The approval reply may carry the flag words `agent`, `lean`, `silent`, `parallel=N` (e.g. `go lean silent`); strip them and use them as the execution mode, replacing the invocation's flags (a reply with none keeps the invocation's). Apply amendments to `BACKLOG.md` first, then continue. If the user wants a different execution style (all tasks, N tasks, or one at a time), follow it. Default: run all approved tasks sequentially, stopping on any failure.
 
 ## PHASE 3: Execute (one task at a time)
 
@@ -199,7 +200,7 @@ For each task in order, skipping `done`/`dropped` and tasks whose dependencies a
 **MAIN mode (default):** implement and verify in the main thread. Spawn a subagent only for read-heavy investigation (broad searches, reading many files) so the main context stays focused, or when a task is clearly too big for the main context. Model rule below applies to any agent spawned.
 
 **AGENT mode:** every task's implementation is delegated to a subagent, to save main-thread tokens and run independent work in parallel. The main thread only orchestrates.
-1. Pick the runnable tasks (status `todo`, all dependencies `done`). Group them into a batch: tasks marked `parallel-safe` whose Scope files do not overlap run together in one message (several Agent calls at once); anything else runs alone, in order.
+1. Pick the runnable tasks (status `todo`, all dependencies `done`). Group them into a batch: tasks marked `parallel-safe` whose Scope files do not overlap run together in one message (several Agent calls at once), but never more than `parallel=N` agents at once (default 1: every task runs alone, in order); anything else runs alone, in order. If more than N tasks are eligible, take the first N in task order and start the rest in later batches.
 2. Per task, set `in-progress`, then spawn a fresh `general-purpose` agent (not `fork`: it ignores the model override). Its prompt is self-contained: the full task spec, the repo conventions and verify commands from the `BACKLOG.md` header, and these constraints: touch only the Scope files, do not commit or stage, do not touch `docs/backlog/`, report files changed and the commands it ran with results.
 3. When agents return, the main thread does steps 4-8 above itself, task by task: run verification and read the real output, self-review `git diff` limited to that task's paths, stage by path, commit, set `done`, write LOG.md. Never trust the agent's own "tests pass"; re-run.
 4. If verification of a parallel task fails because of another task's uncommitted changes in the shared tree, commit the others first, then re-verify. A genuine failure goes back to a new agent run (counts toward the 3 attempts, with escalation below).
