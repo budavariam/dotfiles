@@ -1,12 +1,12 @@
 #!/bin/sh
 
 ITEM="ai.status"
-SB=/opt/homebrew/bin/sketchybar
+SB="${SB:-/opt/homebrew/bin/sketchybar}"  # overridable for tests
 PLUGIN_DIR="${PLUGIN_DIR:-$HOME/.config/sketchybar/plugins}"
 . "$HOME/.config/sketchybar/variables.sh"  # AI_SORT_BY / AI_SORT_DIR / AI_TOOLS
 export AI_SORT_BY AI_SORT_DIR
-FLAG_DIR="/tmp/claude-needs-action.d"  # Claude Code per-session flags, see ~/.claude/sketchybar-claude-update.sh
-POPUP_FLAG="/tmp/ai-popup-open"    # exists while the dropdown is open
+FLAG_DIR="${FLAG_DIR:-/tmp/claude-needs-action.d}"  # Claude Code per-session flags, see ~/.claude/sketchybar-claude-update.sh
+POPUP_FLAG="${POPUP_FLAG:-/tmp/ai-popup-open}"    # exists while the dropdown is open
 SIG_FILE="/tmp/ai-sessions-sig"
 PY=/opt/homebrew/bin/python3  # pyenv/xcode shims take 150ms-1.5s to start, Homebrew's ~30ms
 [ -x "$PY" ] || PY=python3
@@ -105,6 +105,7 @@ fi
 
 # Cheap count + waiting check: no python (runs on every poll/hook event)
 session_count=0
+busy_count=0
 needs_action=0
 for f in ~/.claude/sessions/*.json; do
   [ -f "$f" ] || continue
@@ -113,6 +114,7 @@ for f in ~/.claude/sessions/*.json; do
   session_count=$((session_count + 1))
   sid=$(grep -o '"sessionId":"[^"]*"' "$f" | cut -d'"' -f4)
   [ -n "$sid" ] && [ -e "$FLAG_DIR/$sid" ] && needs_action=1
+  grep -q '"status":"busy"' "$f" && busy_count=$((busy_count + 1))
 done
 
 # Other AI tools: one ps+awk pass over the AI_TOOLS patterns, ignoring a process whose parent matches the same tool
@@ -133,12 +135,15 @@ fi
 # Keep an open dropdown fresh (hook events, polling)
 [ -e "$POPUP_FLAG" ] && [ "$SENDER" != "mouse.clicked" ] && build_popup
 
+# busy/total, busy zero-padded to the width of total so the bar only shifts when total gains a digit
+COUNT=$(printf '%0*d/%d' "${#session_count}" "$busy_count" "$session_count")
+
 if [ "$needs_action" = "1" ]; then
-  LABEL="${session_count}!"
+  LABEL="${COUNT}!"
   ICON_COLOR=$RED
   LABEL_COLOR=$RED
 else
-  LABEL="$session_count"
+  LABEL="$COUNT"
   ICON_COLOR=$ORANGE
   LABEL_COLOR=$WHITE
 fi
