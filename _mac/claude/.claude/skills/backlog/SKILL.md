@@ -1,9 +1,9 @@
 ---
 name: backlog
 description: Turn a raw brain dump of project improvements into a traceable, dependency-ordered backlog, then execute it one task at a time with verification until every item is done or explicitly dropped. Resumes automatically if a backlog exists.
-argument-hint: "[agent] [paste brain dump | status | resume | audit | clear | list [all] | todo-sync [path]]"
+argument-hint: "[agent] [lean] [paste brain dump | status | resume | audit | clear | clear all | list [all] | todo-sync [path]]"
 disable-model-invocation: true
-allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d) Bash(git remote *) Bash(mkdir -p docs/backlog) Agent
+allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d-%H%M) Bash(git remote *) Bash(mkdir -p docs/backlog) Agent
 ---
 
 # Backlog orchestrator
@@ -19,12 +19,14 @@ Git status:
 Raw input: $ARGUMENTS
 
 **Execution mode** (parse first):
-- Input starts with the literal word `agent` -> AGENT mode. Strip that word; the rest is the input for everything below (a dump, `resume`, empty, ...). `agent` + empty with an existing backlog = resume in AGENT mode.
-- Otherwise -> MAIN mode (default). The input is used as is.
-- The mode applies to this invocation only. It is not stored; call `agent` again on resume to keep using it.
-- `status`, `list`, `audit`, `clear`, `todo-sync` ignore the mode, except `todo-sync` followed by execution, which uses it.
+- The input may start with the literal flag words `agent` and/or `lean`, in any order. Strip them; the rest is the input for everything below (a dump, `resume`, empty, ...).
+- `agent` -> AGENT mode. `agent` + empty with an existing backlog = resume in AGENT mode.
+- `lean` -> LEAN mode (token saver, for when the daily limit is approaching). It includes everything AGENT mode does, so `lean` alone is enough; `agent lean` is the same.
+- No flag -> MAIN mode (default). The input is used as is.
+- The mode applies to this invocation only. It is not stored; pass the flag again on resume to keep using it.
+- `status`, `list`, `audit`, `clear`, `clear all`, `todo-sync` ignore the mode, except `todo-sync` followed by execution, which uses it.
 
-User input: the raw input minus a leading `agent`.
+User input: the raw input minus the leading flag words.
 
 Existing backlog: Read `docs/backlog/BACKLOG.md`. If it does not exist, the backlog is NONE.
 
@@ -36,6 +38,7 @@ Existing backlog: Read `docs/backlog/BACKLOG.md`. If it does not exist, the back
 - Input is "audit" -> PHASE 4 only.
 - Input starts with "list" -> LIST (below). Change nothing.
 - Input is "clear" -> CLEAR (below). Change nothing else.
+- Input is "clear all" -> CLEAR ALL (below). Change nothing else.
 - Input starts with "todo-sync" -> TODO SYNC (below), then continue as for a new dump.
 - Backlog exists and input is a new dump -> OVERLAPPING DUMPS (below).
 - Backlog is NONE and input is empty -> ask the user to paste the dump. Stop.
@@ -45,7 +48,8 @@ Existing backlog: Read `docs/backlog/BACKLOG.md`. If it does not exist, the back
 - `docs/backlog/inbox.md`: the verbatim raw dump. Append-only: dumps are added at the end, existing text is never edited. Each fragment gets an ID: I-01, I-02, ...
 - `docs/backlog/BACKLOG.md`: status table plus task specs.
 - `docs/backlog/LOG.md`: append-only record of what was done per task.
-- `docs/backlog/ARCHIVE.md`: finished task rows and specs moved out by `clear`. Created on first clear.
+- `docs/backlog/ARCHIVE.md`: `done` task rows and specs moved out by `clear`. Created on first clear. Only finished work lives here.
+- `docs/backlog/ABANDONED.md`: ideas that will not be done (`dropped` tasks, REJECTED fragments). Append-only, one entry per idea: `T-xx / I-xx  title  (date -u)  reason  [original spec kept below]`. Created on first entry. Written when the task is set to `dropped` (or the fragment rejected), not only on `clear`.
 
 Create `docs/backlog/` if missing. These files are working state: never stage or commit them (status updates would otherwise need a commit per task, and a task's own hash can't be inside itself).
 
@@ -56,18 +60,29 @@ Create `docs/backlog/` if missing. These files are working state: never stage or
 
 ## LIST
 
-Read-only. Print the current backlog items grouped by status in this order: in-progress, blocked, todo, done, dropped (skip empty groups). One line per task: `T-xx  [size]  title  (deps: T-yy)  [commit]`. Then, under "Open fragments", list inbox fragments with outcome UNCLEAR or CONFLICT (`I-xx  excerpt`). With `list all`, also include tasks from `ARCHIVE.md`. If the backlog is NONE, say so. No narration.
+Read-only. Print the current backlog items grouped by status in this order: in-progress, blocked, todo, done, dropped (skip empty groups). One line per task: `T-xx  [size]  title  (deps: T-yy)  [commit]`. Then, under "Open fragments", list inbox fragments with outcome UNCLEAR or CONFLICT (`I-xx  excerpt`). With `list all`, also include tasks from `ARCHIVE.md` (done) and `ABANDONED.md` (dropped). If the backlog is NONE, say so. No narration.
 
 ## CLEAR
 
 Archive finished work so `BACKLOG.md` only shows what is left. Nothing is deleted.
 
-1. Move every `done` and `dropped` row from the Status table, together with its `### T-xx` spec, to the end of `ARCHIVE.md` (keep the commit hash, add the clear date from `date -u`).
-2. Leave `todo`, `in-progress` and `blocked` tasks untouched. If a remaining task depends on an archived `done` task, keep the Depends entry; archived `done` counts as satisfied.
-3. Leave the Traceability table, `inbox.md` and `LOG.md` untouched (the Task column still points to archived IDs).
-4. Report in one line: N tasks archived, M remain. If none were finished, say so and change nothing.
+1. Move every `done` row from the Status table, together with its `### T-xx` spec, to the end of `ARCHIVE.md` (keep the commit hash, add the clear date from `date -u`). Only `done` tasks are archived; never archive `todo`, `in-progress`, `blocked` or `dropped`.
+2. `dropped` rows: move the row and spec to `ABANDONED.md` (if not already recorded there, add the entry with the reason from LOG.md or "no reason recorded"), then remove them from `BACKLOG.md`. They are not archived as finished work.
+3. Leave `todo`, `in-progress` and `blocked` tasks untouched. If a remaining task depends on an archived `done` task, keep the Depends entry; archived `done` counts as satisfied. A dependency on a `dropped` task stays unsatisfied: mark that dependent `blocked` and ask.
+4. Leave the Traceability table, `inbox.md` and `LOG.md` untouched (the Task column still points to archived/abandoned IDs).
+5. Report in one line: N archived, K abandoned, M remain. If nothing was `done` or `dropped`, say so and change nothing.
 
-PHASE 4 and `status` must also read `ARCHIVE.md` when checking that every fragment is accounted for.
+### CLEAR ALL (`clear all`)
+
+Empties the backlog completely. Nothing is deleted and no code is touched.
+
+1. `done` rows and specs -> `ARCHIVE.md`, as above.
+2. Every other row (`todo`, `in-progress`, `blocked`, `dropped`) with its spec -> `ABANDONED.md`, keeping the status it had (`abandoned from: todo`, ...) and reason: the LOG.md reason for `dropped`/`blocked`, else "backlog cleared". For `in-progress`, note any uncommitted changes in the tree and leave them alone (never stash, restore, or reset).
+3. `BACKLOG.md` keeps its header, an empty Status table and the Traceability table. Fragments of abandoned tasks stay in the Traceability table, Task column unchanged.
+4. T-IDs and I-IDs are never reused afterwards (a new dump continues from the highest ever used).
+5. Report in one line: N archived, K abandoned. Run `clear all` only when the input is exactly that; a bare `clear` never abandons open work.
+
+PHASE 4 and `status` must also read `ARCHIVE.md` and `ABANDONED.md` when checking that every fragment is accounted for.
 
 ## TODO SYNC (explicit opt-in only)
 
@@ -130,6 +145,7 @@ Branch: <branch>   Created: <date>   Verify: <real commands>
 | T-01 | ... | S/M/L | - | todo | |
 
 Status values: todo | in-progress | blocked | done | dropped
+Setting `dropped` (or rejecting a fragment) also appends an entry with the reason to `ABANDONED.md`.
 
 ## Traceability (every inbox fragment accounted for)
 | Fragment | Excerpt | Outcome | Task / reason |
@@ -154,7 +170,7 @@ Proceed to execution only after the user approves (e.g. "go", "approved", "looks
 
 ## PHASE 3: Execute (one task at a time)
 
-Confirm repo and branch first (`git branch --show-current`, `git remote -v`). If on main/master, create one work branch for the whole backlog, named `backlog/<YYYYMMDD>` (date from `date +%Y%m%d`, never hand-typed), never derived from a task or topic. Record it in the `Branch:` header of BACKLOG.md; on resume or after a new dump, reuse that branch. If the name already exists and isn't the recorded one, append `-2`, `-3`. Never commit to main/master. Respect uncommitted changes already in the tree: never stash, restore, or reset them, and stage only the task's own files by path (never `git add -A`). If unrelated uncommitted changes overlap the task's files, mark the task `blocked` and ask.
+Confirm repo and branch first (`git branch --show-current`, `git remote -v`). If on main/master, create one work branch for the whole backlog, named `backlog/<YYYYMMDD-HHMM>` (local date and time from `date +%Y%m%d-%H%M`, never hand-typed), never derived from a task or topic. Record it in the `Branch:` header of BACKLOG.md; on resume or after a new dump, reuse that branch. If the name already exists and isn't the recorded one, append `-2`, `-3`. Never commit to main/master. Respect uncommitted changes already in the tree: never stash, restore, or reset them, and stage only the task's own files by path (never `git add -A`). If unrelated uncommitted changes overlap the task's files, mark the task `blocked` and ask.
 
 Before any package install, check the runtime matches the project's declared version (`.nvmrc`, `.python-version`, etc.); on mismatch, stop and ask.
 
@@ -183,11 +199,21 @@ For each task in order, skipping `done`/`dropped` and tasks whose dependencies a
 4. If verification of a parallel task fails because of another task's uncommitted changes in the shared tree, commit the others first, then re-verify. A genuine failure goes back to a new agent run (counts toward the 3 attempts, with escalation below).
 5. Blocked agents or environment errors follow the same blocked rules as MAIN mode.
 
-**Model for spawned agents (both modes):** set the Agent `model` from the task's Size:
-- S -> `haiku`, M -> `sonnet`, L -> `sonnet`.
+**Model for spawned agents (all modes):** set the Agent `model` from the task's Size:
+- S -> `haiku`, M -> `sonnet`, L -> `sonnet`. In LEAN mode: S -> `haiku`, M -> `haiku`, L -> `sonnet`.
 - Never above `sonnet`, whatever model the main thread runs on. Read-only investigation agents: `haiku` for simple lookups, else `sonnet`.
 - An optional `Model:` line in the task spec overrides the default, still capped at `sonnet`.
 - If a `haiku` attempt fails verification, the next attempt uses `sonnet`. There is no escalation beyond `sonnet`.
+
+**LEAN mode (save tokens):** AGENT mode plus the following. The goal is the fewest tokens on the main model without ever lowering the bar for "done".
+- Always delegate implementation (no main-thread coding, no investigation agents). Cheapest models per the table above; `haiku` retries on `sonnet` once, as usual.
+- Intake: classify every fragment as usual (traceability stays complete), but explore the repo only as far as needed: read the CLAUDE.md files and the build/test config, then only the files a task names. No broad searches.
+- Agent prompts are minimal: the task spec, verify commands and constraints, nothing else. Ask the agent to reply in under 10 lines.
+- Main thread per task: re-run only the task's verification plus the project's fast checks (lint/typecheck); run the full test suite once, at the end. Review the diff once (staged, by path) instead of per criterion. Commit, set `done`.
+- LOG.md: one line per task (commit, files, result). No narration; reports are the status table plus exceptions.
+- Don't re-read files you just wrote or specs already in context. Don't print command output unless it failed.
+- Checkpoint after every task: BACKLOG.md and LOG.md current and the commit made, so a limit hit between tasks loses nothing. If you start a task and can't finish it, leave it `in-progress` with a LOG.md note saying what is left; `/backlog resume` (or `/backlog lean`) continues from there.
+- Still never mark a task `done` without its verification run and passed; anything skipped goes under "Not verified" in the final audit.
 
 Context hygiene: if the context becomes large mid-run, finish the current task fully, make sure BACKLOG.md and LOG.md are current, tell the user to run `/compact` or start a fresh session and invoke `/backlog` to resume. All state is on disk.
 
@@ -218,6 +244,7 @@ Example: `T-01 blocked: sandbox cannot reach registry.npmjs.org (ENOTFOUND). Unb
 ## Hard rules
 
 - Never claim something is done without having run its verification and seen it pass.
+- `clear` only archives `done` tasks. Abandoned ideas go to `ABANDONED.md`, never `ARCHIVE.md`.
 - Never delete or reword inbox fragments. Never remove rows from the traceability table.
 - Never expand scope silently. New work becomes a new fragment.
 - Never push, force-push, merge the backlog branch into main/master, rewrite history, or touch files outside the repo.
