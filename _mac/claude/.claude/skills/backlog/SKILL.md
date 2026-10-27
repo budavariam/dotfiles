@@ -1,7 +1,7 @@
 ---
 name: backlog
 description: Turn a raw brain dump of project improvements into a traceable, dependency-ordered backlog, then execute it one task at a time with verification until every item is done or explicitly dropped. Resumes automatically if a backlog exists.
-argument-hint: "[agent] [lean] [silent] [yolo] [parallel=N] [paste brain dump | status | resume | audit | clear | clear all | list [all] | todo-sync [path]]"
+argument-hint: "[agent] [lean] [silent] [yolo] [oneshot] [parallel=N] [paste brain dump | status | resume | audit | clear | clear all | list [all] | inbox [plan] | todo-sync [path]]"
 disable-model-invocation: true
 allowed-tools: Read Grep Glob Write Edit Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git branch *) Bash(git switch *) Bash(git add *) Bash(git commit *) Bash(git show *) Bash(date +%Y%m%d-%H%M) Bash(git remote *) Bash(mkdir -p docs/backlog) Agent AskUserQuestion
 ---
@@ -19,17 +19,18 @@ Git status:
 Raw input: $ARGUMENTS
 
 **Execution mode** (parse first):
-- The input may start with the literal flag words `agent`, `lean`, `silent`, `yolo` and/or `parallel=N`, in any order. Strip them; the rest is the input for everything below (a dump, `resume`, empty, ...).
+- The input may start with the literal flag words `agent`, `lean`, `silent`, `yolo`, `oneshot` and/or `parallel=N`, in any order. Strip them; the rest is the input for everything below (a dump, `resume`, empty, ...).
 - `agent` -> AGENT mode. `agent` + empty with an existing backlog = resume in AGENT mode.
 - `lean` -> LEAN mode (token saver, for when the daily limit is approaching). It includes everything AGENT mode does, so `lean` alone is enough; `agent lean` is the same.
 - `silent` -> no per-task progress lines (see PHASE 3 step 7). Combines with any mode, alone or with `agent`/`lean`; alone it means MAIN mode.
 - `yolo` -> the planner decides and assumes instead of asking: skips the CLARIFY step and uses the "decide, note the assumption in LOG.md" rule (Hard rules). Independent of the execution mode; combines with any flag. Only meaningful at intake and mid-run, so it is not offered at approval; pass it again on resume to keep it.
+- `oneshot` -> `yolo` plus no approval gate: the plan is still built, written to `BACKLOG.md` and printed, but it is treated as approved and execution starts in the same turn, without waiting for `go`. Implies `yolo` (no CLARIFY step; CONFLICT/UNCLEAR items take the recommended default, noted in LOG.md). Combines with `agent`/`lean`/`silent`/`parallel=N`. Applies to the whole run, including deltas from new dumps mid-run. Pass it again on resume to keep it.
 - `parallel=N` (N >= 1) -> at most N subagents run at the same time in AGENT mode. Default 1 (strictly one agent at a time). `N` > 1 implies AGENT mode; in MAIN mode there is nothing to parallelize, so it has no effect.
 - Default (no `yolo`): the planner assumes nothing and asks (CLARIFY step in PHASE 1; mid-run rule in Hard rules).
 - No mode flag -> MAIN mode (default). The input is used as is.
 - Flags can also be given when approving the plan (PHASE 2, e.g. `go lean silent parallel=3`); they then apply to the execution that follows and override the ones from the invocation.
 - The mode applies to this invocation only. It is not stored; pass the flag again on resume to keep using it.
-- `status`, `list`, `audit`, `clear`, `clear all`, `todo-sync` ignore the mode, except `todo-sync` followed by execution, which uses it.
+- `status`, `list`, `audit`, `inbox`, `clear`, `clear all`, `todo-sync` ignore the mode, except `todo-sync` followed by execution, which uses it.
 
 User input: the raw input minus the leading flag words.
 
@@ -42,15 +43,17 @@ Existing backlog: Read `docs/backlog/BACKLOG.md`. If it does not exist, the back
 - Input is "status" -> print the status table only. Change nothing.
 - Input is "audit" -> PHASE 4 only.
 - Input starts with "list" -> LIST (below). Change nothing.
+- Input is "inbox" -> INBOX (below). Change nothing.
+- Input is "inbox plan" -> INBOX PLAN (below).
 - Input is "clear" -> CLEAR (below). Change nothing else.
 - Input is "clear all" -> CLEAR ALL (below). Change nothing else.
 - Input starts with "todo-sync" -> TODO SYNC (below), then continue as for a new dump.
 - Backlog exists and input is a new dump -> OVERLAPPING DUMPS (below).
-- Backlog is NONE and input is empty -> ask the user to paste the dump. Stop.
+- Backlog is NONE and input is empty -> if pending fragments exist (see INBOX), say so and offer `inbox plan`; otherwise ask the user to paste the dump. Stop.
 
 ## Files (single source of truth)
 
-- `docs/backlog/inbox.md`: the verbatim raw dump. Append-only: dumps are added at the end, existing text is never edited. Each fragment gets an ID: I-01, I-02, ...
+- `docs/backlog/inbox.md`: the verbatim raw dump. Append-only: dumps are added at the end, existing text is never edited. Each fragment gets an ID: I-01, I-02, ... The global side-note rule (`~/.claude/CLAUDE.md`) also appends here between runs, as `- I-NN [bug|idea|error] text (date)` lines under a `## Side-notes (<date>)` heading; those are captured but unplanned fragments.
 - `docs/backlog/BACKLOG.md`: status table plus task specs.
 - `docs/backlog/LOG.md`: append-only record of what was done per task.
 - `docs/backlog/ARCHIVE.md`: `done` task rows and specs moved out by `clear`. Created on first clear. Only finished work lives here.
@@ -66,6 +69,16 @@ Create `docs/backlog/` if missing. These files are working state: never stage or
 ## LIST
 
 Read-only. Print the current backlog items grouped by status in this order: in-progress, blocked, todo, done, dropped (skip empty groups). One line per task: `T-xx  [size]  title  (deps: T-yy)  [commit]`. Then, under "Open fragments", list inbox fragments with outcome UNCLEAR or CONFLICT (`I-xx  excerpt`). With `list all`, also include tasks from `ARCHIVE.md` (done) and `ABANDONED.md` (dropped). If the backlog is NONE, say so. No narration.
+
+## INBOX
+
+Pending = fragment IDs in `inbox.md` that appear in none of `BACKLOG.md` (Traceability), `ARCHIVE.md`, `ABANDONED.md`: `comm -23 <(grep -o 'I-[0-9][0-9]*' docs/backlog/inbox.md | sort -u) <(cat docs/backlog/{BACKLOG,ARCHIVE,ABANDONED}.md 2>/dev/null | grep -o 'I-[0-9][0-9]*' | sort -u)`.
+
+**`inbox`** (read-only): print each pending fragment as `I-xx  [tag]  text  (date)`, in ID order. None: say so. Also mention the pending count on `status`, `list` and `resume`.
+
+### INBOX PLAN (`inbox plan`)
+
+Turn the pending fragments into tasks. They are already in `inbox.md`, so do not append or reword them. Backlog NONE: run PHASE 1 from step 2 on them. Backlog exists: run OVERLAPPING DUMPS from step 2 (classify, place, order, update, approval delta). In both, the CLARIFY step and approval gate apply as usual, and each `[bug|idea|error]` tag is context for the spec only.
 
 ## CLEAR
 
@@ -114,7 +127,7 @@ A new dump can arrive at any time (`/backlog <dump>`): before approval, mid-run,
    - Unless `yolo`: run the CLARIFY step (PHASE 1) for the new fragments before placing them.
 4. **Order**: re-sort only `todo` tasks (dependencies first, then value/effort). Never reorder or change `in-progress`, `done`, `dropped` rows, their IDs, statuses, or commit hashes.
 5. **Update** `BACKLOG.md`: add rows and specs, add traceability rows. Remove nothing.
-6. **Approval**: tasks already approved stay approved. Present only the delta, marked NEW / CHANGED (a `todo` task that gained fragments), plus open questions. If the original plan was never approved, this approval covers the whole plan.
+6. **Approval**: tasks already approved stay approved. Present only the delta, marked NEW / CHANGED (a `todo` task that gained fragments), plus open questions. If the original plan was never approved, this approval covers the whole plan. With `oneshot`: present the delta, treat it as approved, and continue execution without stopping.
 7. **After approval** (or on `/backlog resume`), execution continues from the first runnable `todo` task. The branch stays the one recorded in `Branch:`.
 
 If a run is in progress, the dump is handled once the current turn ends; the in-progress task finishes as specified and is not affected by the new dump.
@@ -138,7 +151,7 @@ If a run is in progress, the dump is handled once the current turn ends; the in-
    - Mark tasks that are independent of each other as `parallel-safe`.
 5. Write `BACKLOG.md` in the format below.
 6. Ask the user only about CONFLICT and UNCLEAR items that block planning. Batch them into one message with a recommended default for each. Do not ask anything else (unless `yolo`, the CLARIFY step has already asked everything).
-7. STOP and present: the task list (ID, title, size, depends-on), the traceability summary, and the open questions. End with one line: `Reply go [agent] [lean] [silent] [parallel=N] to run (current: <active flags or none>)`. Wait for approval. Do not implement anything in this turn.
+7. STOP and present: the task list (ID, title, size, depends-on), the traceability summary, and the open questions. End with one line: `Reply go [agent] [lean] [silent] [parallel=N] to run (current: <active flags or none>)`. Wait for approval. Do not implement anything in this turn. With `oneshot`: skip the wait and the `Reply go` line; end with `oneshot: running <N> tasks (<active flags or none>)` and go straight to PHASE 3 in the same turn.
 
 ### BACKLOG.md format
 
@@ -173,7 +186,7 @@ Setting `dropped` (or rejecting a fragment) also appends an entry with the reaso
 
 ## PHASE 2: Approval gate
 
-Proceed to execution only after the user approves (e.g. "go", "approved", "looks good") or amends the plan. The approval reply may carry the flag words `agent`, `lean`, `silent`, `parallel=N` (e.g. `go lean silent`); strip them and use them as the execution mode, replacing the invocation's flags (a reply with none keeps the invocation's). Apply amendments to `BACKLOG.md` first, then continue. If the user wants a different execution style (all tasks, N tasks, or one at a time), follow it. Default: run all approved tasks sequentially, stopping on any failure.
+With `oneshot` this gate is auto-passed: the plan counts as approved the moment it is written to `BACKLOG.md`. Otherwise, proceed to execution only after the user approves (e.g. "go", "approved", "looks good") or amends the plan. The approval reply may carry the flag words `agent`, `lean`, `silent`, `parallel=N` (e.g. `go lean silent`); strip them and use them as the execution mode, replacing the invocation's flags (a reply with none keeps the invocation's). Apply amendments to `BACKLOG.md` first, then continue. If the user wants a different execution style (all tasks, N tasks, or one at a time), follow it. Default: run all approved tasks sequentially, stopping on any failure.
 
 ## PHASE 3: Execute (one task at a time)
 
@@ -255,5 +268,5 @@ Example: `T-01 blocked: sandbox cannot reach registry.npmjs.org (ENOTFOUND). Unb
 - Never delete or reword inbox fragments. Never remove rows from the traceability table.
 - Never expand scope silently. New work becomes a new fragment.
 - Never push, force-push, merge the backlog branch into main/master, rewrite history, or touch files outside the repo.
-- By default, ask instead of assuming, at intake and mid-run (a task whose spec leaves a choice open is set `blocked` with the question and options, and the run continues with other tasks). With `yolo`: decide, state the assumption in LOG.md, and continue.
+- By default, ask instead of assuming, at intake and mid-run (a task whose spec leaves a choice open is set `blocked` with the question and options, and the run continues with other tasks). With `yolo` (or `oneshot`, which implies it): decide, state the assumption in LOG.md, and continue.
 - Keep reports short: status table, then exceptions. No narration of routine steps; the one-line per-task progress is the only per-task output (suppressed by `silent`).

@@ -74,7 +74,12 @@ When I'm investigating a bug:
 Unrelated feature ideas, bug reports, or errors I mention mid-task are notes for later, not redirections.
 
 - Acknowledge in one sentence max.
-- Persist immediately in memory (`project` for bugs/errors, `feedback` for feature ideas).
+- Persist immediately by appending to the current repo's `backlog` inbox, `docs/backlog/inbox.md`, not to auto-memory. The `backlog` skill plans from it.
+  1. Setup (idempotent): `mkdir -p docs/backlog`; if `docs/backlog/` is not a line in `$(git rev-parse --git-path info/exclude)`, append it. Never edit `.gitignore`, never commit or stage these files. Not in a git repo: ask once where to put it.
+  2. ID: next after the highest ever used: `grep -ho 'I-[0-9][0-9]*' docs/backlog/*.md | sort -V | tail -1` (none yet: I-01). Never reuse an ID.
+  3. Append, never edit existing text. If the last heading isn't `## Side-notes (<date>)`, add one first (`date -u +%F`). Fragment: `- I-NN [bug|idea|error] <my wording, verbatim> (<date>)`.
+  4. Acknowledge with the ID, e.g. "Noted as I-07."
+- Retrieval: pending = fragment IDs in `inbox.md` that appear in none of `BACKLOG.md`, `ARCHIVE.md`, `ABANDONED.md`: `comm -23 <(grep -o 'I-[0-9][0-9]*' docs/backlog/inbox.md | sort -u) <(cat docs/backlog/{BACKLOG,ARCHIVE,ABANDONED}.md 2>/dev/null | grep -o 'I-[0-9][0-9]*' | sort -u)`. Run it in your first reply of a session in a repo and whenever I ask what's pending or noted; report "N unplanned notes in docs/backlog/inbox.md" in one line, then continue. `/backlog inbox` lists them, `/backlog inbox plan` turns them into tasks.
 - Don't investigate or implement unless I explicitly switch tasks ("actually let's do this first", "pause and fix this").
 - Resume the current task without further commentary.
 

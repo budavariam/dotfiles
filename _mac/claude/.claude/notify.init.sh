@@ -21,24 +21,25 @@ UPDATED=$(jq --arg cmd "$NOTIFY_SH" '
 ' "$SETTINGS")
 echo "$UPDATED" > "$SETTINGS"
 
-# Add PostToolUse AskUserQuestion hook (idempotent — keyed on sketchybar call presence)
+# Add PreToolUse AskUserQuestion hook: notify + flag the session before the question is shown (idempotent).
+# Also migrates the old PostToolUse variant, which fired after the answer.
 UPDATED=$(jq --arg cmd "$ASK_CMD" '
-  if (.hooks.PostToolUse // []) | map(select(.matcher == "AskUserQuestion" and (.hooks[]?.command | contains("sketchybar-claude-update.sh")))) | length > 0
+  .hooks.PostToolUse = ((.hooks.PostToolUse // []) | map(select(.matcher != "AskUserQuestion")))
+  | if (.hooks.PreToolUse // []) | map(select(.matcher == "AskUserQuestion" and (.hooks[]?.command | contains("sketchybar-claude-update.sh")))) | length > 0
   then .
-  else .hooks.PostToolUse = (
-    ((.hooks.PostToolUse // []) | map(select(.matcher != "AskUserQuestion")))
-    + [{"matcher": "AskUserQuestion", "hooks": [{"type": "command", "command": $cmd}]}]
-  )
+  else .hooks.PreToolUse = ((.hooks.PreToolUse // []) + [{"matcher": "AskUserQuestion", "hooks": [{"type": "command", "command": $cmd}]}])
   end
 ' "$SETTINGS")
 echo "$UPDATED" > "$SETTINGS"
 
-# Add PreToolUse hook: clear needs-action flag when Claude is working (user responded)
+# Add PostToolUse hook: clear needs-action once the tool ran (question answered / permission granted).
+# Not PreToolUse: that would clear the flag the AskUserQuestion hook just set.
 CLEAR_CMD="$SKETCHYBAR_SH clear-needs-action"
 UPDATED=$(jq --arg cmd "$CLEAR_CMD" '
-  if (.hooks.PreToolUse // []) | map(select(.hooks[]?.command == $cmd)) | length > 0
+  .hooks.PreToolUse = ((.hooks.PreToolUse // []) | map(select(any(.hooks[]?; .command == $cmd) | not)))
+  | if (.hooks.PostToolUse // []) | map(select(.hooks[]?.command == $cmd)) | length > 0
   then .
-  else .hooks.PreToolUse = ((.hooks.PreToolUse // []) + [{"hooks": [{"type": "command", "command": $cmd}]}])
+  else .hooks.PostToolUse = ((.hooks.PostToolUse // []) + [{"hooks": [{"type": "command", "command": $cmd}]}])
   end
 ' "$SETTINGS")
 echo "$UPDATED" > "$SETTINGS"

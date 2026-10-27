@@ -10,11 +10,12 @@
 # so the sketchybar dropdown can highlight which session is waiting.
 
 input=$(cat)  # hooks pipe JSON on stdin; we only need session_id
-session_id=$(printf '%s' "$input" | /opt/homebrew/bin/jq -r '.session_id // empty' 2>/dev/null)
+JQ="${JQ:-/opt/homebrew/bin/jq}"  # SKETCHYBAR / FLAG_DIR / JQ are overridable for tests
+session_id=$(printf '%s' "$input" | "$JQ" -r '.session_id // empty' 2>/dev/null)
 session_id="${session_id:-unknown}"
 
-SKETCHYBAR=/opt/homebrew/bin/sketchybar
-FLAG_DIR="/tmp/claude-needs-action.d"
+SKETCHYBAR="${SKETCHYBAR:-/opt/homebrew/bin/sketchybar}"
+FLAG_DIR="${FLAG_DIR:-/tmp/claude-needs-action.d}"
 FLAG="$FLAG_DIR/$session_id"
 
 case "${1:-refresh}" in
