@@ -245,6 +245,28 @@ function tmuxaf() {
   fi
 }
 
+# _tclaude_run <session> [claude args...] — attach to the session if it exists, else create it running claude
+function _tclaude_run() {
+  local session="$1"; shift
+  if ! tmux has-session -t "=$session" 2>/dev/null; then
+    if [[ -n "$TMUX" ]]; then
+      tmux new-session -d -s "$session" claude "$@" && tmux switch-client -t "=$session"
+    else
+      tmux new-session -s "$session" claude "$@"
+    fi
+  elif [[ -n "$TMUX" ]]; then
+    tmux switch-client -t "=$session"
+  else
+    tmux attach-session -t "=$session"
+  fi
+}
+
+# tclaude — claude in the tmux session 'claude' (attach if it exists)
+function tclaude() { _tclaude_run claude "$@"; }
+
+# ntclaude — claude in a new tmux session named claude-YYYYMMDD_HHMM
+function ntclaude() { _tclaude_run "claude-$(date +%Y%m%d_%H%M)" "$@"; }
+
 HISTSIZE=10000000
 SAVEHIST=10000000
 
