@@ -49,11 +49,11 @@
         if [[ -z \"$branch\" ]]; then echo \"No branch selected.\"; return 1; fi; \
         git checkout \"$branch\"; \
     }; f"
-    # wtf - fzf-select a Claude worktree for the current repo and print its path (used by the cdw shell alias)
+    # wtf - fzf-select any worktree of the current repo (including the main one) and print its path (used by the cdw shell alias)
     #       main list shows: MM-DD HH:MM  hash  branch  (sorted most-recent first)
     wtf = "!f() { \
         git rev-parse HEAD > /dev/null 2>&1 || return; \
-        git worktree list | grep -F '.claude/worktrees' | \
+        git worktree list | \
         while IFS= read -r line; do \
             path=$(echo \"$line\" | awk '{print $1}'); \
             hash=$(echo \"$line\" | awk '{print $2}'); \
