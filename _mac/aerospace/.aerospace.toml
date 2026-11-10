@@ -112,6 +112,7 @@ alt-slash = 'layout tiles horizontal vertical'
 alt-comma = 'layout accordion horizontal vertical'
 alt-shift-0 = 'move-node-to-workspace 0'
 alt-rightSquareBracket = "exec-and-forget sketchybar --trigger toggle_aerospace_popup"
+alt-backslash = "exec-and-forget sketchybar --trigger toggle_ai_popup"
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#focus
 alt-h = 'focus left'

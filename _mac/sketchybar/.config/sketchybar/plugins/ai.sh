@@ -91,8 +91,8 @@ EOF
   $SB "$@" && echo "$sig" > "$SIG_FILE"
 }
 
-# Click toggles the dropdown; rows are built only when it opens
-if [ "$SENDER" = "mouse.clicked" ]; then
+# Click (or toggle_ai_popup hotkey event) toggles the dropdown; rows are built only when it opens
+if [ "$SENDER" = "mouse.clicked" ] || [ "$SENDER" = "toggle_ai_popup" ]; then
   if [ -e "$POPUP_FLAG" ]; then
     rm -f "$POPUP_FLAG"
     $SB --set "$ITEM" popup.drawing=off
@@ -133,7 +133,7 @@ if [ "$session_count" = "0" ]; then
 fi
 
 # Keep an open dropdown fresh (hook events, polling)
-[ -e "$POPUP_FLAG" ] && [ "$SENDER" != "mouse.clicked" ] && build_popup
+[ -e "$POPUP_FLAG" ] && [ "$SENDER" != "mouse.clicked" ] && [ "$SENDER" != "toggle_ai_popup" ] && build_popup
 
 # busy/total, busy zero-padded to the width of total so the bar only shifts when total gains a digit
 COUNT=$(printf '%0*d/%d' "${#session_count}" "$busy_count" "$session_count")

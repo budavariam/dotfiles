@@ -2,6 +2,7 @@
 
 ITEM="ai.status"
 EVENT_NAME="ai_update"
+TOGGLE_EVENT_NAME="toggle_ai_popup"  # triggered by aerospace alt-backslash
 HOOK_EVENT_NAME="claude_update"  # triggered by ~/.claude/sketchybar-claude-update.sh
 
 # nf-md-creation (U+F0674) - sparkles, written as UTF-8 bytes: bash 3.2 (no shebang here) has no \U escape; Nerd Fonts has no brand glyph for these tools.
@@ -37,5 +38,6 @@ cnf_ai=(
 sketchybar --add item "$ITEM" left \
   --add event "$EVENT_NAME" \
   --add event "$HOOK_EVENT_NAME" \
-  --subscribe "$ITEM" "$EVENT_NAME" "$HOOK_EVENT_NAME" mouse.clicked \
+  --add event "$TOGGLE_EVENT_NAME" \
+  --subscribe "$ITEM" "$EVENT_NAME" "$HOOK_EVENT_NAME" "$TOGGLE_EVENT_NAME" mouse.clicked \
   --set "$ITEM" "${cnf_ai[@]}"
